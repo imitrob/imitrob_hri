@@ -101,4 +101,4 @@ if __name__ == '__main__':
     print("4. Interactive plot tester: \n")
     interactive_plot_tester()
 
-    
+    # Match function signature ready to be tested
