@@ -70,8 +70,18 @@ def interactive_plot_tester():
     interactive_probs_plotter(cl, cg, g.action_names, g.clear_threshold, g.unsure_threshold, g.diffs_threshold, action)
 
 def modality_merge_tester():
+    print("-----1------")
     ls = UnifiedSentence([0.9,0.2,0.1],[[0.9,0.1,0.0],[0.1,0.9,0.0]])
     gs = UnifiedSentence([0.9,0.2,0.1],[[0.9,0.1,0.0],[0.1,0.9,0.0]])
+    action_names = g.action_names
+    object_names = g.object_names
+    mm = ModalityMerger(action_names, object_names)
+    r = mm.feedforward(ls, gs)
+    print(r)
+
+    print("------2------")
+    ls = UnifiedSentence([0.0,1.0,0.0],[[1.0,0.0,0.0],[0.0,0.0,1.0]])
+    gs = UnifiedSentence([0.0,0.8,0.0],[[0.8,0.0,0.0],[0.0,0.0,0.0]])
     action_names = g.action_names
     object_names = g.object_names
     mm = ModalityMerger(action_names, object_names)

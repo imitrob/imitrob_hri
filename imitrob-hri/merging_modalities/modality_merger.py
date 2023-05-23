@@ -437,10 +437,48 @@ class ModalityMerger():
     def get_num_of_angular_needed_for_action_magic(self, action):
         return 0
 
-    def feedforward(self, language_sentence, gesture_sentence):
+    @staticmethod
+    def is_zeros(arr, threshold=1e-3):
+        return np.allclose(arr, np.zeros(arr.shape), atol=threshold)
+    
+    @staticmethod
+    def is_one_only(arr):
+        larr = list(arr)
+        lenarr = len(larr)
+        if larr.count(1) == 1 and larr.count(0) == lenarr - 1:
+            return True
+        return False
+
+
+    def feedforward(self, language_sentence, gesture_sentence, epsilon=0.05, gamma=0.5):
         '''
         
         '''
+        # A.) Data preprocessing
+        # 1. Add epsilon
+        if self.is_zeros(language_sentence.target_action):
+            language_sentence.target_action += epsilon
+        if self.is_zeros(gesture_sentence.target_action):
+            gesture_sentence.target_action += epsilon
+        for n,o in enumerate(language_sentence.target_objects):
+            if self.is_zeros(o):
+                language_sentence.target_objects[n] += epsilon
+        for n,o in enumerate(gesture_sentence.target_objects):
+            if self.is_zeros(o):
+                gesture_sentence.target_objects[n] += epsilon
+
+        # 2. Add gamma, if language includes one value
+        if self.is_one_only(language_sentence.target_action):
+            language_sentence.target_action += gamma
+            language_sentence.target_action = np.clip(language_sentence.target_action, 0, 1)
+        for n,o in enumerate(language_sentence.target_objects):
+            if self.is_one_only(o):
+                language_sentence.target_objects[n] += gamma
+                language_sentence.target_objects[n] = np.clip(o, 0, 1)
+
+        print(language_sentence.target_action,language_sentence.target_objects, gesture_sentence.target_action, gesture_sentence.target_objects)
+
+        # B.) Merging
         # 1. Action merge
         action_po = self.action.merge(language_sentence.target_action, gesture_sentence.target_action)
         if not action_po.conclusion_use:
@@ -448,9 +486,9 @@ class ModalityMerger():
         
         aon = self.get_num_of_object_needed_for_action_magic(action_po.activated)
         if aon > 0:
-            assert aon == len(language_sentence.target_object) == len(gesture_sentence.target_object)
+            assert aon == len(language_sentence.target_objects) == len(gesture_sentence.target_objects)
             # 2. Selection merge
-            selection_po = self.selection.merge(language_sentence.target_object, gesture_sentence.deictic_confidence * gesture_sentence.target_object, aon)
+            selection_po = self.selection.merge(language_sentence.target_objects, gesture_sentence.deictic_confidence * gesture_sentence.target_objects, aon)
             
             if not selection_po.conclusion_use:
                 return selection_po.conclusion # ask user to choose or repeat 
@@ -472,13 +510,13 @@ class ModalityMerger():
         return f'Action: {action_po.activated}, What to do: {action_po.conclusion} \n Objects:{selection_po.activated}, What to do: {selection_po.conclusion}'
         
 class UnifiedSentence():
-    def __init__(self, target_action, target_object=[], distance_params=[], angular_params=[], deictic_confidence=1.0):
+    def __init__(self, target_action, target_objects=[], distance_params=[], angular_params=[], deictic_confidence=1.0):
         self.target_action = np.array(target_action)
-        self.target_object = np.array(target_object)
+        self.target_objects = np.array(target_objects)
         self.distance_params = np.array(distance_params)
         self.angular_params = np.array(angular_params)
 
         self.deictic_confidence = deictic_confidence
 
-
+    #def 
 
