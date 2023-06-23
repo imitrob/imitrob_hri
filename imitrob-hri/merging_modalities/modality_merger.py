@@ -2,8 +2,12 @@
 import numpy as np
 from collections import deque
 
-from utils import *
-import globals as g
+try:
+    import globals as g
+    from utils import *
+except ModuleNotFoundError:
+    import merging_modalities.globals as g
+    from utils import *
 
 """
 class ModalityReceiver():
