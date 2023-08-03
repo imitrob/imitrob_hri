@@ -4,6 +4,8 @@ from modality_merger import ProbsVector, SingleTypeModalityMerger, SelectionType
 from utils import *
 
 def probs_vector_tester():
+    ''' ProbsVector holds vector of probabilities and can do additional features 
+    '''
     action_names = ['pick up', 'place', 'push']
     match_threshold = 0.8
     clear_threshold = 0.7
@@ -41,6 +43,8 @@ def probs_vector_tester():
     print(po)    
 
 def single_modality_tester():
+    ''' SingleTypeModalityMerger has two ProbsVectors
+    '''
     object_names = ['red box', 'blue box', 'grey cup']
     cl = [[0.9,0.2,0.1], [0.99,0.1,0.1]]
     cg = [[0.9,0.2,0.1], [0.99,0.1,0.1]]
@@ -70,16 +74,17 @@ def interactive_plot_tester():
     interactive_probs_plotter(cl, cg, g.action_names, g.clear_threshold, g.unsure_threshold, g.diffs_threshold, action)
 
 def modality_merge_tester():
-    print("-----1------")
+    print(f"{'-' * 5} 1 {'-' * 5}")
     ls = UnifiedSentence([0.9,0.2,0.1],[[0.9,0.1,0.0],[0.1,0.9,0.0]])
     gs = UnifiedSentence([0.9,0.2,0.1],[[0.9,0.1,0.0],[0.1,0.9,0.0]])
     action_names = g.action_names
     object_names = g.object_names
     mm = ModalityMerger(action_names, object_names)
+    print(mm)
     r = mm.feedforward(ls, gs)
     print(r)
 
-    print("------2------")
+    print(f"{'-' * 5} 2 {'-' * 5}")
     ls = UnifiedSentence([0.0,1.0,0.0],[[1.0,0.0,0.0],[0.0,0.0,1.0]])
     gs = UnifiedSentence([0.0,0.8,0.0],[[0.8,0.0,0.0],[0.0,0.0,0.0]])
     action_names = g.action_names

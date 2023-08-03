@@ -429,8 +429,24 @@ class ModalityMerger():
     def __init__(self, action_names, object_names):
         self.action = SingleTypeModalityMerger(names=action_names)
         self.selection = SelectionTypeModalityMerger(names=object_names)
-        self.distance = SingleTypeModalityMerger()
-        self.angular = SingleTypeModalityMerger()
+        
+        self.mms = []
+        self.mm_compare_types = []
+
+    def __str__(self):
+        s = ''
+        for mm in self.mms:
+            s += str(mm.names) + '\n'
+        return f"** Modality merge summary: **\nActions: {self.action.names}\nObjects: {self.selection.names}\n{s}**"
+
+    def get_all_templates(self):
+        # TODO:
+        return
+    
+    def get_names_for_compare_type(self, compare_type):
+        return {
+            '-': ['abc', 'def', 'ghi']
+        }[compare_type]
 
     def get_num_of_object_needed_for_action_magic(self, action):
         return 2
@@ -480,7 +496,10 @@ class ModalityMerger():
                 language_sentence.target_objects[n] += gamma
                 language_sentence.target_objects[n] = np.clip(o, 0, 1)
 
-        print(language_sentence.target_action,language_sentence.target_objects, gesture_sentence.target_action, gesture_sentence.target_objects)
+        # print("ls ta: ", language_sentence.target_action)
+        # print("ls to: ", language_sentence.target_objects)
+        # print("gs ta: ", gesture_sentence.target_action)
+        # print("gs to: ", gesture_sentence.target_objects)
 
         # B.) Merging
         # 1. Action merge
@@ -500,19 +519,76 @@ class ModalityMerger():
             selection_po = ProbsVector()
 
         if self.get_num_of_distances_needed_for_action_magic(action_po.activated):
-            # 3. Distance parameters merge
+            # 3. Distance (compare type) parameters merge
             distance_po = np.average(language_sentence.target_distance, gesture_sentence.target_distance) 
         else:
             distance_po = []
 
         if self.get_num_of_angular_needed_for_action_magic(action_po.activated):
-            # 4. Angular parameters merge
+            # 4. Angular (compare type) parameters merge
             angular_po = np.average(language_sentence.target_action, gesture_sentence.target_action) 
         else:
             angular_po = []
 
         return f'Action: {action_po.activated}, What to do: {action_po.conclusion} \n Objects:{selection_po.activated}, What to do: {selection_po.conclusion}'
+    
+    def single_modality_merge(self, compare_type, lsp, gsp):
+        # Get single modality merger
+        if compare_type in self.mm_compare_type:
+            p = self.mm_parameters.index(compare_type)
+            mm = self.mms[p]
+        else:
+            mm = SingleTypeModalityMerger(names=self.get_names_for_compare_type())
+            self.mms.append(mm)
         
+        return mm.merge(lsp, gsp)
+    
+    def penalize_compare_type_match(self):
+        '''
+        
+        '''
+        pass
+    
+    def feedforward2(self, ls, gs):
+        ''' 
+            gs: gesture_sentence, ls: language_sentence
+
+            templates: point, pick, place
+            mm_compare_types: objects, storages, distances, ...
+            - objects: 
+                - get probs. from array
+                - do 
+        '''
+        templates = self.get_all_templates()
+        template_p = []
+        for template in templates: # point, pick, place
+            # merge template (action) as single (discrete) modality  
+            template_merged_p = self.action.merge(ls.target_action, gs.target_action)
+            
+            for compare_type in self.mm_compare_types: # storages, distances, ...
+                # single compare-type merger e.g. [box1, cube1, ...] (probs.)
+                compare_type_p = self.single_modality_merge(compare_type, getattr(ls,compare_type), getattr(gs,compare_type))
+                #nop = compare_type_p.names_of_detected_compare_types
+                # penalize missing or surplus compare types
+                alpha = 1 #self.penalize_compare_type_match(template.get_n_ct(compare_type), nop)
+                
+                P = 2
+                N = 3
+                beta = np.ones([N, P])
+                if template.has_compare_type(compare_type):
+                    for property_name in get_ct_properties(compare_type):	
+                        # check properties, penalize non-compatible ones
+                        beta = np.ones([N, P]) #penalize_properties(property_name, compare_type)
+                type_p_adjusted = compare_type_p * alpha * np.dot(beta)
+            # adjusted template probability based on compare types and properties of compare types
+            template_merged_p = template_merged_p * np.dot(type_p_adjusted)  
+            template_p.append(template_merged_p) 
+        return template_p
+
+def get_ct_properties(ct):
+    return ['distance']
+
+            
 class UnifiedSentence():
     def __init__(self, target_action, target_objects=[], distance_params=[], angular_params=[], deictic_confidence=1.0):
         self.target_action = np.array(target_action)
