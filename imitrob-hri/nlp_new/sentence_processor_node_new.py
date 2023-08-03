@@ -9,6 +9,13 @@ LICENSE file in the root directory of this source tree.
 @author: Karla Štěpánová, Megi Mejdrechová
 @mail:  karla.stepanova@cvut.cz
 """
+# if __name__ == '__main__':
+#     import sys
+#     sys.path.append("/home/petr/crow-base/src/crow_nlp/crow_nlp")
+#     sys.path.append("/home/petr/crow-base/src/crow_ontology")
+#     sys.path.append("/home/petr/crow-base/src/crow_utils")
+#     sys.path.append("/home/petr/crow-base/src/crow_params")
+
 
 import json
 import re
@@ -22,8 +29,8 @@ from rclpy.node import Node
 # from rclpy.qos import qos_profile_sensor_data
 from rclpy.qos import QoSProfile
 from rclpy.qos import QoSReliabilityPolicy
-from crow_msgs.msg import SentenceProgram, ProcessedSentence, StringList, CommandType, StampedString#, NlpStatus
-#from crow_nlp.nlp_crow.processing.NLProcessor import NLProcessor
+from crow_msgs.msg import SentenceProgram, StampedString # , ProcessedSentence, StringList, CommandType, #, NlpStatus
+
 from crow_nlp.nlp_crow.processing.NLProcessor import NLProcessor
 # import message_filters
 import traceback as tb
