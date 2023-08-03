@@ -280,6 +280,11 @@ class SentenceProcessor(Node):
                 print("--------")
                 print("Program Template:")
                 print(program_template)
+                # NEW HERE
+                
+                mm_data = self.mm_gather_info(template_type)
+                program_template = self.mm_run(mm_data)
+                # NEW END
 
                 start_attempt_time = time.time()
                 while (time.time() - start_attempt_time) < self.MAX_OBJ_REQUEST_TIME:
@@ -331,10 +336,7 @@ class SentenceProcessor(Node):
                     continue
                 self.send_status("zpracovavam", template_type, object_detected, found_in_ws)
 
-                # NEW HERE
-                mm_data = self.mm_gather_info(template_type)
-                self.mm_run(mm_data)
-                # NEW END
+
 
                 if dict1.get('action', False):
                     data.append(dict1)

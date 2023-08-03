@@ -1,73 +1,8 @@
-
-
-input('''1.
-Create Ontology Client
-''')
-from crow_ontology.crowracle_client import CrowtologyClient
-crowracle = CrowtologyClient()
-
-crowracle.onto
-
-input('''
-
-''')
-from rclpy.qos import QoSProfile
-from rclpy.qos import QoSReliabilityPolicy
-from crow_msgs.msg import SentenceProgram
-from rclpy.node import Node
-
-rosnode = Node("node")
-
-qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
-rosnode.nl_publisher = rosnode.create_publisher(SentenceProgram, "/nl_input", qos)
-msg = SentenceProgram()
-msg.header.stamp = rosnode.get_clock().now().to_msg()
-msg.data = [
-            # "Ukaž na červenou kostku",
-            # "Ukaž na modrý kolík",
-            # "Ukaž na zelenou kostku",
-            # "Ukaž na kolík",
-            # "Ukaž na zelenou kostku"
-            "Definuj modrou pozici"
-]
-
-from rdflib.namespace import Namespace, RDF, RDFS, OWL, FOAF, XSD
-from rdflib import URIRef, BNode, Literal, Graph
-ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
-CROW = Namespace(f"{ONTO_IRI}#")
-
-def add_object(self):
-    o = self.onto
-    id = 0
-    location = [0.,0.,0.]
-    individual_name = 0
-
-    PART = Namespace(f"{ONTO_IRI}/{individual_name}#")  # Add object to database
-    #if typeN == 'Cube':
-    o.add((CROW[individual_name], RDF.type, CROW.Cube))  # Add ID
-    #if typeN == 'Peg':
-    #    o.add((CROW[individual_name], RDF.type, CROW.Peg))  # Add ID
-
-    o.add( (CROW[individual_name], CROW.hasId, Literal('od_' + str(id), datatype=XSD.string)))  # Add color
-    o.set((CROW[individual_name], CROW.hasColor, CROW.COLOR_RED))  # Add AbsoluteLocaton
-    prop_name = PART.xyzAbsoluteLocation
-    prop_range = list(o.objects(CROW.hasAbsoluteLocation, RDFS.range))[0]
-    o.add((prop_name, RDF.type, prop_range))
-    o.add((prop_name, CROW.x, Literal(location[0], datatype=XSD.float)))
-    o.add((prop_name, CROW.y, Literal(location[1], datatype=XSD.float)))
-    o.add((prop_name, CROW.z, Literal(location[2], datatype=XSD.float)))
-    o.set((CROW[individual_name], CROW.hasAbsoluteLocation, prop_name))
-
-add_object(crowracle)
-
-input('''
+'''
 Understanding the OntologyAPI
 
-
-
 - test 4
-''')
-
+'''
 import rclpy
 from rclpy.node import Node
 import curses
@@ -239,10 +174,10 @@ print(uris)
 self.crowracle.add_storage_space('sklad úložiště', [[0,0,0.2],[1,0,0.2],[1,1,0.2],[0,1,0.2]], [[0,0,0.2],[1,0,0.2],[1,1,0.2],[0,1,0.2],[0,0,0.4],[1,0,0.4],[1,1,0.4],[0,1,0.4]], 1, 1, [0.5,0.5,0.2])
 self.crowracle.add_storage_space('box úložiště', [[0,0,0.2],[1,0,0.2],[1,1,0.2],[0,1,0.2]], [[0,0,0.2],[1,0,0.2],[1,1,0.2],[0,1,0.2],[0,0,0.4],[1,0,0.4],[1,1,0.4],[0,1,0.4]], 1, 1, [0.2,0.2,0.2])
 self.crowracle.add_position('auto pozice', [0.5,0.5,0.5])
-self.crowracle.add_detected_object('my_cube0', [0.1, 0.9, 0.3], [1,1,1], 'uuid0', '2021-07-16Z23:00:00', self.crowracle.CROW.CUBE, 'ukl')
-self.crowracle.add_detected_object('my_cube1', [0.1, 0.8, 0.3], [1,1,1], 'uuid1', '2021-07-16Z23:00:00', self.crowracle.CROW.CUBE, 'ukl')
-self.crowracle.add_detected_object('my_cube2', [0.1, 0.7, 0.3], [1,1,1], 'uuid2', '2021-07-16Z23:00:00', self.crowracle.CROW.CUBE, 'ukl')
-self.crowracle.add_detected_object('my_cube3', [-0.1, 0.9, 0.3], [1,1,1], 'uuid3', '2021-07-16Z23:00:00', self.crowracle.CROW.CUBE, 'ukl')
+self.crowracle.add_detected_object('my_cube0', [0.1, 0.9, 0.3], [1,1,1], 'uuid0', '2021-07-16Z23:00:00', self.crowracle.CROW.CUBE, 'ukl', tracked=True)
+self.crowracle.add_detected_object('my_cube1', [0.1, 0.8, 0.3], [1,1,1], 'uuid1', '2021-07-16Z23:00:00', self.crowracle.CROW.CUBE, 'ukl', tracked=True)
+self.crowracle.add_detected_object('my_cube2', [0.1, 0.7, 0.3], [1,1,1], 'uuid2', '2021-07-16Z23:00:00', self.crowracle.CROW.CUBE, 'ukl', tracked=True)
+self.crowracle.add_detected_object('my_cube3', [-0.1, 0.9, 0.3], [1,1,1], 'uuid3', '2021-07-16Z23:00:00', self.crowracle.CROW.CUBE, 'ukl', tracked=True)
 
 print('get all storages')
 q1 = {}
@@ -263,22 +198,22 @@ print(area_uri)
 print('test_obj_in_area')
 obj_uri = self.crowracle.getTangibleObjects()
 print(obj_uri)
-res = self.crowracle.test_obj_in_area(obj_uri[0], area_uri)
-print(res)
-res = self.crowracle.test_obj_in_area(obj_uri[-1], area_uri)
-print(res)
+#res = self.crowracle.test_obj_in_area(obj_uri[0], area_uri)
+#print(res)
+#res = self.crowracle.test_obj_in_area(obj_uri[-1], area_uri)
+#print(res)
 
-print('get objs in area')
-uris = self.crowracle.get_objs_in_area(area_uri)
-print(uris)
+#print('get objs in area')
+#uris = self.crowracle.get_objs_in_area(area_uri)
+#print(uris)
 
-print('get free space area')
-space = self.crowracle.get_free_space_area(area_uri)
-print(space)
+#print('get free space area')
+#space = self.crowracle.get_free_space_area(area_uri)
+#print(space)
 
-print('get centroid of area')
-centroid = self.crowracle.get_area_centroid(area_uri)
-print(centroid)
+#print('get centroid of area')
+#centroid = self.crowracle.get_area_centroid(area_uri)
+#print(centroid)
 
 print('done')
 
