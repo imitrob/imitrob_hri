@@ -9,6 +9,17 @@ except ModuleNotFoundError:
     import merging_modalities.globals as g
     from utils import *
 
+import os
+from os import listdir
+from os.path import isfile, join
+
+import sys; sys.path.append("..")
+from nlp_new.templates.PickTask import PickTask
+from nlp_new.templates.PointTask import PointTask
+
+from copy import deepcopy
+
+
 """
 class ModalityReceiver():
     ''' Is this already implemented?
@@ -317,13 +328,13 @@ class SelectionTypeModalityMerger(SingleTypeModalityMerger):
     def __init__(self, cl_prior = 0.9, cg_prior = 0.99, fun='mul', names=[]):
         super().__init__(cl_prior=cl_prior, cg_prior=cg_prior, fun=fun, names=names)
 
-    def merge(self, ml, mg, aor):
-        return MultiProbsVector(self.match(ml, mg, aor))
+    def merge(self, ml, mg):
+        return MultiProbsVector(self.match(ml, mg))
         po = self.match(ml, mg)
         if po.is_match(): return po
         else: return self.resolve(ml, mg)
 
-    def cross_match(self, cl, cg, aor):
+    def cross_match(self, cl, cg):
         ''' Alignment function 
         Now linear alignment:
         L: -- x ------ x ------ x ------
@@ -370,7 +381,7 @@ class SelectionTypeModalityMerger(SingleTypeModalityMerger):
             raise Exception("NotImplementedErrors")
         '''
 
-    def match(self, cl, cg, ao):
+    def match(self, cl, cg):
         ''' This fun. replaces the match function from SingleTypeModalityMerger 
             This fun. matches all object from l & g. There can be more observation instances for one action.
         '''
@@ -400,7 +411,7 @@ class SelectionTypeModalityMerger(SingleTypeModalityMerger):
             elif instances_l == instances_g == ao:
             '''
             if True:
-                match_decision_probs.append(self.cross_match(cl, cg, ao))
+                match_decision_probs.append(self.cross_match(cl, cg))
                 
         '''
         sums = []
@@ -426,23 +437,32 @@ class SelectionTypeModalityMerger(SingleTypeModalityMerger):
 
 
 class ModalityMerger():
-    def __init__(self, action_names, object_names):
+    def __init__(self, action_names, object_names, compare_types):
+        ''' Now compare types needs to be ['action', 'selection']
+        '''
+        assert compare_types == ['action', 'selection']
         self.action = SingleTypeModalityMerger(names=action_names)
-        self.selection = SelectionTypeModalityMerger(names=object_names)
+        self.selection = SingleTypeModalityMerger(names=object_names)
         
-        self.mms = []
-        self.mm_compare_types = []
+        self.compare_types = compare_types
+
+    def get_cts_type_objs(self):
+        cts = []
+        for compare_type in self.compare_types:
+            cts.append(getattr(self, compare_type))
+        return cts
 
     def __str__(self):
         s = ''
-        for mm in self.mms:
-            s += str(mm.names) + '\n'
-        return f"** Modality merge summary: **\nActions: {self.action.names}\nObjects: {self.selection.names}\n{s}**"
+        for mmn, mm in zip(self.compare_types, self.get_cts_type_objs()):
+            s += mmn.capitalize() + ': ' + str(mm.names) + '\n'
+        return f"** Modality merge summary: **\n{s}**"
 
     def get_all_templates(self):
-        # TODO:
-        return
-    
+        mypath = os.getcwd()+"/../nlp_new/templates"
+        # list only .py files without .py extension
+        return [f[0:-3] for f in listdir(mypath) if (isfile(join(mypath, f)) and f[-3:]=='.py')]
+        
     def get_names_for_compare_type(self, compare_type):
         return {
             '-': ['abc', 'def', 'ghi']
@@ -534,9 +554,8 @@ class ModalityMerger():
     
     def single_modality_merge(self, compare_type, lsp, gsp):
         # Get single modality merger
-        if compare_type in self.mm_compare_type:
-            p = self.mm_parameters.index(compare_type)
-            mm = self.mms[p]
+        if compare_type in self.compare_types:
+            mm = getattr(self, compare_type) 
         else:
             mm = SingleTypeModalityMerger(names=self.get_names_for_compare_type())
             self.mms.append(mm)
@@ -554,49 +573,108 @@ class ModalityMerger():
             gs: gesture_sentence, ls: language_sentence
 
             templates: point, pick, place
-            mm_compare_types: objects, storages, distances, ...
-            - objects: 
-                - get probs. from array
-                - do 
+            compare_types: objects, storages, distances, ...
+
+            alpha - penalizes if template does/doesn't have compare type which is in the sentence
         '''
+        
+        
+        # 1. Compare types independently
+        cts = {}
+        for compare_type in self.compare_types: # storages, distances, ...
+            # single compare-type merger e.g. [box1, cube1, ...] (probs.)
+            cts[compare_type] = self.single_modality_merge(compare_type, \
+                                        getattr(ls,'target_'+compare_type),
+                                        getattr(gs,'target_'+compare_type))
+            print(f"I {compare_type}: {cts[compare_type].p}")
+        # 2. Penalize likelihood for every template
         templates = self.get_all_templates()
-        template_p = []
-        for template in templates: # point, pick, place
-            # merge template (action) as single (discrete) modality  
-            template_merged_p = self.action.merge(ls.target_action, gs.target_action)
-            
-            for compare_type in self.mm_compare_types: # storages, distances, ...
-                # single compare-type merger e.g. [box1, cube1, ...] (probs.)
-                compare_type_p = self.single_modality_merge(compare_type, getattr(ls,compare_type), getattr(gs,compare_type))
-                #nop = compare_type_p.names_of_detected_compare_types
-                # penalize missing or surplus compare types
-                alpha = 1 #self.penalize_compare_type_match(template.get_n_ct(compare_type), nop)
-                
-                P = 2
-                N = 3
-                beta = np.ones([N, P])
-                if template.has_compare_type(compare_type):
-                    for property_name in get_ct_properties(compare_type):	
+        template_ct_penalized = deepcopy(cts['action']) # 1D (templates)
+        
+        print(f"Template BEFORE: {template_ct_penalized.p}")
+        for nt, template in enumerate(templates): # point, pick, place
+            template_obj = eval(template)()
+
+            alpha = 1.0
+            beta = 1.0
+            for nct, compare_type in enumerate(self.compare_types): # objects, storages, distances, ...
+                compare_type_p = cts[compare_type].p
+                compare_type_names = cts[compare_type].action_names
+
+                # if compare type is missing in sentence or in template -> penalize
+                compare_type_in_sentence = (compare_type in ls.get_cts_visible() or compare_type in gs.get_cts_visible())
+                compare_type_in_template = template_obj.has_compare_type(compare_type) 
+                if (compare_type_in_template and compare_type_in_sentence):
+                    alpha *= 1.0
+                else:
+                    alpha *= 0.9
+                if template_obj.has_compare_type(compare_type):
+                    for property_name in get_ct_properties(compare_type):
+                        
                         # check properties, penalize non-compatible ones
-                        beta = np.ones([N, P]) #penalize_properties(property_name, compare_type)
-                type_p_adjusted = compare_type_p * alpha * np.dot(beta)
-            # adjusted template probability based on compare types and properties of compare types
-            template_merged_p = template_merged_p * np.dot(type_p_adjusted)  
-            template_p.append(template_merged_p) 
-        return template_p
-
-def get_ct_properties(ct):
-    return ['distance']
-
+                        b = penalize_properties(property_name, compare_type, compare_type_p, compare_type_names)
+                        beta *= b
+            print(f"alpha: {alpha}")
+            print(f"beta:  {beta}")
+            template_ct_penalized.p[nt] *= alpha
+            template_ct_penalized.p[nt] *= beta
             
+
+        print(f"Template AFTER: {template_ct_penalized.p}")
+        return template_ct_penalized
+
+# draft 
+def get_ct_properties(compare_type):
+    if compare_type == 'selection':
+        return ['reachable', 'pickable']
+    else:
+        return []
+    
+def penalize_properties(property_name, compare_type, compare_type_p, compare_type_names):
+
+    if compare_type == 'selection':
+        # across all objects
+        ret = 0
+        for compare_type_p_, compare_type_name_ in zip(compare_type_p, compare_type_names):
+            probability_of_object_selection = compare_type_p_
+            object_property_bool = g.object_properties[compare_type_name_][property_name]
+            penalization = g.selection_penalization[property_name]
+            # if object feasibility not fulfilled -> penalize
+            p = probability_of_object_selection * (float(not object_property_bool) * penalization)
+            print(f"compare_type_name_ { compare_type_name_}, p {compare_type_p_}:\
+                  probability_of_object_selection {probability_of_object_selection},\
+                  {object_property_bool} object_property_bool,\
+                  {penalization} penalization,, p: {p}")
+
+            # probability for template is summed
+            ret += p
+        # if no property -> no penalization
+        n = len(compare_type_p)
+        if n == 0: return 1.
+        # normalize
+        ret /= n
+        return ret
+    else:
+        return 1.
+
 class UnifiedSentence():
     def __init__(self, target_action, target_objects=[], distance_params=[], angular_params=[], deictic_confidence=1.0):
         self.target_action = np.array(target_action)
-        self.target_objects = np.array(target_objects)
+        self.target_selection = np.array(target_objects)
         self.distance_params = np.array(distance_params)
         self.angular_params = np.array(angular_params)
 
         self.deictic_confidence = deictic_confidence
 
-    #def 
+    def get_cts_visible(self):
+        cts_visible = []
+
+        if sum(self.target_action) > 0.1:
+            cts_visible.append("action")
+        if sum(self.target_selection) > 0.1:
+            cts_visible.append("selection")
+        if sum(self.distance_params) > 0.1:
+            cts_visible.append("distance")
+
+        return cts_visible
 

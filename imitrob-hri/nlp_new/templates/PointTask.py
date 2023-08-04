@@ -26,6 +26,9 @@ class PointTask(Template):
         self.action = CommandType.POINT
         self.logger = logging.getLogger(__name__)
 
+        # related to parameters ?
+        self.compare_types = ['action', 'selection']
+
     def match(self, tagged_text : TaggedText, language = 'en', client = None) -> None:
         psd = PositionStorageDetector(language=language, client = client)
         self.position = psd.detect_position(tagged_text)
@@ -60,5 +63,13 @@ class PointTask(Template):
             self.target = pg.ground_storage(self.storage)
             self.parameters.append('target')
 
+    def has_compare_type(self, compare_type):
+        return False
 
 
+    def has_compare_type(self, compare_type):
+        if compare_type in self.compare_types:
+            return True
+        else:
+            return False
+    

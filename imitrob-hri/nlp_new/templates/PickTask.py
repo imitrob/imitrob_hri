@@ -33,6 +33,9 @@ class PickTask(Template):
         
         self.logger = logging.getLogger(__name__)
 
+        # related to parameters ?
+        self.compare_types = ['action', 'selection']
+
     def match(self, tagged_text : TaggedText, language = 'en', client = None) -> None:
         od = ObjectDetector(language = language, client = client)
         self.target = od.detect_object(tagged_text)
@@ -55,4 +58,9 @@ class PickTask(Template):
         self.target.location.y
         print(self)
 
-        
+    def has_compare_type(self, compare_type):
+        if compare_type in self.compare_types:
+            return True
+        else:
+            return False
+    

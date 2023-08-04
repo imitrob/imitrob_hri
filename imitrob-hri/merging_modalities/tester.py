@@ -3,6 +3,8 @@ import globals as g; g.init()
 from modality_merger import ProbsVector, SingleTypeModalityMerger, SelectionTypeModalityMerger, ModalityMerger, UnifiedSentence, MultiProbsVector
 from utils import *
 
+import numpy as np
+
 def probs_vector_tester():
     ''' ProbsVector holds vector of probabilities and can do additional features 
     '''
@@ -93,17 +95,64 @@ def modality_merge_tester():
     r = mm.feedforward(ls, gs)
     print(r)
 
+def modality_merge_2_tester():
+    ############ Compare types:
+    ## PickTask: 'action', 'selection'
+    ## PointTask: 'action', 'selection'
+    print("Pick Task needs object to detect/ground, when object added, pick task has higher prob")
+    print(f"{'-' * 5} 1.1 {'-' * 5}")
+    #         ['pick up', 'place', 'push'], ['box', 'big box', 'table']
+
+    ls = UnifiedSentence([0.9,0.2,0.1],[0.9,0.1,0.0])
+    gs = UnifiedSentence([0.9,0.2,0.1],[0.9,0.1,0.0])
+    action_names = g.action_names
+    object_names = g.object_names
+    mm = ModalityMerger(action_names, object_names, g.compare_types)
+    print(mm)
+    r = mm.feedforward2(ls, gs)
+    print(r)
+
+    print(f"{'-' * 5} 1.2 {'-' * 5}")
+    ls = UnifiedSentence([0.9,0.2,0.1],[0.0,0.0,0.0])
+    gs = UnifiedSentence([0.9,0.2,0.1],[0.0,0.0,0.0])
+    action_names = g.action_names
+    object_names = g.object_names
+    mm = ModalityMerger(action_names, object_names, g.compare_types)
+    print(mm)
+    r = mm.feedforward2(ls, gs)
+    print(r)
+
+    print(f"{'-' * 5} 2 {'-' * 5}")
+    ls = UnifiedSentence([0.0,1.0,0.0],[0.0,0.0,0.0])
+    gs = UnifiedSentence([0.0,0.8,0.0],[0.8,0.0,0.0])
+    action_names = g.action_names
+    object_names = g.object_names
+    mm = ModalityMerger(action_names, object_names, g.compare_types)
+    r = mm.feedforward2(ls, gs)
+    print(r)
+
+def test_on_data():
+    gestures_data = np.load('/home/imitlearn/crow-base/src/imitrob-hri/imitrob-hri/data/artificial_gestures_01.npy', allow_pickle=True)
+    speech_data = np.load('/home/imitlearn/crow-base/src/imitrob-hri/imitrob-hri/data/artificial_speech_01.npy', allow_pickle=True)
+    for gs, ls in zip(gestures_data, speech_data):
+        action_names = g.action_names
+        object_names = g.object_names
+        mm = ModalityMerger(action_names, object_names, g.compare_types)
+        r = mm.feedforward2(ls, gs)
+        return 
+
 if __name__ == '__main__':
-    print("1. Single probs vector tester: \n")
-    probs_vector_tester()
+    #print("1. Single probs vector tester: \n")
+    #probs_vector_tester()
 
-    print("2. Selection type tester: \n")
-    single_modality_tester()
+    #print("2. Selection type tester: \n")
+    #single_modality_tester()
 
-    print("3. Modality merge tester: \n")
-    modality_merge_tester()
+    #print("3. Modality merge tester: \n")
+    #modality_merge_tester()
 
-    print("4. Interactive plot tester: \n")
-    interactive_plot_tester()
+    #print("4. Interactive plot tester: \n")
+    #interactive_plot_tester()
 
-    # Match function signature ready to be tested
+    #print("5. Modality merge 2 tester: \n")
+    modality_merge_2_tester()
