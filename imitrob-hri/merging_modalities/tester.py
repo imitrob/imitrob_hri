@@ -131,15 +131,54 @@ def modality_merge_2_tester():
     r = mm.feedforward2(ls, gs)
     print(r)
 
+def modality_merge_2_tester():
+    ############ Compare types:
+    ## PickTask: 'action', 'selection'
+    ## PointTask: 'action', 'selection'
+    print("Pick Task needs object to detect/ground, when object added, pick task has higher prob")
+    print(f"{'-' * 5} 1.1 {'-' * 5}")
+    #         ['pick up', 'place', 'push'], ['box', 'big box', 'table']
+
+    ls = UnifiedSentence([0.9,0.2],[0.9,0.1,0.0])
+    gs = UnifiedSentence([0.9,0.2],[0.9,0.1,0.0])
+    action_names = g.action_names
+    object_names = g.object_names
+    mm = ModalityMerger(action_names, object_names, g.compare_types)
+    print(mm)
+    r = mm.feedforward2(ls, gs)
+    print(r)
+
+    print(f"{'-' * 5} 1.2 {'-' * 5}")
+    ls = UnifiedSentence([0.9,0.2],[0.0,0.0,0.0])
+    gs = UnifiedSentence([0.9,0.2],[0.0,0.0,0.0])
+    action_names = g.action_names
+    object_names = g.object_names
+    mm = ModalityMerger(action_names, object_names, g.compare_types)
+    print(mm)
+    r = mm.feedforward2(ls, gs)
+    print(r)
+
 def test_on_data():
     gestures_data = np.load('/home/imitlearn/crow-base/src/imitrob-hri/imitrob-hri/data/artificial_gestures_01.npy', allow_pickle=True)
     speech_data = np.load('/home/imitlearn/crow-base/src/imitrob-hri/imitrob-hri/data/artificial_speech_01.npy', allow_pickle=True)
-    for gs, ls in zip(gestures_data, speech_data):
+    results_data = np.load('/home/imitlearn/crow-base/src/imitrob-hri/imitrob-hri/data/artificial_results_01.npy', allow_pickle=True)
+    
+    acc = 0
+    for gs, ls, trueres in zip(gestures_data, speech_data, results_data):
+        print("gta", gs.target_action, " lta ", ls.target_action, " gts: ", gs.target_selection, " lts: ", ls.target_selection)
         action_names = g.action_names
         object_names = g.object_names
         mm = ModalityMerger(action_names, object_names, g.compare_types)
         r = mm.feedforward2(ls, gs)
-        return 
+        print(r)
+        print(r.activated, trueres[0])
+        print(r.activated == trueres[0])
+        if r.activated == trueres[0]:
+            acc +=1
+
+    print(f"Final acc: {acc/40 *100}%")
+    
+    print(results_data)
 
 if __name__ == '__main__':
     #print("1. Single probs vector tester: \n")
@@ -155,4 +194,7 @@ if __name__ == '__main__':
     #interactive_plot_tester()
 
     #print("5. Modality merge 2 tester: \n")
-    modality_merge_2_tester()
+    #modality_merge_2_tester()
+
+
+    test_on_data()

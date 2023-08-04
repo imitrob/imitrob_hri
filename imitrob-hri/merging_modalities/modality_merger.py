@@ -489,37 +489,41 @@ class ModalityMerger():
             return True
         return False
 
+    def preprocessing(self, language_sentence, gesture_sentence, epsilon, gamma):
+        ''' Data preprocessing '''
+        # 1. Add epsilon
+        if self.is_zeros(language_sentence.target_action):
+            language_sentence.target_action += epsilon
+        if self.is_zeros(gesture_sentence.target_action):
+            gesture_sentence.target_action += epsilon
+        for n,o in enumerate(language_sentence.target_selection):
+            if self.is_zeros(o):
+                language_sentence.target_selection[n] += epsilon
+        for n,o in enumerate(gesture_sentence.target_selection):
+            if self.is_zeros(o):
+                gesture_sentence.target_selection[n] += epsilon
+
+        # 2. Add gamma, if language includes one value
+        if self.is_one_only(language_sentence.target_action):
+            language_sentence.target_action += gamma
+            language_sentence.target_action = np.clip(language_sentence.target_action, 0, 1)
+        if self.is_one_only(language_sentence.target_selection):
+            for n,o in enumerate(language_sentence.target_selection):
+                language_sentence.target_selection[n] += gamma
+                language_sentence.target_selection[n] = np.clip(o, 0, 1)
+
+        # print("ls ta: ", language_sentence.target_action)
+        # print("ls to: ", language_sentence.target_selection)
+        # print("gs ta: ", gesture_sentence.target_action)
+        # print("gs to: ", gesture_sentence.target_selection)
+        return language_sentence, gesture_sentence
 
     def feedforward(self, language_sentence, gesture_sentence, epsilon=0.05, gamma=0.5):
         '''
         
         '''
         # A.) Data preprocessing
-        # 1. Add epsilon
-        if self.is_zeros(language_sentence.target_action):
-            language_sentence.target_action += epsilon
-        if self.is_zeros(gesture_sentence.target_action):
-            gesture_sentence.target_action += epsilon
-        for n,o in enumerate(language_sentence.target_objects):
-            if self.is_zeros(o):
-                language_sentence.target_objects[n] += epsilon
-        for n,o in enumerate(gesture_sentence.target_objects):
-            if self.is_zeros(o):
-                gesture_sentence.target_objects[n] += epsilon
-
-        # 2. Add gamma, if language includes one value
-        if self.is_one_only(language_sentence.target_action):
-            language_sentence.target_action += gamma
-            language_sentence.target_action = np.clip(language_sentence.target_action, 0, 1)
-        for n,o in enumerate(language_sentence.target_objects):
-            if self.is_one_only(o):
-                language_sentence.target_objects[n] += gamma
-                language_sentence.target_objects[n] = np.clip(o, 0, 1)
-
-        # print("ls ta: ", language_sentence.target_action)
-        # print("ls to: ", language_sentence.target_objects)
-        # print("gs ta: ", gesture_sentence.target_action)
-        # print("gs to: ", gesture_sentence.target_objects)
+        language_sentence, gesture_sentence = self.preprocessing(language_sentence, gesture_sentence, epsilon, gamma)
 
         # B.) Merging
         # 1. Action merge
@@ -562,13 +566,7 @@ class ModalityMerger():
         
         return mm.merge(lsp, gsp)
     
-    def penalize_compare_type_match(self):
-        '''
-        
-        '''
-        pass
-    
-    def feedforward2(self, ls, gs):
+    def feedforward2(self, ls, gs, epsilon=0.05, gamma=0.5):
         ''' 
             gs: gesture_sentence, ls: language_sentence
 
@@ -577,8 +575,10 @@ class ModalityMerger():
 
             alpha - penalizes if template does/doesn't have compare type which is in the sentence
         '''
-        
-        
+        # A.) Data preprocessing
+        ls, gs = self.preprocessing(ls, gs, epsilon, gamma)
+
+        # B.) Merging
         # 1. Compare types independently
         cts = {}
         for compare_type in self.compare_types: # storages, distances, ...
@@ -587,6 +587,7 @@ class ModalityMerger():
                                         getattr(ls,'target_'+compare_type),
                                         getattr(gs,'target_'+compare_type))
             print(f"I {compare_type}: {cts[compare_type].p}")
+        
         # 2. Penalize likelihood for every template
         templates = self.get_all_templates()
         template_ct_penalized = deepcopy(cts['action']) # 1D (templates)
@@ -612,7 +613,8 @@ class ModalityMerger():
                     for property_name in get_ct_properties(compare_type):
                         
                         # check properties, penalize non-compatible ones
-                        b = penalize_properties(property_name, compare_type, compare_type_p, compare_type_names)
+                        b = penalize_properties(template, property_name, compare_type, compare_type_p, compare_type_names)
+                        print("---------***: ", b)
                         beta *= b
             print(f"alpha: {alpha}")
             print(f"beta:  {beta}")
@@ -630,7 +632,7 @@ def get_ct_properties(compare_type):
     else:
         return []
     
-def penalize_properties(property_name, compare_type, compare_type_p, compare_type_names):
+def penalize_properties(template, property_name, compare_type, compare_type_p, compare_type_names):
 
     if compare_type == 'selection':
         # across all objects
@@ -638,21 +640,23 @@ def penalize_properties(property_name, compare_type, compare_type_p, compare_typ
         for compare_type_p_, compare_type_name_ in zip(compare_type_p, compare_type_names):
             probability_of_object_selection = compare_type_p_
             object_property_bool = g.object_properties[compare_type_name_][property_name]
-            penalization = g.selection_penalization[property_name]
             # if object feasibility not fulfilled -> penalize
-            p = probability_of_object_selection * (float(not object_property_bool) * penalization)
+            if object_property_bool:
+                p = 1.0
+            else:
+                p = probability_of_object_selection * g.selection_penalization[template][property_name]
             print(f"compare_type_name_ { compare_type_name_}, p {compare_type_p_}:\
                   probability_of_object_selection {probability_of_object_selection},\
                   {object_property_bool} object_property_bool,\
                   {penalization} penalization,, p: {p}")
-
+            print("jeste p", p)
             # probability for template is summed
             ret += p
         # if no property -> no penalization
         n = len(compare_type_p)
         if n == 0: return 1.
-        # normalize
-        ret /= n
+        # normalize ?
+        #ret /= n
         return ret
     else:
         return 1.

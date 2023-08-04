@@ -5,9 +5,9 @@ def init():
     action_names = ['PickTask', 'PointTask']
     object_names = ['box', 'big box', 'table']
     compare_types = ['action', 'selection']
-    match_threshold = 0.5
-    clear_threshold = 0.4
-    unsure_threshold = 0.2
+    match_threshold = 0.25
+    clear_threshold = 0.2
+    unsure_threshold = 0.15
     diffs_threshold = 0.05
 
     object_properties = {
@@ -24,6 +24,11 @@ def init():
     }
 
     selection_penalization = {
-        'reachable': 0.8,
-        'pickable': 0.0,
+        'PickTask': {
+            'reachable': 0.8,
+            'pickable': 0.0,
+        }, 'PointTask': {
+            'reachable': 1.0,
+            'pickable': 1.0,
+        },
     }
