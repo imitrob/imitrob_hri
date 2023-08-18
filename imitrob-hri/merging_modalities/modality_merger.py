@@ -4,10 +4,13 @@ from collections import deque
 
 try:
     import globals as g
+except ModuleNotFoundError:
+    import merging_modalities.globals as g; g.init()
+
+try:
     from utils import *
 except ModuleNotFoundError:
-    import merging_modalities.globals as g
-    from utils import *
+    from merging_modalities.utils import *
 
 import os
 from os import listdir
@@ -46,22 +49,22 @@ class ProbsVector():
         p (Float[]): Probabilities vector
         - match() - Is there probable item that matches?
         - resolve() - How to resolve, if probs. don't match
-        - clear - all clear actions
+        - clear - all clear templates
         - unsure - all unsure actins
-        - negative - all not present actions
-        - activated - action most probable or None if more clear actions or no clear action
+        - negative - all not present templates
+        - activated - template most probable or None if more clear templates or no clear template
         - 
     '''
-    def __init__(self, p=[], action_names=[]):
-        # Handle if action names not given
-        if len(action_names) == 0: action_names = g.action_names
+    def __init__(self, p=np.array([]), template_names=[]):
+        # Handle if template names not given
+        if len(template_names) == 0: template_names = g.template_names
         # handle if probabilities not given
-        if len(p) == 0: self.p = np.zeros(len(action_names))
+        if len(p) == 0: self.p = np.zeros(len(template_names))
         
-        assert len(p) == len(action_names)
+        assert len(p) == len(template_names)
 
         self.p = np.array(p)
-        self.action_names = action_names
+        self.template_names = template_names
         assert isinstance(self.p, np.ndarray) and isinstance(self.p[0], float)
         self.conclusion = None
         assert g.match_threshold
@@ -74,7 +77,7 @@ class ProbsVector():
     # 1) clear
     @property
     def clear(self):
-        return [self.action_names[id] for id in self.clear_id]
+        return [self.template_names[id] for id in self.clear_id]
 
     @property
     def clear_id(self):
@@ -87,7 +90,7 @@ class ProbsVector():
     # 2) unsure
     @property
     def unsure(self):
-        return [self.action_names[id] for id in self.unsure_id]
+        return [self.template_names[id] for id in self.unsure_id]
 
     @property
     def unsure_id(self):
@@ -100,7 +103,7 @@ class ProbsVector():
     # 3) negative
     @property
     def negative(self):
-        return [self.action_names[id] for id in self.negative_id]
+        return [self.template_names[id] for id in self.negative_id]
 
     @property
     def negative_id(self):
@@ -136,7 +139,7 @@ class ProbsVector():
 
     @property
     def max(self):
-        return self.action_names[np.argmax(self.p)]
+        return self.template_names[np.argmax(self.p)]
 
     @property
     def max_prob(self):
@@ -160,18 +163,18 @@ class ProbsVector():
 
     @property
     def activated_id(self):
-        ''' Action to be activated:
+        ''' template to be activated:
             1. Information must be clear
-            2. Range between other actions must be above threshold
+            2. Range between other templates must be above threshold
         Returns:
-            activated action (String) or None
+            activated template (String) or None
         '''
         if len(self.clear) == 1 and self.diffs_above_threshold():
             return self.clear_id[0] 
 
     @property
     def activated(self):
-        if self.activated_id is not None: return self.action_names[self.activated_id]
+        if self.activated_id is not None: return self.template_names[self.activated_id]
 
     @property
     def activated_prob(self):
@@ -383,15 +386,15 @@ class SelectionTypeModalityMerger(SingleTypeModalityMerger):
 
     def match(self, cl, cg):
         ''' This fun. replaces the match function from SingleTypeModalityMerger 
-            This fun. matches all object from l & g. There can be more observation instances for one action.
+            This fun. matches all selection from l & g. There can be more observation instances for one template.
         '''
         cl = self.prior_confidence_language * np.array(cl)
         cg = self.prior_confidence_gestures * np.array(cg)
         instances_l = len(cl)
         instances_g = len(cg)
         match_decision_probs = []
-        # Matches for different possible range values which can construct template action
-        # Now only one number of objects 
+        # Matches for different possible range values which can construct template template
+        # Now only one number of selections 
         #for ao in aor:
         if True:
             '''
@@ -407,7 +410,7 @@ class SelectionTypeModalityMerger(SingleTypeModalityMerger):
                 low_probs.discard_smallest(how_many_instances_to_discard)
                 match_decision_probs.append(low_probs) # match
             
-            # n of observed object instances matches 
+            # n of observed selection instances matches 
             elif instances_l == instances_g == ao:
             '''
             if True:
@@ -437,12 +440,12 @@ class SelectionTypeModalityMerger(SingleTypeModalityMerger):
 
 
 class ModalityMerger():
-    def __init__(self, action_names, object_names, compare_types):
-        ''' Now compare types needs to be ['action', 'selection']
+    def __init__(self, template_names, selection_names, compare_types):
+        ''' Now compare types needs to be ['template', 'selection']
         '''
-        assert compare_types == ['action', 'selection']
-        self.action = SingleTypeModalityMerger(names=action_names)
-        self.selection = SingleTypeModalityMerger(names=object_names)
+        assert compare_types == ['template', 'selections']
+        self.template = SingleTypeModalityMerger(names=template_names)
+        self.selections = SingleTypeModalityMerger(names=selection_names)
         
         self.compare_types = compare_types
 
@@ -468,13 +471,13 @@ class ModalityMerger():
             '-': ['abc', 'def', 'ghi']
         }[compare_type]
 
-    def get_num_of_object_needed_for_action_magic(self, action):
+    def get_num_of_selection_needed_for_template_magic(self, template):
         return 2
 
-    def get_num_of_distances_needed_for_action_magic(self, action):
+    def get_num_of_distances_needed_for_template_magic(self, template):
         return 0
 
-    def get_num_of_angular_needed_for_action_magic(self, action):
+    def get_num_of_angular_needed_for_template_magic(self, template):
         return 0
 
     @staticmethod
@@ -483,6 +486,8 @@ class ModalityMerger():
     
     @staticmethod
     def is_one_only(arr):
+        arr = np.array(arr)
+        assert len(arr.shape) == 1, f"Only 1D arrays possible, shape: {arr.shape}"
         larr = list(arr)
         lenarr = len(larr)
         if larr.count(1) == 1 and larr.count(0) == lenarr - 1:
@@ -492,30 +497,37 @@ class ModalityMerger():
     def preprocessing(self, language_sentence, gesture_sentence, epsilon, gamma):
         ''' Data preprocessing '''
         # 1. Add epsilon
-        if self.is_zeros(language_sentence.target_action):
-            language_sentence.target_action += epsilon
-        if self.is_zeros(gesture_sentence.target_action):
-            gesture_sentence.target_action += epsilon
-        for n,o in enumerate(language_sentence.target_selection):
+        if self.is_zeros(language_sentence.target_template):
+            language_sentence.target_template += epsilon
+        if self.is_zeros(gesture_sentence.target_template):
+            gesture_sentence.target_template += epsilon
+        for n,o in enumerate(language_sentence.target_selections):
             if self.is_zeros(o):
-                language_sentence.target_selection[n] += epsilon
-        for n,o in enumerate(gesture_sentence.target_selection):
+                language_sentence.target_selections[n] += epsilon
+        for n,o in enumerate(gesture_sentence.target_selections):
             if self.is_zeros(o):
-                gesture_sentence.target_selection[n] += epsilon
+                gesture_sentence.target_selections[n] += epsilon
 
         # 2. Add gamma, if language includes one value
-        if self.is_one_only(language_sentence.target_action):
-            language_sentence.target_action += gamma
-            language_sentence.target_action = np.clip(language_sentence.target_action, 0, 1)
-        if self.is_one_only(language_sentence.target_selection):
-            for n,o in enumerate(language_sentence.target_selection):
-                language_sentence.target_selection[n] += gamma
-                language_sentence.target_selection[n] = np.clip(o, 0, 1)
+        print(language_sentence.target_template)
+        if self.is_one_only(language_sentence.target_template):
+            language_sentence.target_template += gamma
+            language_sentence.target_template = np.clip(language_sentence.target_template, 0, 1)
+        
+        if np.array(language_sentence.target_selections).ndim == 2:        
+            for n,o in enumerate(language_sentence.target_selections):
+                if self.is_one_only(language_sentence.target_selections[n]):
+                    language_sentence.target_selections[n] += gamma
+                    language_sentence.target_selections[n] = np.clip(o, 0, 1)
+        else:
+            if self.is_one_only(language_sentence.target_selections):
+                language_sentence.target_selections += gamma
+                language_sentence.target_selections = np.clip(language_sentence.target_selections, 0, 1)
 
-        # print("ls ta: ", language_sentence.target_action)
-        # print("ls to: ", language_sentence.target_selection)
-        # print("gs ta: ", gesture_sentence.target_action)
-        # print("gs to: ", gesture_sentence.target_selection)
+        # print("ls ta: ", language_sentence.target_template)
+        # print("ls to: ", language_sentence.target_selections)
+        # print("gs ta: ", gesture_sentence.target_template)
+        # print("gs to: ", gesture_sentence.target_selections)
         return language_sentence, gesture_sentence
 
     def feedforward(self, language_sentence, gesture_sentence, epsilon=0.05, gamma=0.5):
@@ -526,35 +538,36 @@ class ModalityMerger():
         language_sentence, gesture_sentence = self.preprocessing(language_sentence, gesture_sentence, epsilon, gamma)
 
         # B.) Merging
-        # 1. Action merge
-        action_po = self.action.merge(language_sentence.target_action, gesture_sentence.target_action)
-        if not action_po.conclusion_use:
-            return action_po.conclusion # ask user to choose or repeat 
+        # 1. template merge
+        template_po = self.template.merge(language_sentence.target_template, gesture_sentence.target_template)
+        if not template_po.conclusion_use:
+            return template_po.conclusion # ask user to choose or repeat 
         
-        aon = self.get_num_of_object_needed_for_action_magic(action_po.activated)
+        # Note: aon deleted
+        aon = self.get_num_of_selection_needed_for_template_magic(template_po.activated)
         if aon > 0:
-            assert aon == len(language_sentence.target_objects) == len(gesture_sentence.target_objects)
+            assert aon == len(language_sentence.target_selections) == len(gesture_sentence.target_selections), f"Target selection num don't match: lan {language_sentence.target_selection}, ges {gesture_sentence.target_selection}"
             # 2. Selection merge
-            selection_po = self.selection.merge(language_sentence.target_objects, gesture_sentence.deictic_confidence * gesture_sentence.target_objects, aon)
+            selection_po = self.selection.merge(language_sentence.target_selections, gesture_sentence.deictic_confidence * gesture_sentence.target_selection)
             
             if not selection_po.conclusion_use:
                 return selection_po.conclusion # ask user to choose or repeat 
         else:
             selection_po = ProbsVector()
 
-        if self.get_num_of_distances_needed_for_action_magic(action_po.activated):
+        if self.get_num_of_distances_needed_for_template_magic(template_po.activated):
             # 3. Distance (compare type) parameters merge
             distance_po = np.average(language_sentence.target_distance, gesture_sentence.target_distance) 
         else:
             distance_po = []
 
-        if self.get_num_of_angular_needed_for_action_magic(action_po.activated):
+        if self.get_num_of_angular_needed_for_template_magic(template_po.activated):
             # 4. Angular (compare type) parameters merge
-            angular_po = np.average(language_sentence.target_action, gesture_sentence.target_action) 
+            angular_po = np.average(language_sentence.target_template, gesture_sentence.target_template) 
         else:
             angular_po = []
 
-        return f'Action: {action_po.activated}, What to do: {action_po.conclusion} \n Objects:{selection_po.activated}, What to do: {selection_po.conclusion}'
+        return f'template: {template_po.activated}, What to do: {template_po.conclusion} \n selections:{selection_po.activated}, What to do: {selection_po.conclusion}'
     
     def single_modality_merge(self, compare_type, lsp, gsp):
         # Get single modality merger
@@ -571,7 +584,7 @@ class ModalityMerger():
             gs: gesture_sentence, ls: language_sentence
 
             templates: point, pick, place
-            compare_types: objects, storages, distances, ...
+            compare_types: selections, storages, distances, ...
 
             alpha - penalizes if template does/doesn't have compare type which is in the sentence
         '''
@@ -590,7 +603,7 @@ class ModalityMerger():
         
         # 2. Penalize likelihood for every template
         templates = self.get_all_templates()
-        template_ct_penalized = deepcopy(cts['action']) # 1D (templates)
+        template_ct_penalized = deepcopy(cts['template']) # 1D (templates)
         
         print(f"Template BEFORE: {template_ct_penalized.p}")
         for nt, template in enumerate(templates): # point, pick, place
@@ -598,9 +611,9 @@ class ModalityMerger():
 
             alpha = 1.0
             beta = 1.0
-            for nct, compare_type in enumerate(self.compare_types): # objects, storages, distances, ...
+            for nct, compare_type in enumerate(self.compare_types): # selections, storages, distances, ...
                 compare_type_p = cts[compare_type].p
-                compare_type_names = cts[compare_type].action_names
+                compare_type_names = cts[compare_type].template_names
 
                 # if compare type is missing in sentence or in template -> penalize
                 compare_type_in_sentence = (compare_type in ls.get_cts_visible() or compare_type in gs.get_cts_visible())
@@ -614,7 +627,6 @@ class ModalityMerger():
                         
                         # check properties, penalize non-compatible ones
                         b = penalize_properties(template, property_name, compare_type, compare_type_p, compare_type_names)
-                        print("---------***: ", b)
                         beta *= b
             print(f"alpha: {alpha}")
             print(f"beta:  {beta}")
@@ -635,50 +647,57 @@ def get_ct_properties(compare_type):
 def penalize_properties(template, property_name, compare_type, compare_type_p, compare_type_names):
 
     if compare_type == 'selection':
-        # across all objects
+        # across all selections
         ret = 0
         for compare_type_p_, compare_type_name_ in zip(compare_type_p, compare_type_names):
-            probability_of_object_selection = compare_type_p_
-            object_property_bool = g.object_properties[compare_type_name_][property_name]
-            # if object feasibility not fulfilled -> penalize
-            if object_property_bool:
+            probability_of_selection_selection = compare_type_p_
+            selection_property_bool = g.selection_properties[compare_type_name_][property_name]
+            # if selection feasibility not fulfilled -> penalize
+            if selection_property_bool:
                 p = 1.0
             else:
-                p = probability_of_object_selection * g.selection_penalization[template][property_name]
+                p = probability_of_selection_selection * g.selection_penalization[template][property_name]
             print(f"compare_type_name_ { compare_type_name_}, p {compare_type_p_}:\
-                  probability_of_object_selection {probability_of_object_selection},\
-                  {object_property_bool} object_property_bool,\
-                  {penalization} penalization,, p: {p}")
-            print("jeste p", p)
+                  probability_of_selection_selection {probability_of_selection_selection},\
+                  {selection_property_bool} selection_property_bool,\
+                  p: {p}")
             # probability for template is summed
             ret += p
         # if no property -> no penalization
         n = len(compare_type_p)
         if n == 0: return 1.
         # normalize ?
-        #ret /= n
+        ret /= n
         return ret
     else:
         return 1.
 
 class UnifiedSentence():
-    def __init__(self, target_action, target_objects=[], distance_params=[], angular_params=[], deictic_confidence=1.0):
-        self.target_action = np.array(target_action)
-        self.target_selection = np.array(target_objects)
+    def __init__(self, target_template, target_selections=[], distance_params=[], angular_params=[], deictic_confidence=1.0, target_template_names=[], target_selection_names = [], distance_params_names = [], angular_params_names = []):
+        self.target_template = np.array(target_template)
+        self.target_selections = np.array(target_selections)
         self.distance_params = np.array(distance_params)
         self.angular_params = np.array(angular_params)
+
+        # possibility to add names
+        self.target_template_names = target_template_names
+        self.target_selection_names = target_selection_names
+        self.distance_params_names = distance_params_names
+        self.angular_params_names = angular_params_names
 
         self.deictic_confidence = deictic_confidence
 
     def get_cts_visible(self):
         cts_visible = []
 
-        if sum(self.target_action) > 0.1:
-            cts_visible.append("action")
-        if sum(self.target_selection) > 0.1:
+        if sum(self.target_template) > 0.1:
+            cts_visible.append("template")
+        if sum(self.target_selections) > 0.1:
             cts_visible.append("selection")
         if sum(self.distance_params) > 0.1:
             cts_visible.append("distance")
 
         return cts_visible
 
+    def __str__(self):
+        return f"{[(n, m) for n, m in zip(self.target_template_names, self.target_template)]} \n {[(n, m) for n, m in zip(self.target_selection_names, self.target_selections)]}"

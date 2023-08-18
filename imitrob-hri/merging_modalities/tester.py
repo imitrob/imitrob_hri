@@ -1,22 +1,25 @@
-
 import globals as g; g.init()
 from modality_merger import ProbsVector, SingleTypeModalityMerger, SelectionTypeModalityMerger, ModalityMerger, UnifiedSentence, MultiProbsVector
 from utils import *
+import sys; sys.path.append("..")
+from nlp_new.sentence_processor_node_new import SentenceProcessor
 
 import numpy as np
 
 def probs_vector_tester():
     ''' ProbsVector holds vector of probabilities and can do additional features 
     '''
-    action_names = ['pick up', 'place', 'push']
-    match_threshold = 0.8
-    clear_threshold = 0.7
-    unsure_threshold = 0.2
+    g.template_names = ['pick up', 'place', 'push']
+    g.selection_names = ['box', 'big box', 'table']
+    g.match_threshold = 0.7
+    g.clear_threshold = 0.5
+    g.unsure_threshold = 0.2
+    g.diffs_threshold = 0.01
 
-    p = [0.9, 0.8, 0.2]
+    p = [0.9, 0.8, 0.3]
     po = ProbsVector(p)
 
-    assert po.clear_id == [0, 1]
+    assert po.clear_id == [0, 1], f"po.clear_id {po.clear_id}"
     assert po.clear == ['pick up', 'place']
     assert po.unsure == ['push']
     assert po.negative == []
@@ -47,22 +50,21 @@ def probs_vector_tester():
 def single_modality_tester():
     ''' SingleTypeModalityMerger has two ProbsVectors
     '''
-    object_names = ['red box', 'blue box', 'grey cup']
+    selection_names = ['red box', 'blue box', 'grey cup']
     cl = [[0.9,0.2,0.1], [0.99,0.1,0.1]]
     cg = [[0.9,0.2,0.1], [0.99,0.1,0.1]]
-    aor = [2]
-    print("Object names:\t", object_names)
+    print("Object names:\t", selection_names)
     print("Language probs:\t", cl)
     print("Gesture probs:\t", cg)
-    selection = SelectionTypeModalityMerger(names=object_names)
-    ret = selection.match(cl, cg, aor)
+    selection = SelectionTypeModalityMerger(names=selection_names)
+    ret = selection.match(cl, cg)
     print(MultiProbsVector(ret))
     return
-    action = SingleTypeModalityMerger()
+    template = SingleTypeModalityMerger()
     cl = [0.9,0.2,0.1]
     cg = [0.9,0.2,0.1]
-    ret = action.match(cl, cg)
-    print("Action names:\t", g.action_names)
+    ret = template.match(cl, cg)
+    print("Action names:\t", g.template_names)
     print("Language probs:\t", cl)
     print("Gesture probs:\t", cg)
     print(ret)
@@ -73,15 +75,13 @@ def interactive_plot_tester():
     cg = [0.9,0.2,0.1]
     ret = action.match(cl, cg)
 
-    interactive_probs_plotter(cl, cg, g.action_names, g.clear_threshold, g.unsure_threshold, g.diffs_threshold, action)
+    interactive_probs_plotter(cl, cg, g.template_names, g.clear_threshold, g.unsure_threshold, g.diffs_threshold, action)
 
 def modality_merge_tester():
     print(f"{'-' * 5} 1 {'-' * 5}")
     ls = UnifiedSentence([0.9,0.2,0.1],[[0.9,0.1,0.0],[0.1,0.9,0.0]])
     gs = UnifiedSentence([0.9,0.2,0.1],[[0.9,0.1,0.0],[0.1,0.9,0.0]])
-    action_names = g.action_names
-    object_names = g.object_names
-    mm = ModalityMerger(action_names, object_names)
+    mm = ModalityMerger(g.template_names, g.selection_names, ['template', 'selection'])
     print(mm)
     r = mm.feedforward(ls, gs)
     print(r)
@@ -89,72 +89,44 @@ def modality_merge_tester():
     print(f"{'-' * 5} 2 {'-' * 5}")
     ls = UnifiedSentence([0.0,1.0,0.0],[[1.0,0.0,0.0],[0.0,0.0,1.0]])
     gs = UnifiedSentence([0.0,0.8,0.0],[[0.8,0.0,0.0],[0.0,0.0,0.0]])
-    action_names = g.action_names
-    object_names = g.object_names
-    mm = ModalityMerger(action_names, object_names)
+    
+    mm = ModalityMerger(g.template_names, g.selection_names, ['template', 'selection'])
     r = mm.feedforward(ls, gs)
     print(r)
 
 def modality_merge_2_tester():
     ############ Compare types:
-    ## PickTask: 'action', 'selection'
-    ## PointTask: 'action', 'selection'
+    ## PickTask: 'template', 'selection'
+    ## PointTask: 'template', 'selection'
     print("Pick Task needs object to detect/ground, when object added, pick task has higher prob")
     print(f"{'-' * 5} 1.1 {'-' * 5}")
     #         ['pick up', 'place', 'push'], ['box', 'big box', 'table']
 
-    ls = UnifiedSentence([0.9,0.2,0.1],[0.9,0.1,0.0])
-    gs = UnifiedSentence([0.9,0.2,0.1],[0.9,0.1,0.0])
-    action_names = g.action_names
-    object_names = g.object_names
-    mm = ModalityMerger(action_names, object_names, g.compare_types)
+    g.template_names = ['pick up', 'place', 'push']
+    g.selection_names = ['box', 'big box', 'table']
+
+    ls = UnifiedSentence([0.9,0.2,0.1],[[0.9,0.1,0.0]])
+    gs = UnifiedSentence([0.9,0.2,0.1],[[0.9,0.1,0.0]])
+    
+    mm = ModalityMerger(g.template_names, g.selection_names, g.compare_types)
     print(mm)
     r = mm.feedforward2(ls, gs)
     print(r)
 
     print(f"{'-' * 5} 1.2 {'-' * 5}")
-    ls = UnifiedSentence([0.9,0.2,0.1],[0.0,0.0,0.0])
-    gs = UnifiedSentence([0.9,0.2,0.1],[0.0,0.0,0.0])
-    action_names = g.action_names
-    object_names = g.object_names
-    mm = ModalityMerger(action_names, object_names, g.compare_types)
+    ls = UnifiedSentence([0.9,0.2,0.1],[[0.0,0.0,0.0]])
+    gs = UnifiedSentence([0.9,0.2,0.1],[[0.0,0.0,0.0]])
+    
+    mm = ModalityMerger(g.template_names, g.selection_names, g.compare_types)
     print(mm)
     r = mm.feedforward2(ls, gs)
     print(r)
 
     print(f"{'-' * 5} 2 {'-' * 5}")
-    ls = UnifiedSentence([0.0,1.0,0.0],[0.0,0.0,0.0])
-    gs = UnifiedSentence([0.0,0.8,0.0],[0.8,0.0,0.0])
-    action_names = g.action_names
-    object_names = g.object_names
-    mm = ModalityMerger(action_names, object_names, g.compare_types)
-    r = mm.feedforward2(ls, gs)
-    print(r)
-
-def modality_merge_2_tester():
-    ############ Compare types:
-    ## PickTask: 'action', 'selection'
-    ## PointTask: 'action', 'selection'
-    print("Pick Task needs object to detect/ground, when object added, pick task has higher prob")
-    print(f"{'-' * 5} 1.1 {'-' * 5}")
-    #         ['pick up', 'place', 'push'], ['box', 'big box', 'table']
-
-    ls = UnifiedSentence([0.9,0.2],[0.9,0.1,0.0])
-    gs = UnifiedSentence([0.9,0.2],[0.9,0.1,0.0])
-    action_names = g.action_names
-    object_names = g.object_names
-    mm = ModalityMerger(action_names, object_names, g.compare_types)
-    print(mm)
-    r = mm.feedforward2(ls, gs)
-    print(r)
-
-    print(f"{'-' * 5} 1.2 {'-' * 5}")
-    ls = UnifiedSentence([0.9,0.2],[0.0,0.0,0.0])
-    gs = UnifiedSentence([0.9,0.2],[0.0,0.0,0.0])
-    action_names = g.action_names
-    object_names = g.object_names
-    mm = ModalityMerger(action_names, object_names, g.compare_types)
-    print(mm)
+    ls = UnifiedSentence([0.0,1.0,0.0],[[0.0,0.0,0.0]])
+    gs = UnifiedSentence([0.0,0.8,0.0],[[0.8,0.0,0.0]])
+    
+    mm = ModalityMerger(g.template_names, g.selection_names, g.compare_types)
     r = mm.feedforward2(ls, gs)
     print(r)
 
@@ -165,10 +137,9 @@ def test_on_data():
     
     acc = 0
     for gs, ls, trueres in zip(gestures_data, speech_data, results_data):
-        print("gta", gs.target_action, " lta ", ls.target_action, " gts: ", gs.target_selection, " lts: ", ls.target_selection)
-        action_names = g.action_names
-        object_names = g.object_names
-        mm = ModalityMerger(action_names, object_names, g.compare_types)
+        print("gta", gs.target_template, " lta ", ls.target_template, " gts: ", gs.target_selections, " lts: ", ls.target_selections)
+
+        mm = ModalityMerger(g.template_names, g.selection_names, g.compare_types)
         r = mm.feedforward2(ls, gs)
         print(r)
         print(r.activated, trueres[0])
@@ -179,6 +150,38 @@ def test_on_data():
     print(f"Final acc: {acc/40 *100}%")
     
     print(results_data)
+
+
+def names_to_default():
+    language_template_name = utils.ct_name_to_default_name(language_template_name, ct='template') # "pick that" -> "pick up"
+    language_templates = [utils.ct_name_to_default_name(name, ct='template') for name in self.get_language_templates()] # all templates available
+
+
+
+def test_on_data2():
+    dataset = np.load('/home/imitlearn/crow-base/src/imitrob-hri/imitrob-hri/data/artificial_dataset_02.npy', allow_pickle=True)
+    
+    acc = 0
+    for sample in dataset:
+        x, y = sample
+        ls, gs = x
+        y_l_name, y_g_name = y
+
+        g.template_names, t_g, t_l = SentenceProcessor.make_conjunction(gs.target_template_names, ls.target_template_names, \
+                            gs.target_template, ls.target_template, ct='template')
+        g.selection_names, o_g, o_l = SentenceProcessor.make_conjunction(gs.target_selection_names, ls.target_selection_names, \
+                            gs.target_selections, ls.target_selections, ct='selection')
+        gs_extended = UnifiedSentence(t_g, target_selections=o_g, target_template_names=g.selection_names, target_selection_names=g.selection_names)
+        ls_extended = UnifiedSentence(t_l, target_selections=o_l, target_template_names=g.selection_names, target_selection_names=g.selection_names)
+        
+        mm = ModalityMerger(g.template_names, g.selection_names, g.compare_types)
+        r = mm.feedforward2(ls_extended, gs_extended)
+        print(r)
+        if r.activated == y_g_name or r.activated == y_l_name:
+            acc +=1
+
+    print(f"Final acc: {acc}%")
+
 
 if __name__ == '__main__':
     #print("1. Single probs vector tester: \n")
@@ -198,3 +201,4 @@ if __name__ == '__main__':
 
 
     test_on_data()
+    #test_on_data2()

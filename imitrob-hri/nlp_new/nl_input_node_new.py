@@ -51,12 +51,14 @@ class NLInput(Node):
 
 
         input_sentences = [
-                 "Ukaž na červenou kostku",
+            #     "Ukaž na červenou kostku",
             # "Ukaž na modrý kolík",
             # "Ukaž na zelenou kostku",
             # "Ukaž na kolík",
             # "Ukaž na zelenou kostku"
             #"Definuj modrou pozici"
+            #"Pick a red cube",
+            'Seber kostku',
             ]
 
         # input_sentences = ["Point to the red cube",

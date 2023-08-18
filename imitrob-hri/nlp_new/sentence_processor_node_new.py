@@ -54,9 +54,10 @@ NOT_PROFILING = True
 if not NOT_PROFILING:
     from crow_control.utils.profiling import StatTimer
 
-import utils
 import sys; sys.path.append("..")
+import nlp_new.nlp_utils as nlp_utils
 from merging_modalities.modality_merger import ModalityMerger, UnifiedSentence
+from merging_modalities.utils import cc
 
 def distance(entry):
     return entry[-1]
@@ -113,7 +114,27 @@ class SentenceProcessor(Node):
         self.gestures_ongoing_now = False
         self.create_subscription(msg_type=GestureSentence, topic='/gesture/gesture_sentence',
             callback=self.gesture_sentence_callback,qos_profile=qos)
-        self.gesture_sentence = GestureSentence()
+        self.gesture_sentence = self.tmp_get_empty_gesture_sentence()
+
+    def tmp_get_sample_gesture_sentence(self):
+        gs = GestureSentence()
+        gs.actions = ['pick', 'place', 'point']
+        gs.action_likelihoods = [0.2, 1.0, 0.5]
+        gs.selections = ['box', 'big box']
+        gs.selection_likelihoods = [0.9, 0.0]
+        gs.auxiliary_parameters = []
+        gs.auxiliary_parameter_likelihoods = []
+        return gs 
+
+    def tmp_get_empty_gesture_sentence(self):
+        gs = GestureSentence()
+        gs.actions = []
+        gs.action_likelihoods = []
+        gs.selections = []
+        gs.selection_likelihoods = []
+        gs.auxiliary_parameters = []
+        gs.auxiliary_parameter_likelihoods = []
+        return gs 
 
     def gestures_ongoing_callback(self, msg):
         ''' Updates current value of person gesturing bool
@@ -144,30 +165,53 @@ class SentenceProcessor(Node):
                     i = 0
         return
     
-    def mm_gather_info(self, language_template_name, language_object_name):
+    def mm_gather_info(self, language_template_name, language_selection_name, printer=True):
+        ''' Gather all probabilities from all merge types
+        Parameters:
+            language_template_name (Str), language_selection_name (Str) are detected from the NLP
+                It is then converted into vector: **pick** -> (pick, place, push) -> (1, epsilon, epsilon)
+
+        '''
+        if printer: print(f"{cc.OKCYAN}mm_gather_info start{cc.E}")
+        if printer: print(f"language_template_name {language_template_name}, language_selection_name {language_selection_name}")
+        
+        ### CT: Template
         # 1. Templates Preprocessing 
-        language_template_name = utils.template_name_to_default_name(language_template_name)
-        language_templates = [utils.template_name_to_default_name(name) for name in self.get_language_templates()]
-        gesture_templates = self.gesture_sentence.actions
-        # 2. Make template likelihoods
-        language_template_likelihoods = self.make_language_likelihoods(language_templates, language_template_name)
-        gesture_template_likelihoods = self.gesture_sentence.action_likelihoods
-        # 3. Unify template vectors
-        templates, t_g, t_l = self.unify(gesture_templates, language_templates, \
-                                    gesture_template_likelihoods, language_template_likelihoods)
+        language_template_name = nlp_utils.ct_name_to_default_name(language_template_name, ct='template') # "pick that" -> "pick up"
+        language_templates = [nlp_utils.ct_name_to_default_name(name, ct='template') for name in self.get_language_templates()] # all templates available
+        
+        gesture_templates = self.gesture_sentence.actions 
+        if printer: print(f"{cc.B}language_templates: {language_templates}{cc.E}\n{cc.B}gesture_templates: {gesture_templates}{cc.E}")
+        
+        # 2. Get template likelihoods
+        language_template_likelihoods = self.make_one_hot_vector(language_templates, language_template_name)
+        gesture_template_likelihoods = list(self.gesture_sentence.action_likelihoods)
 
+        if printer: print(f"{cc.B}language_template_likelihoods: {language_template_likelihoods}{cc.E}\n{cc.B}gesture_template_likelihoods: {gesture_template_likelihoods}{cc.E}")
+        
+        # 3. Conjunction template vectors
+        templates, t_g, t_l = self.make_conjunction(gesture_templates, language_templates, \
+                                    gesture_template_likelihoods, language_template_likelihoods, ct='template')
+
+        if printer: print(f"{cc.W}Conjunction templates:{cc.E} {templates}\nt_g: {t_g}\nt_l: {t_l}")
+        ### CT: Objects
         # 4. Objects preprocessing
-        language_object_name = language_object_name
-        language_objects = [language_object_name]
-        gesture_objects = self.gesture_sentence.objects
-        # 5. Make object likelihoods
-        language_object_likelihoods = self.make_language_likelihoods(language_objects, language_object_name)
-        gesture_object_likelihoods = self.gesture_sentence.object_likelihoods
-        # 6. Unify object vectors
+        language_selection_name = language_selection_name # "red box"
+        language_selections = [language_selection_name] # ("red box", "blue box", "big container") - unique names
+        gesture_selections = self.gesture_sentence.selections # ("red box", "blue box", "big container", "small container") - unique names
+        
+        if printer: print(f"{cc.W}CT selections language:{cc.E} {selections}\n{cc.W}CT selections gesture:{cc.E} {selections}")
+        # 5. Make selection likelihoods
+        selection_likelihoods = self.make_one_hot_vector(selections, selection_name)
+        selection_likelihoods = list(self.gesture_sentence.selection_likelihoods)
+        
+        # 6. make_conjunction selection vectors
         # TODO: GET ALL OBJECT NAMES FROM THE SCENE
-        objects, o_g, o_l = self.unify(gesture_objects, language_objects, \
-                                       gesture_object_likelihoods, language_object_likelihoods)
+        selections, o_g, o_l = self.make_conjunction(selections, selections, \
+                                       selection_likelihoods, selection_likelihoods, ct='selection')
 
+        if printer: print(f"{cc.W}Conjunction templates:{cc.E} {selections}\no_g: {o_g}\no_l: {o_l}")
+        
         # Checker
         print("[Modality merger] Prepare the gestures:")
         if (time.time() - self.gesture_sentence.header.stamp.sec) > 3.:
@@ -176,53 +220,66 @@ class SentenceProcessor(Node):
             else:
                 print(f"    [WARNING!] Gesture sentence old {(time.time() - self.gesture_sentence.header.stamp.sec)} sec.")
 
-        print("REPORT")
-        print(list(zip(templates, t_g, t_l)))
-        print(list(zip(objects, o_g, o_l)))
-        gs = UnifiedSentence(target_action=t_g, target_objects=o_g)
-        ls = UnifiedSentence(target_action=t_l, target_objects=o_l)
+        if printer:
+            print(f"{cc.W}REPORTER{cc.E}:")
+            print(list(zip(templates, t_g, t_l)))
+            print(list(zip(selections, o_g, o_l)))
+        gs = UnifiedSentence(target_action=t_g, target_selection=o_g)
+        ls = UnifiedSentence(target_action=t_l, target_selection=o_l)
 
-        return (templates, objects), (gs, ls)
+        if printer: print(f"{cc.OKCYAN}mm_gather_info end{cc.E}")
+
+        return (templates, selections), (gs, ls)
     
     def mm_run(self, mm_info):
-        templates, objects = mm_info[0]
+        templates, selections = mm_info[0]
         gs, ls = mm_info[1]
-        mm = ModalityMerger(templates, objects)
+        mm = ModalityMerger(templates, selections, compare_types=['action', 'selection'])
         print("[Modality merger] Here comes the magic:")
-        todo = mm.feedforward(ls, gs)
+        todo = mm.feedforward2(ls, gs)
         print("=====================================")
         print(todo)
         print("=====================================")
 
     @staticmethod
-    def unify(gesture_templates, language_templates, gesture_likelihoods, language_likelihoods):
+    def make_conjunction(gesture_templates, language_templates, gesture_likelihoods, language_likelihoods, ct):
         ''' If language and gesture templates has different sizes or one/few templates are missing
             This function makes UNION from both template lists.
         '''
-        print(f"[{len(gesture_templates)}] gesture_templates: {gesture_templates}") 
-        print(f"[{len(language_templates)}] language_templates: {language_templates}")
+        assert len(gesture_templates) == len(gesture_likelihoods), "items & likelihoods different sizes"
+        assert len(language_templates) == len(language_likelihoods), "items & likelihoods different sizes"
+        print(f"[conj fun][{len(gesture_templates)}] gesture_templates: {gesture_templates}") 
+        print(f"[conj fun][{len(language_templates)}] language_templates: {language_templates}")
 
-        templates = gesture_templates.copy()
-        templates.extend(language_templates)
-        templates = list(set(templates))
-
-        gesture_likelihoods_unified =  [0.] * len(templates)
-        language_likelihoods_unified = [0.] * len(templates)
-        for template in templates:
-            if template in gesture_templates:
-                n = gesture_templates.index(template)
-                m = templates.index(template)
+        for i in range(len(gesture_templates)):
+            gesture_templates[i] = nlp_utils.ct_name_to_default_name(gesture_templates[i], ct=ct)
+        for i in range(len(language_templates)):
+            language_templates[i] = nlp_utils.ct_name_to_default_name(language_templates[i], ct=ct)
+        
+        extended_list = gesture_templates.copy()
+        extended_list.extend(language_templates)
+        unique_list = list(set(extended_list))
+        
+        gesture_likelihoods_unified =  [0.] * len(unique_list)
+        language_likelihoods_unified = [0.] * len(unique_list)
+        for unique_item in unique_list:
+            if unique_item in gesture_templates:
+                n = gesture_templates.index(unique_item)
+                
+                m = unique_list.index(unique_item)
                 gesture_likelihoods_unified[m] = gesture_likelihoods[n]
 
-            if template in language_templates:
-                n = language_templates.index(template)
-                m = templates.index(template)
+            if unique_item in language_templates:
+                n = language_templates.index(unique_item)
+                m = unique_list.index(unique_item)
                 language_likelihoods_unified[m] = language_likelihoods[n]
         
-        print(f"[{len(templates)}] final templates: {templates}")
-        return templates, language_likelihoods_unified, gesture_likelihoods_unified
+        print(f"[conj fun][{len(unique_list)}] final templates: {unique_list}")
+        return unique_list, language_likelihoods_unified, gesture_likelihoods_unified
 
-    def make_language_likelihoods(self, template_names, activated_template_name):
+    def make_one_hot_vector(self, template_names, activated_template_name):
+        ''' For Language likelihoods vector construction
+        '''
         a = np.zeros(len(template_names))
         n = template_names.index(activated_template_name)
         a[n] = 1.
@@ -230,6 +287,37 @@ class SentenceProcessor(Node):
     
     def get_language_templates(self):
         return self.nl_processor.tf.get_all_template_names()
+    
+    def get_language_detected_selection(self, program_template):
+        template = program_template.root.children[0].template
+        if template is None:
+            raise AttributeError("Unknown command: {}".format(program_template))
+        if not template.is_filled():
+            # self.wait_then_talk()
+            # print(f"Delay at the end: {time.time() - start_attempt_time}")
+            return
+
+        dict1 = template.get_inputs()
+        template_type = dict1.get('action_type', '-')
+
+        target_obj = dict1.get('target')
+        if target_obj is not None:
+            if hasattr(target_obj, "flags") and 'last_mentioned' in target_obj.flags:
+            #TODO add last mentioned correferenced object and then delete this and adjust in ObjectGrounder
+                target_obj = None
+                dict1['target']=None
+        if target_obj is not None:
+            if len(target_obj.is_a) > 1:
+                    # self.wait_then_talk()
+                    print('TODO ask for specification which object to choose')
+                #@TODO: ask for specification, which target_obj to choose
+            target_obj = target_obj.is_a[0].n3()
+
+            # Select only the name
+            # '<http://imitrob.ciirc.cvut.cz/ontologies/crow#Cube>' -> 'Cube'
+            return target_obj[1:-1].split("#")[-1]            
+        else:
+            return None
 
     def process_sentence_callback(self, nlInputMsg):
         # 1. Check if gestures are still in process of gesturing
@@ -282,20 +370,32 @@ class SentenceProcessor(Node):
                 success = False
 
                 #process input sentence
-                program_template = self.nl_processor.process_text(input_sentence)
+                program_template_speech = self.nl_processor.process_text(input_sentence)
                 # get current database state for writing an ungrounded and currently grounded program to be executed
                 print("--------")
                 print("Program Template:")
-                print(program_template)
-                # NEW HERE
+                print(program_template_speech)
                 
-                mm_data = self.mm_gather_info(template_type)
+                ''' MM HERE 
+                    We got data from speech lines above (process_text, ..)
+                    We will get data from gestures inside gather_info function
+                '''
+                
+                selction_name_from_language_template = self.get_language_detected_selection(program_template_speech)
+                if selction_name_from_language_template == None: 
+                    print("Language selction not found!")
+                mm_data = self.mm_gather_info(program_template_speech.root.children[0].template.action_type, selction_name_from_language_template)
                 program_template = self.mm_run(mm_data)
-                # NEW END
+                print("========== Done merging =======")
+                print(program_template)
+                input()
+                ''' MM END '''
 
                 start_attempt_time = time.time()
                 while (time.time() - start_attempt_time) < self.MAX_OBJ_REQUEST_TIME:
                     # print(f"Delay: {time.time() - start_attempt_time}")
+
+
                     robot_program = self.run_program(program_template)
                     try:
                         template = program_template.root.children[0].template
