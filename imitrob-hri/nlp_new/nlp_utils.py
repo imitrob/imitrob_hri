@@ -5,9 +5,9 @@ template_name_synonyms = {
     '0': ['NOOP'],
     '16': ['GRIP'],
     '32': ['RELEASE', "release", "pustit"],
-    '64': ['point', 'ukaž', 'POINT', 'POINT_TASK'], # point towards a location
-    '80': ['PICK', 'PICK_TASK', 'seber'], # pick an object
-    '128': ['PLACE'], # place an object (assuming something is being held)
+    '64': ['POINT', 'point', 'ukaž', 'POINT_TASK'], # point towards a location
+    '80': ['PICK', 'PICK_TASK', 'seber', 'pick'], # pick an object
+    '128': ['PLACE', 'place'], # place an object (assuming something is being held)
     '208': ['PNP'], # pick n place
     '209': ['STORE'], # pick an object an place it into a storage
     '210': ['STASH'], # pick an object an place it into the robot storage (backstage)
@@ -15,7 +15,8 @@ template_name_synonyms = {
     '213': ['FETCH_TO'], # take object from backstage and put it into a storage
     '214': ['TIDY', 'TIDY_TASK', 'ukliď'], # take all objects from the front and put them into a storage
     '256': ['STOP', 'stop'],  # stop the robot arm(s)
-    '?': ['put', 'polož'],
+    '?': ['PUT', 'put', 'polož'],
+    '15645644565': ['PUSH', 'push'],
 
     '512': ['RETRACT'],  # retract to starting position
     '2048': ['MOVE'],  # move eef to a location
@@ -29,6 +30,22 @@ template_name_synonyms = {
 
     '1111111111': ['PRODUCT_REMOVE', "remove_product", "Odeber výrobek"],
 }
+
+selection_name_synonyms = {
+    '0': ['box'],
+    '1': ['big box'],
+    '2': ['table'],
+    '3': ['aruco box'],
+
+    '10': ['Cube'],
+    '11': ['Peg'],
+    '100': ['tomato soup can'], 
+    '101': ['potted meat can'],
+    '102': ['bowl'],
+
+
+}
+
 '''
     "peg": "kolík",
     "take": "vezmi",
@@ -84,19 +101,35 @@ template_name_synonyms = {
 
 
 def template_name_to_id(name):
+    assert isinstance(name, str), f"name is not string, it is {type(name)}"
     for key in template_name_synonyms.keys():
         if name in template_name_synonyms[key]:
             return int(key)
-    return None
+    raise Exception(f"Exception for {name}")
 
-def template_name_to_default_name(name):
-    for key in template_name_synonyms.keys():
-        if name in template_name_synonyms[key]:
-            return template_name_synonyms[key][0]
-    return None
+def ct_name_to_default_name(name, ct):
+    assert isinstance(name, str), f"name is not string, it is {type(name)}"
+    ct_name_synonyms = eval(ct+'_name_synonyms')
+
+    for key in ct_name_synonyms.keys():
+        if name in ct_name_synonyms[key]:
+            return ct_name_synonyms[key][0]
+    raise Exception(f"Exception for {name} not in {ct_name_synonyms[key]}")
 
 def tester_template_name_to_id():
     name = 'ukaz'
     assert template_name_to_id(name) == 64    
     assert template_name_to_default_name(name) == 'point'
+
+
+class cc:
+    H = '\033[95m'
+    OK = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    W = '\033[93m'
+    F = '\033[91m'
+    E = '\033[0m'
+    B = '\033[1m'
+    U = '\033[4m'
 
