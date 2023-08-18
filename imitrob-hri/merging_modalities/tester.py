@@ -162,10 +162,12 @@ def test_on_data2():
     dataset = np.load('/home/imitlearn/crow-base/src/imitrob-hri/imitrob-hri/data/artificial_dataset_02.npy', allow_pickle=True)
     
     acc = 0
+    nsamples = len(dataset)
     for sample in dataset:
-        x, y = sample
-        ls, gs = x
-        y_l_name, y_g_name = y
+        ls = sample['xl'] 
+        gs = sample['xg']
+        y_template = sample['y_template']
+        y_selection = sample['y_selection']
 
         g.template_names, t_g, t_l = SentenceProcessor.make_conjunction(gs.target_template_names, ls.target_template_names, \
                             gs.target_template, ls.target_template, ct='template')
@@ -177,10 +179,10 @@ def test_on_data2():
         mm = ModalityMerger(g.template_names, g.selection_names, g.compare_types)
         r = mm.feedforward2(ls_extended, gs_extended)
         print(r)
-        if r.activated == y_g_name or r.activated == y_l_name:
+        if r.activated == y_template and r.activated == y_selection:
             acc +=1
 
-    print(f"Final acc: {acc}%")
+    print(f"Final acc: {acc/nsamples*100}%")
 
 
 if __name__ == '__main__':

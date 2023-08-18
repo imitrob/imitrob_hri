@@ -3,7 +3,7 @@ def init():
     global template_names, selection_names, match_threshold, clear_threshold, unsure_threshold
     global diffs_threshold, compare_types, object_properties, selection_penalization
     #template_names = ['pick up', 'place', 'push']
-    template_names = ['PickTask', 'PointTask']
+    template_names = ['PickTask', 'PointTask', 'PutTask']
     selection_names = ['box', 'big box', 'table']
     compare_types = ['template', 'selections']
 

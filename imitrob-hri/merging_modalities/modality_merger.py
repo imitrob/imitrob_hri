@@ -19,6 +19,7 @@ from os.path import isfile, join
 import sys; sys.path.append("..")
 from nlp_new.templates.PickTask import PickTask
 from nlp_new.templates.PointTask import PointTask
+from nlp_new.templates.PutTask import PutTask
 
 from copy import deepcopy
 
@@ -635,7 +636,7 @@ class ModalityMerger():
             
 
         print(f"Template AFTER: {template_ct_penalized.p}")
-        return template_ct_penalized
+        return template_ct_penalized, cts['selection']
 
 # draft 
 def get_ct_properties(compare_type):
