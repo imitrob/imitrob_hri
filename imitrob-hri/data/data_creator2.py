@@ -1,10 +1,10 @@
 
-
+import os
 import sys;sys.path.append("..")
 from merging_modalities.modality_merger import UnifiedSentence
 import numpy as np
 
-template_list = ['pick', 'place', 'push', 'point']
+template_list = ['pick', 'put', 'point']
 selection_names_list = ['potted meat can', 'tomato soup can', 'bowl', 'Cube', 'Peg', 'box', 'big box', 'aruco box']
 
 def normal(mu, sigma):
@@ -65,5 +65,8 @@ for i_sample in range(100):
     }
     dataset.append(sample)
 
-np.save('/home/imitlearn/crow-base/src/imitrob-hri/imitrob-hri/data/artificial_dataset_02.npy', dataset)
+np.save(os.path.expanduser('~/ros2_ws/src/imitrob-hri/imitrob-hri/data/artificial_dataset_02.npy'), dataset)
 
+def get_sample():
+    dataset = np.load(os.path.expanduser('~/ros2_ws/src/imitrob-hri/imitrob-hri/data/artificial_dataset_02.npy'), allow_pickle=True)
+    return dataset[0]

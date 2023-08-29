@@ -2,33 +2,33 @@
 
 # names unique, [0] is default name
 template_name_synonyms = {
-    '0': ['NOOP'],
-    '16': ['GRIP'],
-    '32': ['RELEASE', "release", "pustit"],
-    '64': ['POINT', 'point', 'ukaž', 'POINT_TASK'], # point towards a location
-    '80': ['PICK', 'PICK_TASK', 'seber', 'pick'], # pick an object
-    '128': ['PLACE', 'place'], # place an object (assuming something is being held)
-    '208': ['PNP'], # pick n place
-    '209': ['STORE'], # pick an object an place it into a storage
-    '210': ['STASH'], # pick an object an place it into the robot storage (backstage)
-    '212': ['FETCH'], # take object from backstage and put it near the user
-    '213': ['FETCH_TO'], # take object from backstage and put it into a storage
+    '0': ['noop'],
+    '16': ['grip'],
+    '32': ['release', "release", "pustit"],
+    '64': ['point', 'point', 'ukaž', 'POINT_TASK', 'ukaz', 'PointTask'], # point towards a location
+    '80': ['pick', 'PICK_TASK', 'seber', 'pick', 'PickTask'], # pick an object
+    '128': ['place', 'place'], # place an object (assuming something is being held)
+    '208': ['pnp'], # pick n place
+    '209': ['store'], # pick an object an place it into a storage
+    '210': ['stash'], # pick an object an place it into the robot storage (backstage)
+    '212': ['fetch'], # take object from backstage and put it near the user
+    '213': ['fetch_to'], # take object from backstage and put it into a storage
     '214': ['TIDY', 'TIDY_TASK', 'ukliď'], # take all objects from the front and put them into a storage
-    '256': ['STOP', 'stop'],  # stop the robot arm(s)
-    '?': ['PUT', 'put', 'polož'],
-    '15645644565': ['PUSH', 'push'],
+    '256': ['stop', 'stop'],  # stop the robot arm(s)
+    '?': ['put', 'put', 'polož', 'PutTask'],
+    '15645644565': ['push', 'push'],
 
-    '512': ['RETRACT'],  # retract to starting position
-    '2048': ['MOVE'],  # move eef to a location
+    '512': ['retract'],  # retract to starting position
+    '2048': ['move'],  # move eef to a location
 
-    '4294967296': ['REM_CMD_LAST', 'REMOVE_COMMAND_LAST', 'Zruš poslední příkaz', 'remove_last_command'],  # removes last added command
-    '4294967297': ['REM_CMD_X', 'REMOVE_COMMAND_X', "remove_command", "Zruš příkaz"],  # removes the specified command
-    '8589934592': ['DEFINE_STORAGE'], # start process of marker recognition, polyhedron calculation and addition of this entry to the ontology
-    '8589934593': ['DEFINE_POSITION'], # start process of marker recognition and addition of this entry to the ontology
-    '8589934594': ['BUILD_ASSEMBLY', 'BUILD', 'build', 'stavět', 'Postav', 'build_assembly'], #starts process of building a given assembly based on the recipe using aplanner
-    '8589934595': ['BUILD_ASSEMBLY_CANCEL', 'BUILD_CANCEL'], #cancels process of building a given assembly based on the recipe using aplanner
+    '4294967296': ['rem_cmd_last', 'REMOVE_COMMAND_LAST', 'Zruš poslední příkaz', 'remove_last_command'],  # removes last added command
+    '4294967297': ['rem_cmd_x', 'REMOVE_COMMAND_X', "remove_command", "Zruš příkaz"],  # removes the specified command
+    '8589934592': ['define_storage'], # start process of marker recognition, polyhedron calculation and addition of this entry to the ontology
+    '8589934593': ['define_position'], # start process of marker recognition and addition of this entry to the ontology
+    '8589934594': ['build_assembly', 'BUILD', 'build', 'stavět', 'Postav', 'build_assembly'], #starts process of building a given assembly based on the recipe using aplanner
+    '8589934595': ['build_assembly_cancel', 'BUILD_CANCEL'], #cancels process of building a given assembly based on the recipe using aplanner
 
-    '1111111111': ['PRODUCT_REMOVE', "remove_product", "Odeber výrobek"],
+    '1111111111': ['product_remove', "remove_product", "Odeber výrobek"],
 }
 
 selection_name_synonyms = {
@@ -104,22 +104,19 @@ def template_name_to_id(name):
     assert isinstance(name, str), f"name is not string, it is {type(name)}"
     for key in template_name_synonyms.keys():
         if name in template_name_synonyms[key]:
-            return int(key)
+            return key
     raise Exception(f"Exception for {name}")
 
-def ct_name_to_default_name(name, ct):
+def to_default_name(name, ct='template'):
+    name = name.lower()
     assert isinstance(name, str), f"name is not string, it is {type(name)}"
     ct_name_synonyms = eval(ct+'_name_synonyms')
 
     for key in ct_name_synonyms.keys():
-        if name in ct_name_synonyms[key]:
-            return ct_name_synonyms[key][0]
-    raise Exception(f"Exception for {name} not in {ct_name_synonyms[key]}")
-
-def tester_template_name_to_id():
-    name = 'ukaz'
-    assert template_name_to_id(name) == 64    
-    assert template_name_to_default_name(name) == 'point'
+        for item in ct_name_synonyms[key]:
+            if name == item.lower():
+                return ct_name_synonyms[key][0]
+    raise Exception(f"Exception for {name} not in {ct_name_synonyms}")
 
 
 class cc:
@@ -133,3 +130,46 @@ class cc:
     B = '\033[1m'
     U = '\033[4m'
 
+
+def make_conjunction(gesture_templates, language_templates, gesture_likelihoods, language_likelihoods, ct='template'):
+    ''' If language and gesture templates has different sizes or one/few templates are missing
+        This function makes UNION from both template lists.
+    '''
+    assert len(gesture_templates) == len(gesture_likelihoods), "items & likelihoods different sizes"
+    assert len(language_templates) == len(language_likelihoods), "items & likelihoods different sizes"
+    assert isinstance(gesture_templates[0], str), "names must be string"
+    assert isinstance(language_templates[0], str), "names must be string"
+    assert isinstance(gesture_likelihoods[0], float), "likelihoods must be float"
+    assert isinstance(language_likelihoods[0], float), "likelihoods must be float"
+
+    gesture_templates = list(gesture_templates)
+    language_templates = list(language_templates)
+
+    #print(f"[conj fun][{len(gesture_templates)}] gesture_templates: {gesture_templates}") 
+    #print(f"[conj fun][{len(language_templates)}] language_templates: {language_templates}")
+
+    for i in range(len(gesture_templates)):
+        gesture_templates[i] = to_default_name(gesture_templates[i], ct=ct)
+    for i in range(len(language_templates)):
+        language_templates[i] = to_default_name(language_templates[i], ct=ct)
+    
+    extended_list = gesture_templates.copy()
+    extended_list.extend(language_templates)
+    unique_list = list(set(extended_list))
+    
+    gesture_likelihoods_unified =  [0.] * len(unique_list)
+    language_likelihoods_unified = [0.] * len(unique_list)
+    for unique_item in unique_list:
+        if unique_item in gesture_templates:
+            n = gesture_templates.index(unique_item)
+            
+            m = unique_list.index(unique_item)
+            gesture_likelihoods_unified[m] = gesture_likelihoods[n]
+
+        if unique_item in language_templates:
+            n = language_templates.index(unique_item)
+            m = unique_list.index(unique_item)
+            language_likelihoods_unified[m] = language_likelihoods[n]
+    
+    #print(f"[conj fun][{len(unique_list)}] final templates: {unique_list}")
+    return unique_list, language_likelihoods_unified, gesture_likelihoods_unified

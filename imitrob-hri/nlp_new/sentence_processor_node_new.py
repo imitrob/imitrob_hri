@@ -190,7 +190,7 @@ class SentenceProcessor(Node):
         if printer: print(f"{cc.B}language_template_likelihoods: {language_template_likelihoods}{cc.E}\n{cc.B}gesture_template_likelihoods: {gesture_template_likelihoods}{cc.E}")
         
         # 3. Conjunction template vectors
-        templates, t_g, t_l = self.make_conjunction(gesture_templates, language_templates, \
+        templates, t_g, t_l = nlp_utils.make_conjunction(gesture_templates, language_templates, \
                                     gesture_template_likelihoods, language_template_likelihoods, ct='template')
 
         if printer: print(f"{cc.W}Conjunction templates:{cc.E} {templates}\nt_g: {t_g}\nt_l: {t_l}")
@@ -207,7 +207,7 @@ class SentenceProcessor(Node):
         
         # 6. make_conjunction selection vectors
         # TODO: GET ALL OBJECT NAMES FROM THE SCENE
-        selections, o_g, o_l = self.make_conjunction(selections, selections, \
+        selections, o_g, o_l = nlp_utils.make_conjunction(selections, selections, \
                                        selection_likelihoods, selection_likelihoods, ct='selection')
 
         if printer: print(f"{cc.W}Conjunction templates:{cc.E} {selections}\no_g: {o_g}\no_l: {o_l}")
@@ -240,42 +240,6 @@ class SentenceProcessor(Node):
         print("=====================================")
         print(todo)
         print("=====================================")
-
-    @staticmethod
-    def make_conjunction(gesture_templates, language_templates, gesture_likelihoods, language_likelihoods, ct):
-        ''' If language and gesture templates has different sizes or one/few templates are missing
-            This function makes UNION from both template lists.
-        '''
-        assert len(gesture_templates) == len(gesture_likelihoods), "items & likelihoods different sizes"
-        assert len(language_templates) == len(language_likelihoods), "items & likelihoods different sizes"
-        print(f"[conj fun][{len(gesture_templates)}] gesture_templates: {gesture_templates}") 
-        print(f"[conj fun][{len(language_templates)}] language_templates: {language_templates}")
-
-        for i in range(len(gesture_templates)):
-            gesture_templates[i] = nlp_utils.ct_name_to_default_name(gesture_templates[i], ct=ct)
-        for i in range(len(language_templates)):
-            language_templates[i] = nlp_utils.ct_name_to_default_name(language_templates[i], ct=ct)
-        
-        extended_list = gesture_templates.copy()
-        extended_list.extend(language_templates)
-        unique_list = list(set(extended_list))
-        
-        gesture_likelihoods_unified =  [0.] * len(unique_list)
-        language_likelihoods_unified = [0.] * len(unique_list)
-        for unique_item in unique_list:
-            if unique_item in gesture_templates:
-                n = gesture_templates.index(unique_item)
-                
-                m = unique_list.index(unique_item)
-                gesture_likelihoods_unified[m] = gesture_likelihoods[n]
-
-            if unique_item in language_templates:
-                n = language_templates.index(unique_item)
-                m = unique_list.index(unique_item)
-                language_likelihoods_unified[m] = language_likelihoods[n]
-        
-        print(f"[conj fun][{len(unique_list)}] final templates: {unique_list}")
-        return unique_list, language_likelihoods_unified, gesture_likelihoods_unified
 
     def make_one_hot_vector(self, template_names, activated_template_name):
         ''' For Language likelihoods vector construction

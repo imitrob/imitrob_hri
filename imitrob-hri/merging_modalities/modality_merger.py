@@ -20,7 +20,7 @@ import sys; sys.path.append("..")
 from nlp_new.templates.PickTask import PickTask
 from nlp_new.templates.PointTask import PointTask
 from nlp_new.templates.PutTask import PutTask
-
+from nlp_new.nlp_utils import to_default_name
 from copy import deepcopy
 
 
@@ -62,7 +62,7 @@ class ProbsVector():
         # handle if probabilities not given
         if len(p) == 0: self.p = np.zeros(len(template_names))
         
-        assert len(p) == len(template_names)
+        assert len(p) == len(template_names), f"p {p} != template_names {template_names}"
 
         self.p = np.array(p)
         self.template_names = template_names
@@ -244,6 +244,10 @@ class ProbsVector():
         else:
             self.resolve()
         return self.conclusion
+    
+    @property
+    def names(self):
+        return self.template_names
 
 class MultiProbsVector():
     ''' Saving multiple ProbsVectors '''
@@ -328,6 +332,7 @@ class SingleTypeModalityMerger():
     def mul(self, l, g):
         return l * g
 
+"""
 class SelectionTypeModalityMerger(SingleTypeModalityMerger):
     def __init__(self, cl_prior = 0.9, cg_prior = 0.99, fun='mul', names=[]):
         super().__init__(cl_prior=cl_prior, cg_prior=cg_prior, fun=fun, names=names)
@@ -436,7 +441,7 @@ class SelectionTypeModalityMerger(SingleTypeModalityMerger):
         cg = self.prior_confidence_gestures * np.array(cg)    
         
         return self.probs_similarity_magic(cl, cg)
-
+"""
 
 
 
@@ -510,7 +515,6 @@ class ModalityMerger():
                 gesture_sentence.target_selections[n] += epsilon
 
         # 2. Add gamma, if language includes one value
-        print(language_sentence.target_template)
         if self.is_one_only(language_sentence.target_template):
             language_sentence.target_template += gamma
             language_sentence.target_template = np.clip(language_sentence.target_template, 0, 1)
@@ -594,28 +598,25 @@ class ModalityMerger():
 
         # B.) Merging
         # 1. Compare types independently
-        cts = {}
+        S_naive = {}
         for compare_type in self.compare_types: # storages, distances, ...
             # single compare-type merger e.g. [box1, cube1, ...] (probs.)
-            cts[compare_type] = self.single_modality_merge(compare_type, \
+            S_naive[compare_type] = self.single_modality_merge(compare_type, \
                                         getattr(ls,'target_'+compare_type),
                                         getattr(gs,'target_'+compare_type))
-            print(f"I {compare_type}: {cts[compare_type].p}")
-        
         # 2. Penalize likelihood for every template
         templates = self.get_all_templates()
-        template_ct_penalized = deepcopy(cts['template']) # 1D (templates)
+        template_ct_penalized = deepcopy(S_naive['template']) # 1D (templates)
         
-        print(f"Template BEFORE: {template_ct_penalized.p}")
+        if g.DEBUG:
+            print(f"Template BEFORE: {template_ct_penalized.p}")
+
         for nt, template in enumerate(templates): # point, pick, place
             template_obj = eval(template)()
 
             alpha = 1.0
             beta = 1.0
             for nct, compare_type in enumerate(self.compare_types): # selections, storages, distances, ...
-                compare_type_p = cts[compare_type].p
-                compare_type_names = cts[compare_type].template_names
-
                 # if compare type is missing in sentence or in template -> penalize
                 compare_type_in_sentence = (compare_type in ls.get_cts_visible() or compare_type in gs.get_cts_visible())
                 compare_type_in_template = template_obj.has_compare_type(compare_type) 
@@ -624,19 +625,24 @@ class ModalityMerger():
                 else:
                     alpha *= 0.9
                 if template_obj.has_compare_type(compare_type):
-                    for property_name in get_ct_properties(compare_type):
+                    #                       properties              x         names
+                    b = np.ones((len(get_ct_properties(compare_type)), len(S_naive.names)))
+                    for n,property_name in enumerate(get_ct_properties(compare_type)):
                         
                         # check properties, penalize non-compatible ones
-                        b = penalize_properties(template, property_name, compare_type, compare_type_p, compare_type_names)
-                        beta *= b
-            print(f"alpha: {alpha}")
-            print(f"beta:  {beta}")
+                        b[n] = penalize_properties(template, property_name, compare_type, S_naive[compare_type])
+                    # BIG QUESTION HOW TO PENALIZE?
+                    beta *= max(b.prod(1)) # this is draft how it should look like
+                    # look at notes in notebook for more info
+            if g.DEBUG: 
+                print(f"alpha: {alpha}")
+                print(f"beta:  {beta}")
             template_ct_penalized.p[nt] *= alpha
             template_ct_penalized.p[nt] *= beta
             
-
-        print(f"Template AFTER: {template_ct_penalized.p}")
-        return template_ct_penalized, cts['selection']
+        if g.DEBUG: 
+            print(f"Template AFTER: {template_ct_penalized.p}")
+        return template_ct_penalized, S_naive['selections']
 
 # draft 
 def get_ct_properties(compare_type):
@@ -645,33 +651,25 @@ def get_ct_properties(compare_type):
     else:
         return []
     
-def penalize_properties(template, property_name, compare_type, compare_type_p, compare_type_names):
-
+def penalize_properties(template, property_name, compare_type, S_naive_c):
+    '''
+    template (String): e.g. 'PickTask'
+    property_name (String): e.g. 'reachable', 'pickable', ...
+    compare_type (String): e.g. 'template', 'selection', ...
+    S_naive_c: Sentence naive merged - single compare type
+    '''
+    ret = np.ones((len(S_naive_c.p)))
+    if g.DEBUG: print(f"[penalize properties] len items p: {len(S_naive_c.p)}")
     if compare_type == 'selection':
-        # across all selections
-        ret = 0
-        for compare_type_p_, compare_type_name_ in zip(compare_type_p, compare_type_names):
-            probability_of_selection_selection = compare_type_p_
-            selection_property_bool = g.selection_properties[compare_type_name_][property_name]
-            # if selection feasibility not fulfilled -> penalize
-            if selection_property_bool:
-                p = 1.0
-            else:
-                p = probability_of_selection_selection * g.selection_penalization[template][property_name]
-            print(f"compare_type_name_ { compare_type_name_}, p {compare_type_p_}:\
-                  probability_of_selection_selection {probability_of_selection_selection},\
-                  {selection_property_bool} selection_property_bool,\
-                  p: {p}")
-            # probability for template is summed
-            ret += p
-        # if no property -> no penalization
-        n = len(compare_type_p)
-        if n == 0: return 1.
-        # normalize ?
-        ret /= n
-        return ret
-    else:
-        return 1.
+        #if not (len(S_naive_c.p) == 0):
+        for n, p, name in enumerate(zip(S_naive_c.p, S_naive_c.names)):
+
+            if not g.object_properties[name][property_name]:
+                ret[n] = p * g.task_property_penalization[template][property_name]
+                
+                if g.DEBUG: print(f"[penalize properties] {ret} *= {p} * {g.selection_penalization[template][property_name]}")
+    return ret
+    
 
 class UnifiedSentence():
     def __init__(self, target_template, target_selections=[], distance_params=[], angular_params=[], deictic_confidence=1.0, target_template_names=[], target_selection_names = [], distance_params_names = [], angular_params_names = []):
