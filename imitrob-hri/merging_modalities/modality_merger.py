@@ -3,11 +3,6 @@ import numpy as np
 from collections import deque
 
 try:
-    import globals as g
-except ModuleNotFoundError:
-    import merging_modalities.globals as g; g.init()
-
-try:
     from utils import *
 except ModuleNotFoundError:
     from merging_modalities.utils import *
@@ -56,9 +51,12 @@ class ProbsVector():
         - activated - template most probable or None if more clear templates or no clear template
         - 
     '''
-    def __init__(self, p=np.array([]), template_names=[]):
+    def __init__(self, p=np.array([]), template_names=[], c=None):
+        assert c is not None
+        self.c = c
+
         # Handle if template names not given
-        if len(template_names) == 0: template_names = g.template_names
+        if len(template_names) == 0: template_names = self.c.template_names
         # handle if probabilities not given
         if len(p) == 0: self.p = np.zeros(len(template_names))
         
@@ -68,9 +66,9 @@ class ProbsVector():
         self.template_names = template_names
         assert isinstance(self.p, np.ndarray) and isinstance(self.p[0], float)
         self.conclusion = None
-        assert g.match_threshold
+        assert self.c.match_threshold
         try:
-            g.match_threshold, g.clear_threshold, g.unsure_threshold, g.diffs_threshold
+            self.c.match_threshold, self.c.clear_threshold, self.c.unsure_threshold, self.c.diffs_threshold
         except NameError:
             raise Exception("Some threshold value not defined: (match_threshold, clear_threshold, unsure_threshold, diffs_threshold)")
 
@@ -82,7 +80,7 @@ class ProbsVector():
 
     @property
     def clear_id(self):
-        return self.get_probs_in_range(g.clear_threshold, 1.01)
+        return self.get_probs_in_range(self.c.clear_threshold, 1.01)
 
     @property
     def clear_probs(self):
@@ -95,7 +93,7 @@ class ProbsVector():
 
     @property
     def unsure_id(self):
-        return self.get_probs_in_range(g.unsure_threshold, g.clear_threshold)
+        return self.get_probs_in_range(self.c.unsure_threshold, self.c.clear_threshold)
 
     @property
     def unsure_probs(self):
@@ -108,7 +106,7 @@ class ProbsVector():
 
     @property
     def negative_id(self):
-        return self.get_probs_in_range(-0.01, g.unsure_threshold)
+        return self.get_probs_in_range(-0.01, self.c.unsure_threshold)
 
     @property
     def negative_probs(self):
@@ -160,7 +158,7 @@ class ProbsVector():
         return r
     
     def diffs_above_threshold(self):
-        return (self.diffs > g.diffs_threshold).all()
+        return (self.diffs > self.c.diffs_threshold).all()
 
     @property
     def activated_id(self):
@@ -188,7 +186,7 @@ class ProbsVector():
         return self.clear_id[0] if len(self.clear) == 1 else None
 
     def is_match(self):
-        if self.activated != None and self.p[self.single_clear_id] > g.match_threshold:
+        if self.activated != None and self.p[self.single_clear_id] > self.c.match_threshold:
             return True
         else:
             return False
@@ -291,12 +289,15 @@ class MultiProbsVector():
         return acts
 
 class SingleTypeModalityMerger():
-    def __init__(self, cl_prior = 0.99, cg_prior = 0.8, fun='mul', names=[]):
+    def __init__(self, cl_prior = 0.99, cg_prior = 0.8, fun='mul', names=[], c=None):
         self.prior_confidence_language = cl_prior
         self.prior_confidence_gestures = cg_prior
         self.fun = fun
         self.names = names
         assert self.fun in np.array(['mul', 'abs_sub'])
+
+        assert c is not None
+        self.c = c
 
     def merge(self, ml, mg):
         po = self.match(ml, mg)
@@ -324,7 +325,7 @@ class SingleTypeModalityMerger():
         for n,(l,g) in enumerate(zip(cl, cg)):
             cm[n] = getattr(self, self.fun)(l, g)
             #getattr(float(l), self.fun)(g)
-        return ProbsVector(cm, self.names)
+        return ProbsVector(cm, self.names, self.c)
     
     def add_2(self, l, g):
         return abs(l + g)/2
@@ -446,14 +447,17 @@ class SelectionTypeModalityMerger(SingleTypeModalityMerger):
 
 
 class ModalityMerger():
-    def __init__(self, template_names, selection_names, compare_types):
+    def __init__(self, template_names, selection_names, compare_types, c):
         ''' Now compare types needs to be ['template', 'selection']
         '''
+        self.c = c
+
         assert compare_types == ['template', 'selections']
-        self.template = SingleTypeModalityMerger(names=template_names)
-        self.selections = SingleTypeModalityMerger(names=selection_names)
+        self.template = SingleTypeModalityMerger(names=template_names, c=self.c)
+        self.selections = SingleTypeModalityMerger(names=selection_names, c=self.c)
         
         self.compare_types = compare_types
+
 
     def get_cts_type_objs(self):
         cts = []
@@ -608,7 +612,7 @@ class ModalityMerger():
         templates = self.get_all_templates()
         template_ct_penalized = deepcopy(S_naive['template']) # 1D (templates)
         
-        if g.DEBUG:
+        if self.c.DEBUG:
             print(f"Template BEFORE: {template_ct_penalized.p}")
 
         for nt, template in enumerate(templates): # point, pick, place
@@ -630,17 +634,17 @@ class ModalityMerger():
                     for n,property_name in enumerate(get_ct_properties(compare_type)):
                         
                         # check properties, penalize non-compatible ones
-                        b[n] = penalize_properties(template, property_name, compare_type, S_naive[compare_type])
+                        b[n] = penalize_properties(template, property_name, compare_type, S_naive[compare_type], self.c)
                     # BIG QUESTION HOW TO PENALIZE?
                     beta *= max(b.prod(1)) # this is draft how it should look like
                     # look at notes in notebook for more info
-            if g.DEBUG: 
+            if self.c.DEBUG: 
                 print(f"alpha: {alpha}")
                 print(f"beta:  {beta}")
             template_ct_penalized.p[nt] *= alpha
             template_ct_penalized.p[nt] *= beta
             
-        if g.DEBUG: 
+        if self.c.DEBUG: 
             print(f"Template AFTER: {template_ct_penalized.p}")
         return template_ct_penalized, S_naive['selections']
 
@@ -651,7 +655,7 @@ def get_ct_properties(compare_type):
     else:
         return []
     
-def penalize_properties(template, property_name, compare_type, S_naive_c):
+def penalize_properties(template, property_name, compare_type, S_naive_c, c):
     '''
     template (String): e.g. 'PickTask'
     property_name (String): e.g. 'reachable', 'pickable', ...
@@ -659,15 +663,15 @@ def penalize_properties(template, property_name, compare_type, S_naive_c):
     S_naive_c: Sentence naive merged - single compare type
     '''
     ret = np.ones((len(S_naive_c.p)))
-    if g.DEBUG: print(f"[penalize properties] len items p: {len(S_naive_c.p)}")
+    if c.DEBUG: print(f"[penalize properties] len items p: {len(S_naive_c.p)}")
     if compare_type == 'selection':
         #if not (len(S_naive_c.p) == 0):
         for n, p, name in enumerate(zip(S_naive_c.p, S_naive_c.names)):
 
-            if not g.object_properties[name][property_name]:
-                ret[n] = p * g.task_property_penalization[template][property_name]
+            if not c.object_properties[name][property_name]:
+                ret[n] = p * c.task_property_penalization[template][property_name]
                 
-                if g.DEBUG: print(f"[penalize properties] {ret} *= {p} * {g.selection_penalization[template][property_name]}")
+                if c.DEBUG: print(f"[penalize properties] {ret} *= {p} * {c.selection_penalization[template][property_name]}")
     return ret
     
 

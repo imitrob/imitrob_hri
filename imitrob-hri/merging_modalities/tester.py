@@ -1,4 +1,4 @@
-import globals as g; g.init()
+from configuration import Configuration
 from modality_merger import ProbsVector, SingleTypeModalityMerger, ModalityMerger, UnifiedSentence, MultiProbsVector
 from utils import *
 import sys, os; sys.path.append("..")
@@ -10,12 +10,12 @@ import numpy as np
 def probs_vector_tester():
     ''' ProbsVector holds vector of probabilities and can do additional features 
     '''
-    g.template_names = ['pick up', 'place', 'push']
-    g.selection_names = ['box', 'big box', 'table']
-    g.match_threshold = 0.7
-    g.clear_threshold = 0.5
-    g.unsure_threshold = 0.2
-    g.diffs_threshold = 0.01
+    c.template_names = ['pick up', 'place', 'push']
+    c.selection_names = ['box', 'big box', 'table']
+    c.match_threshold = 0.7
+    c.clear_threshold = 0.5
+    c.unsure_threshold = 0.2
+    c.diffs_threshold = 0.01
 
     p = [0.9, 0.8, 0.3]
     po = ProbsVector(p)
@@ -65,7 +65,7 @@ def single_modality_tester():
     cl = [0.9,0.2,0.1]
     cg = [0.9,0.2,0.1]
     ret = template.match(cl, cg)
-    print("Action names:\t", g.template_names)
+    print("Action names:\t", c.template_names)
     print("Language probs:\t", cl)
     print("Gesture probs:\t", cg)
     print(ret)
@@ -76,13 +76,13 @@ def interactive_plot_tester():
     cg = [0.9,0.2,0.1]
     ret = action.match(cl, cg)
 
-    interactive_probs_plotter(cl, cg, g.template_names, g.clear_threshold, g.unsure_threshold, g.diffs_threshold, action)
+    interactive_probs_plotter(cl, cg, c.template_names, c.clear_threshold, c.unsure_threshold, c.diffs_threshold, action)
 
 def modality_merge_tester():
     print(f"{'-' * 5} 1 {'-' * 5}")
     ls = UnifiedSentence([0.9,0.2,0.1],[[0.9,0.1,0.0],[0.1,0.9,0.0]])
     gs = UnifiedSentence([0.9,0.2,0.1],[[0.9,0.1,0.0],[0.1,0.9,0.0]])
-    mm = ModalityMerger(g.template_names, g.selection_names, ['template', 'selection'])
+    mm = ModalityMerger(c.template_names, c.selection_names, ['template', 'selection'])
     print(mm)
     r = mm.feedforward(ls, gs)
     print(r)
@@ -91,7 +91,7 @@ def modality_merge_tester():
     ls = UnifiedSentence([0.0,1.0,0.0],[[1.0,0.0,0.0],[0.0,0.0,1.0]])
     gs = UnifiedSentence([0.0,0.8,0.0],[[0.8,0.0,0.0],[0.0,0.0,0.0]])
     
-    mm = ModalityMerger(g.template_names, g.selection_names, ['template', 'selection'])
+    mm = ModalityMerger(c.template_names, c.selection_names, ['template', 'selection'])
     r = mm.feedforward(ls, gs)
     print(r)
 
@@ -103,13 +103,13 @@ def modality_merge_2_tester():
     print(f"{'-' * 5} 1.1 {'-' * 5}")
     #         ['pick up', 'place', 'push'], ['box', 'big box', 'table']
 
-    g.template_names = ['pick up', 'place', 'push']
-    g.selection_names = ['box', 'big box', 'table']
+    c.template_names = ['pick up', 'place', 'push']
+    c.selection_names = ['box', 'big box', 'table']
 
     ls = UnifiedSentence([0.9,0.2,0.1],[[0.9,0.1,0.0]])
     gs = UnifiedSentence([0.9,0.2,0.1],[[0.9,0.1,0.0]])
     
-    mm = ModalityMerger(g.template_names, g.selection_names, g.compare_types)
+    mm = ModalityMerger(c.template_names, c.selection_names, c.compare_types)
     print(mm)
     r = mm.feedforward2(ls, gs)
     print(r)
@@ -118,7 +118,7 @@ def modality_merge_2_tester():
     ls = UnifiedSentence([0.9,0.2,0.1],[[0.0,0.0,0.0]])
     gs = UnifiedSentence([0.9,0.2,0.1],[[0.0,0.0,0.0]])
     
-    mm = ModalityMerger(g.template_names, g.selection_names, g.compare_types)
+    mm = ModalityMerger(c.template_names, c.selection_names, c.compare_types)
     print(mm)
     r = mm.feedforward2(ls, gs)
     print(r)
@@ -127,7 +127,7 @@ def modality_merge_2_tester():
     ls = UnifiedSentence([0.0,1.0,0.0],[[0.0,0.0,0.0]])
     gs = UnifiedSentence([0.0,0.8,0.0],[[0.8,0.0,0.0]])
     
-    mm = ModalityMerger(g.template_names, g.selection_names, g.compare_types)
+    mm = ModalityMerger(c.template_names, c.selection_names, c.compare_types)
     r = mm.feedforward2(ls, gs)
     print(r)
 
@@ -140,7 +140,7 @@ def test_on_data():
     for gs, ls, trueres in zip(gestures_data, speech_data, results_data):
         print("gta", gs.target_template, " lta ", ls.target_template, " gts: ", gs.target_selections, " lts: ", ls.target_selections)
 
-        mm = ModalityMerger(g.template_names, g.selection_names, g.compare_types)
+        mm = ModalityMerger(c.template_names, c.selection_names, c.compare_types)
         r = mm.feedforward2(ls, gs)
         print(r)
         print(r.activated, trueres[0])
@@ -163,56 +163,7 @@ def test_on_data2():
     dataset = np.load(os.path.expanduser('~/ros2_ws/src/imitrob-hri/imitrob-hri/data/artificial_dataset_02.npy'), allow_pickle=True)
     
     ''' Set configuration '''
-    g.compare_types = ['template', 'selections']
-    g.match_threshold = 0.48
-    g.clear_threshold = 0.44
-    g.unsure_threshold = 0.2
-    g.diffs_threshold = 0.01
-
-    g.object_properties = {
-        'box': {
-            'reachable': True,
-            'pickable': True,
-        },
-        'big box': {
-            'reachable': True,
-            'pickable': False,
-        },
-        'table': {
-            'reachable': True ,
-            'pickable': False,
-        },
-
-
-        'Cube': {
-            'reachable': True,
-            'pickable': True,
-        },
-        'Peg': {
-            'reachable': True,
-            'pickable': True,
-        },
-        'aruco box': {
-            'reachable': True,
-            'pickable': True,
-        },
-
-        'Cup': {
-            'reachable': True,
-            'pickable': True,
-        },
-
-    }
-
-    g.task_property_penalization = {
-        'PickTask': {
-            'reachable': 0.8,
-            'pickable': 0.0,
-        }, 'PointTask': {
-            'reachable': 1.0,
-            'pickable': 1.0,
-        },
-    }
+    c = dataset[0]['config']
 
     acc = 0
     nsamples = len(dataset)
@@ -223,25 +174,24 @@ def test_on_data2():
         y_template = sample['y_template']
         y_selection = sample['y_selection']
 
-        g.template_names, t_g, t_l = make_conjunction(gs.target_template_names, ls.target_template_names, \
+        c.template_names, t_g, t_l = make_conjunction(gs.target_template_names, ls.target_template_names, \
                             gs.target_template, ls.target_template, ct='template')
 
         for template in ['pick', 'point', 'PutTask']:
-            if to_default_name(template) not in g.template_names:
-                g.template_names = np.append(g.template_names, to_default_name(template))
+            if to_default_name(template) not in c.template_names:
+                c.template_names = np.append(c.template_names, to_default_name(template))
                 t_g = np.append(t_g, 0.0)
                 t_l = np.append(t_l, 0.0)
 
-        g.selection_names, o_g, o_l = make_conjunction(gs.target_selection_names, ls.target_selection_names, \
+        c.selection_names, o_g, o_l = make_conjunction(gs.target_selection_names, ls.target_selection_names, \
                             gs.target_selections, ls.target_selections, ct='selection')
-        gs_extended = UnifiedSentence(t_g, target_selections=o_g, target_template_names=g.template_names, target_selection_names=g.selection_names)
-        ls_extended = UnifiedSentence(t_l, target_selections=o_l, target_template_names=g.template_names, target_selection_names=g.selection_names)
+        gs_extended = UnifiedSentence(t_g, target_selections=o_g, target_template_names=c.template_names, target_selection_names=c.selection_names)
+        ls_extended = UnifiedSentence(t_l, target_selections=o_l, target_template_names=c.template_names, target_selection_names=c.selection_names)
         
-        
-        mm = ModalityMerger(g.template_names, g.selection_names, g.compare_types)
+        mm = ModalityMerger(c.template_names, c.selection_names, c.compare_types, c)
         t, s = mm.feedforward2(ls_extended, gs_extended)
         
-        if t.activated == y_template: # and t.activated == y_selection:
+        if t.activated == y_template and s.activated == y_selection:
             acc +=1
         else:
             print("ls", ls)
@@ -250,6 +200,7 @@ def test_on_data2():
             print("y_selection", y_selection)
 
             print(t)
+            print(s)
 
     print(f"Final acc: {acc/nsamples*100}%")
 

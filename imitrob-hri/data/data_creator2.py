@@ -15,7 +15,65 @@ def add_if_not_there(a, b):
         return np.append(a, b)
     return a
 
-unsure_prob_mu = 0.7
+
+class Configuration():
+    def __init__(self):
+        #self.template_names = ['pick up', 'place', 'push']
+        self.template_names = ['PickTask', 'PointTask', 'PutTask']
+        self.selection_names = ['box', 'big box', 'table']
+        self.compare_types = ['template', 'selections']
+
+        self.match_threshold = 0.4
+        self.clear_threshold = 0.34
+        self.unsure_threshold = 0.15
+        self.diffs_threshold = 0.01
+
+        self.object_properties = {
+            'box': {
+                'reachable': True,
+                'pickable': True,
+            },
+            'big box': {
+                'reachable': True,
+                'pickable': False,
+            },
+            'table': {
+                'reachable': True ,
+                'pickable': False,
+            },
+
+
+            'Cube': {
+                'reachable': True,
+                'pickable': True,
+            },
+            'Peg': {
+                'reachable': True,
+                'pickable': True,
+            },
+            'aruco box': {
+                'reachable': True,
+                'pickable': True,
+            },
+            'Cup': {
+                'reachable': True,
+                'pickable': True,
+            },
+        }
+
+        self.task_property_penalization = {
+            'PickTask': {
+                'reachable': 0.8,
+                'pickable': 0.0,
+            }, 'PointTask': {
+                'reachable': 1.0,
+                'pickable': 1.0,
+            },
+        }
+        self.DEBUG = False
+
+
+unsure_prob_mu = 0.5
 unsure_prob_sigma = 0.1
 
 activated_prob_mu = 0.9
@@ -38,18 +96,18 @@ for i_sample in range(100):
     
     ct_template_language_chosen_names = np.random.choice(template_list, size=np.random.randint(1, len(template_list) ), replace=False)
     ct_template_language_chosen_names = add_if_not_there(ct_template_language_chosen_names, y_template)
-    ct_template_language_likelihood = [np.random.random() for i in range(len(ct_template_language_chosen_names))]
+    ct_template_language_likelihood = [normal(unsure_prob_mu, unsure_prob_sigma) for i in range(len(ct_template_language_chosen_names))]
     ct_template_language_likelihood[np.where(ct_template_language_chosen_names == y_template)[0][0]] = normal(activated_prob_mu, activated_prob_sigma)
 
     ## Objects (Selection)
     ct_object_gesture_chosen_names = np.random.choice(selection_names_list, size=np.random.randint(1, len(selection_names_list) ), replace=False)
     ct_object_gesture_chosen_names = add_if_not_there(ct_object_gesture_chosen_names, y_selection)
-    ct_object_gesture_likelihood = [np.random.random() for i in range(len(ct_object_gesture_chosen_names))]
+    ct_object_gesture_likelihood = [normal(unsure_prob_mu, unsure_prob_sigma) for i in range(len(ct_object_gesture_chosen_names))]
     ct_object_gesture_likelihood[np.where(ct_object_gesture_chosen_names == y_selection)[0][0]] = normal(activated_prob_mu, activated_prob_sigma)
     
     ct_object_language_chosen_names = np.random.choice(selection_names_list, size=np.random.randint(1, len(selection_names_list) ), replace=False)
     ct_object_language_chosen_names = add_if_not_there(ct_object_language_chosen_names, y_selection)
-    ct_object_language_likelihood = [np.random.random() for i in range(len(ct_object_language_chosen_names))]
+    ct_object_language_likelihood = [normal(unsure_prob_mu, unsure_prob_sigma) for i in range(len(ct_object_language_chosen_names))]
     ct_object_language_likelihood[np.where(ct_object_language_chosen_names == y_selection)[0][0]] = normal(activated_prob_mu, activated_prob_sigma)
     
     x_g = UnifiedSentence(ct_template_gesture_likelihood, ct_object_gesture_likelihood, \
@@ -63,7 +121,11 @@ for i_sample in range(100):
         'y_template': y_template,
         'y_selection': y_selection,
     }
+    if i_sample == 0:
+        sample['config'] = Configuration()
     dataset.append(sample)
+
+
 
 np.save(os.path.expanduser('~/ros2_ws/src/imitrob-hri/imitrob-hri/data/artificial_dataset_02.npy'), dataset)
 
