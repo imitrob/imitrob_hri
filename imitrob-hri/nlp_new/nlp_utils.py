@@ -31,7 +31,7 @@ template_name_synonyms = {
     '1111111111': ['product_remove', "remove_product", "Odeber výrobek"],
 }
 
-selection_name_synonyms = {
+selections_name_synonyms = {
     '0': ['box'],
     '1': ['big box'],
     '2': ['table'],
@@ -42,8 +42,12 @@ selection_name_synonyms = {
     '100': ['tomato soup can'], 
     '101': ['potted meat can'],
     '102': ['bowl'],
+    '103': ['cup'],
+}
 
-
+storages_name_synonyms = {
+    '0': ['abstract zone'],
+    '1': ['green box'],
 }
 
 '''
@@ -137,10 +141,10 @@ def make_conjunction(gesture_templates, language_templates, gesture_likelihoods,
     '''
     assert len(gesture_templates) == len(gesture_likelihoods), "items & likelihoods different sizes"
     assert len(language_templates) == len(language_likelihoods), "items & likelihoods different sizes"
-    assert isinstance(gesture_templates[0], str), "names must be string"
-    assert isinstance(language_templates[0], str), "names must be string"
-    assert isinstance(gesture_likelihoods[0], float), "likelihoods must be float"
-    assert isinstance(language_likelihoods[0], float), "likelihoods must be float"
+    assert len(gesture_templates) == 0 or isinstance(gesture_templates[0], str), "names must be string"
+    assert len(language_templates) == 0 or isinstance(language_templates[0], str), "names must be string"
+    assert len(gesture_likelihoods) == 0 or isinstance(gesture_likelihoods[0], float), "likelihoods must be float"
+    assert len(language_likelihoods) == 0 or isinstance(language_likelihoods[0], float), "likelihoods must be float"
 
     gesture_templates = list(gesture_templates)
     language_templates = list(language_templates)

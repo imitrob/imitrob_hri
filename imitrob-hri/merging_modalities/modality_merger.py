@@ -15,9 +15,8 @@ import sys; sys.path.append("..")
 from nlp_new.templates.PickTask import PickTask
 from nlp_new.templates.PointTask import PointTask
 from nlp_new.templates.PutTask import PutTask
-from nlp_new.nlp_utils import to_default_name
+from nlp_new.nlp_utils import make_conjunction, to_default_name
 from copy import deepcopy
-
 
 """
 class ModalityReceiver():
@@ -55,8 +54,6 @@ class ProbsVector():
         assert c is not None
         self.c = c
 
-        # Handle if template names not given
-        if len(template_names) == 0: template_names = self.c.template_names
         # handle if probabilities not given
         if len(p) == 0: self.p = np.zeros(len(template_names))
         
@@ -64,7 +61,7 @@ class ProbsVector():
 
         self.p = np.array(p)
         self.template_names = template_names
-        assert isinstance(self.p, np.ndarray) and isinstance(self.p[0], float)
+        assert isinstance(self.p, np.ndarray) and (len(self.p) == 0 or isinstance(self.p[0], float))
         self.conclusion = None
         assert self.c.match_threshold
         try:
@@ -246,6 +243,20 @@ class ProbsVector():
     @property
     def names(self):
         return self.template_names
+    
+    @names.setter
+    def names(self, n):
+        self.template_names = n
+
+    @property
+    def p(self):
+        return self.p_
+
+    @p.setter
+    def p(self, p_):
+        p_ = np.array(p_)
+        assert p_.ndim == 1
+        self.p_ = p_
 
 class MultiProbsVector():
     ''' Saving multiple ProbsVectors '''
@@ -447,17 +458,17 @@ class SelectionTypeModalityMerger(SingleTypeModalityMerger):
 
 
 class ModalityMerger():
-    def __init__(self, template_names, selection_names, compare_types, c):
+    def __init__(self, c):
         ''' Now compare types needs to be ['template', 'selection']
         '''
+        assert len(c.ct_names.keys()) > 0
         self.c = c
-
-        assert compare_types == ['template', 'selections']
-        self.template = SingleTypeModalityMerger(names=template_names, c=self.c)
-        self.selections = SingleTypeModalityMerger(names=selection_names, c=self.c)
+        self.mms = {}
+        for ct in c.ct_names.keys():
+            mm = SingleTypeModalityMerger(names=c.ct_names[ct], c=self.c)
+            self.mms[ct] = mm
         
-        self.compare_types = compare_types
-
+        self.compare_types = c.ct_names.keys()
 
     def get_cts_type_objs(self):
         cts = []
@@ -504,40 +515,23 @@ class ModalityMerger():
             return True
         return False
 
-    def preprocessing(self, language_sentence, gesture_sentence, epsilon, gamma):
+    def preprocessing(self, ls, gs, epsilon, gamma):
         ''' Data preprocessing '''
         # 1. Add epsilon
-        if self.is_zeros(language_sentence.target_template):
-            language_sentence.target_template += epsilon
-        if self.is_zeros(gesture_sentence.target_template):
-            gesture_sentence.target_template += epsilon
-        for n,o in enumerate(language_sentence.target_selections):
-            if self.is_zeros(o):
-                language_sentence.target_selections[n] += epsilon
-        for n,o in enumerate(gesture_sentence.target_selections):
-            if self.is_zeros(o):
-                gesture_sentence.target_selections[n] += epsilon
+
+        for ct in self.c.ct_names.keys():
+            if self.is_zeros(ls[ct].p):
+                ls[ct].p += epsilon
+            if self.is_zeros(gs[ct].p):
+                gs[ct].p += epsilon
 
         # 2. Add gamma, if language includes one value
-        if self.is_one_only(language_sentence.target_template):
-            language_sentence.target_template += gamma
-            language_sentence.target_template = np.clip(language_sentence.target_template, 0, 1)
-        
-        if np.array(language_sentence.target_selections).ndim == 2:        
-            for n,o in enumerate(language_sentence.target_selections):
-                if self.is_one_only(language_sentence.target_selections[n]):
-                    language_sentence.target_selections[n] += gamma
-                    language_sentence.target_selections[n] = np.clip(o, 0, 1)
-        else:
-            if self.is_one_only(language_sentence.target_selections):
-                language_sentence.target_selections += gamma
-                language_sentence.target_selections = np.clip(language_sentence.target_selections, 0, 1)
+        for ct in self.c.ct_names.keys():
+            if self.is_one_only(ls[ct].p):
+                ls[ct].p += gamma
+                ls[ct].p = np.clip(ls[ct].p, 0, 1)
 
-        # print("ls ta: ", language_sentence.target_template)
-        # print("ls to: ", language_sentence.target_selections)
-        # print("gs ta: ", gesture_sentence.target_template)
-        # print("gs to: ", gesture_sentence.target_selections)
-        return language_sentence, gesture_sentence
+        return ls, gs
 
     def feedforward(self, language_sentence, gesture_sentence, epsilon=0.05, gamma=0.5):
         '''
@@ -581,12 +575,17 @@ class ModalityMerger():
     def single_modality_merge(self, compare_type, lsp, gsp):
         # Get single modality merger
         if compare_type in self.compare_types:
-            mm = getattr(self, compare_type) 
-        else:
-            mm = SingleTypeModalityMerger(names=self.get_names_for_compare_type())
-            self.mms.append(mm)
-        
+            mm = self.mms[compare_type] 
+        else: raise Exception("compare_type not in self.compare_types")
         return mm.merge(lsp, gsp)
+    
+    def is_ct_visible(self, s_, ct_target, threshold = 0.1):
+        for ct in self.compare_types:
+            if sum(s_[ct].p) > threshold:
+                if ct == ct_target:
+                    return True
+
+        return False
     
     def feedforward2(self, ls, gs, epsilon=0.05, gamma=0.5):
         ''' 
@@ -606,8 +605,8 @@ class ModalityMerger():
         for compare_type in self.compare_types: # storages, distances, ...
             # single compare-type merger e.g. [box1, cube1, ...] (probs.)
             S_naive[compare_type] = self.single_modality_merge(compare_type, \
-                                        getattr(ls,'target_'+compare_type),
-                                        getattr(gs,'target_'+compare_type))
+                                        ls[compare_type].p,
+                                        gs[compare_type].p)
         # 2. Penalize likelihood for every template
         templates = self.get_all_templates()
         template_ct_penalized = deepcopy(S_naive['template']) # 1D (templates)
@@ -622,7 +621,7 @@ class ModalityMerger():
             beta = 1.0
             for nct, compare_type in enumerate(self.compare_types): # selections, storages, distances, ...
                 # if compare type is missing in sentence or in template -> penalize
-                compare_type_in_sentence = (compare_type in ls.get_cts_visible() or compare_type in gs.get_cts_visible())
+                compare_type_in_sentence = (self.is_ct_visible(ls, compare_type) or self.is_ct_visible(gs, compare_type))
                 compare_type_in_template = template_obj.has_compare_type(compare_type) 
                 if (compare_type_in_template and compare_type_in_sentence):
                     alpha *= 1.0
@@ -630,8 +629,8 @@ class ModalityMerger():
                     alpha *= 0.9
                 if template_obj.has_compare_type(compare_type):
                     #                       properties              x         names
-                    b = np.ones((len(get_ct_properties(compare_type)), len(S_naive.names)))
-                    for n,property_name in enumerate(get_ct_properties(compare_type)):
+                    b = np.ones((len(self.c.ct_properties[compare_type]), len(S_naive.names)))
+                    for n,property_name in enumerate(self.c.ct_properties[compare_type]):
                         
                         # check properties, penalize non-compatible ones
                         b[n] = penalize_properties(template, property_name, compare_type, S_naive[compare_type], self.c)
@@ -646,14 +645,10 @@ class ModalityMerger():
             
         if self.c.DEBUG: 
             print(f"Template AFTER: {template_ct_penalized.p}")
-        return template_ct_penalized, S_naive['selections']
-
-# draft 
-def get_ct_properties(compare_type):
-    if compare_type == 'selection':
-        return ['reachable', 'pickable']
-    else:
-        return []
+        # hack
+        template_ct_penalized.p = np.clip(1.4 * template_ct_penalized.p, 0, 1)
+        S_naive['template'] = template_ct_penalized
+        return S_naive
     
 def penalize_properties(template, property_name, compare_type, S_naive_c, c):
     '''
@@ -675,32 +670,43 @@ def penalize_properties(template, property_name, compare_type, S_naive_c, c):
     return ret
     
 
-class UnifiedSentence():
-    def __init__(self, target_template, target_selections=[], distance_params=[], angular_params=[], deictic_confidence=1.0, target_template_names=[], target_selection_names = [], distance_params_names = [], angular_params_names = []):
-        self.target_template = np.array(target_template)
-        self.target_selections = np.array(target_selections)
-        self.distance_params = np.array(distance_params)
-        self.angular_params = np.array(angular_params)
+class MMSentence():
+    def __init__(self, L, G, M=None):
+        self.L = L # Language
+        self.G = G # Gestures
+        self.M = M # Merged
 
-        # possibility to add names
-        self.target_template_names = target_template_names
-        self.target_selection_names = target_selection_names
-        self.distance_params_names = distance_params_names
-        self.angular_params_names = angular_params_names
+    def make_conjunction(self, c):
+        '''
+        Parameters:
+            c (Configuration()) (pointer)
+        '''
+        for ct in c.ct_names.keys():
+            c.ct_names[ct], self.G[ct].p, self.L[ct].p = make_conjunction( \
+                                        self.G[ct].names, self.L[ct].names, \
+                                        self.G[ct].p, self.L[ct].p, ct=ct)
+            self.G[ct].names = c.ct_names[ct]
+            self.L[ct].names = c.ct_names[ct]
+        # special case: extend to all loaded templates
+        for template in ['pick', 'point', 'PutTask']:
+            if to_default_name(template) not in c.ct_names['template']:
+                c.ct_names['template'] = np.append(c.ct_names['template'], to_default_name(template))
+                self.G['template'].p = np.append(self.G['template'].p, 0.0)
+                self.L['template'].p = np.append(self.L['template'].p, 0.0)
+                self.G['template'].names = c.ct_names['template']
+                self.L['template'].names = c.ct_names['template']
 
-        self.deictic_confidence = deictic_confidence
+    def check_merged(self, y, c):
+        success = True
+        for ct in c.ct_names.keys():
+            if y[ct] == self.M[ct].activated:
+                print(f"{cc.H}{y[ct]} == {self.M[ct].activated}{cc.E}", end="; ")
+            else:
+                print(f"{cc.F}{y[ct]} != {self.M[ct].activated}{cc.E}", end="; ")
+            
+            if ct in y.keys():
+                if y[ct] != self.M[ct].activated:
+                    success = False
+        print()
+        return success
 
-    def get_cts_visible(self):
-        cts_visible = []
-
-        if sum(self.target_template) > 0.1:
-            cts_visible.append("template")
-        if sum(self.target_selections) > 0.1:
-            cts_visible.append("selection")
-        if sum(self.distance_params) > 0.1:
-            cts_visible.append("distance")
-
-        return cts_visible
-
-    def __str__(self):
-        return f"{[(n, m) for n, m in zip(self.target_template_names, self.target_template)]} \n {[(n, m) for n, m in zip(self.target_selection_names, self.target_selections)]}"

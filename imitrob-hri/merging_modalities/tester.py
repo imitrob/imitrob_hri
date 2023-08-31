@@ -1,5 +1,5 @@
 from configuration import Configuration
-from modality_merger import ProbsVector, SingleTypeModalityMerger, ModalityMerger, UnifiedSentence, MultiProbsVector
+from modality_merger import ProbsVector, SingleTypeModalityMerger, ModalityMerger, MultiProbsVector
 from utils import *
 import sys, os; sys.path.append("..")
 from nlp_new.nlp_utils import make_conjunction, to_default_name
@@ -10,6 +10,8 @@ import numpy as np
 def probs_vector_tester():
     ''' ProbsVector holds vector of probabilities and can do additional features 
     '''
+    c = Configuration()
+
     c.template_names = ['pick up', 'place', 'push']
     c.selection_names = ['box', 'big box', 'table']
     c.match_threshold = 0.7
@@ -80,6 +82,7 @@ def interactive_plot_tester():
 
 def modality_merge_tester():
     print(f"{'-' * 5} 1 {'-' * 5}")
+    c = Configuration()
     ls = UnifiedSentence([0.9,0.2,0.1],[[0.9,0.1,0.0],[0.1,0.9,0.0]])
     gs = UnifiedSentence([0.9,0.2,0.1],[[0.9,0.1,0.0],[0.1,0.9,0.0]])
     mm = ModalityMerger(c.template_names, c.selection_names, ['template', 'selection'])
@@ -131,96 +134,18 @@ def modality_merge_2_tester():
     r = mm.feedforward2(ls, gs)
     print(r)
 
-def test_on_data():
-    gestures_data = np.load('/home/imitlearn/crow-base/src/imitrob-hri/imitrob-hri/data/artificial_gestures_01.npy', allow_pickle=True)
-    speech_data = np.load('/home/imitlearn/crow-base/src/imitrob-hri/imitrob-hri/data/artificial_speech_01.npy', allow_pickle=True)
-    results_data = np.load('/home/imitlearn/crow-base/src/imitrob-hri/imitrob-hri/data/artificial_results_01.npy', allow_pickle=True)
-    
-    acc = 0
-    for gs, ls, trueres in zip(gestures_data, speech_data, results_data):
-        print("gta", gs.target_template, " lta ", ls.target_template, " gts: ", gs.target_selections, " lts: ", ls.target_selections)
-
-        mm = ModalityMerger(c.template_names, c.selection_names, c.compare_types)
-        r = mm.feedforward2(ls, gs)
-        print(r)
-        print(r.activated, trueres[0])
-        print(r.activated == trueres[0])
-        if r.activated == trueres[0]:
-            acc +=1
-
-    print(f"Final acc: {acc/40 *100}%")
-    
-    print(results_data)
-
-
-def names_to_default():
-    language_template_name = utils.ct_name_to_default_name(language_template_name, ct='template') # "pick that" -> "pick up"
-    language_templates = [utils.ct_name_to_default_name(name, ct='template') for name in self.get_language_templates()] # all templates available
-
-
-
-def test_on_data2():
-    dataset = np.load(os.path.expanduser('~/ros2_ws/src/imitrob-hri/imitrob-hri/data/artificial_dataset_02.npy'), allow_pickle=True)
-    
-    ''' Set configuration '''
-    c = dataset[0]['config']
-
-    acc = 0
-    nsamples = len(dataset)
-    for n,sample in enumerate(dataset):
-        print(f"{'*' * 10} {n}th sample {'*' * 10}")
-        ls = sample['xl'] 
-        gs = sample['xg']
-        y_template = sample['y_template']
-        y_selection = sample['y_selection']
-
-        c.template_names, t_g, t_l = make_conjunction(gs.target_template_names, ls.target_template_names, \
-                            gs.target_template, ls.target_template, ct='template')
-
-        for template in ['pick', 'point', 'PutTask']:
-            if to_default_name(template) not in c.template_names:
-                c.template_names = np.append(c.template_names, to_default_name(template))
-                t_g = np.append(t_g, 0.0)
-                t_l = np.append(t_l, 0.0)
-
-        c.selection_names, o_g, o_l = make_conjunction(gs.target_selection_names, ls.target_selection_names, \
-                            gs.target_selections, ls.target_selections, ct='selection')
-        gs_extended = UnifiedSentence(t_g, target_selections=o_g, target_template_names=c.template_names, target_selection_names=c.selection_names)
-        ls_extended = UnifiedSentence(t_l, target_selections=o_l, target_template_names=c.template_names, target_selection_names=c.selection_names)
-        
-        mm = ModalityMerger(c.template_names, c.selection_names, c.compare_types, c)
-        t, s = mm.feedforward2(ls_extended, gs_extended)
-        
-        if t.activated == y_template and s.activated == y_selection:
-            acc +=1
-        else:
-            print("ls", ls)
-            print("gs", gs)
-            print("y_template", y_template)
-            print("y_selection", y_selection)
-
-            print(t)
-            print(s)
-
-    print(f"Final acc: {acc/nsamples*100}%")
-
-
 if __name__ == '__main__':
-    #print("1. Single probs vector tester: \n")
-    #probs_vector_tester()
+    print("1. Single probs vector tester: \n")
+    probs_vector_tester()
 
-    #print("2. Selection type tester: \n")
-    #single_modality_tester()
+    print("2. Selection type tester: \n")
+    single_modality_tester()
 
-    #print("3. Modality merge tester: \n")
-    #modality_merge_tester()
+    print("3. Modality merge tester: \n")
+    modality_merge_tester()
 
-    #print("4. Interactive plot tester: \n")
-    #interactive_plot_tester()
+    print("4. Interactive plot tester: \n")
+    interactive_plot_tester()
 
-    #print("5. Modality merge 2 tester: \n")
-    #modality_merge_2_tester()
-
-
-    #test_on_data()
-    test_on_data2()
+    print("5. Modality merge 2 tester: \n")
+    modality_merge_2_tester()

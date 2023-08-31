@@ -1,8 +1,10 @@
 ''' Default configuration class '''
 class Configuration():
     def __init__(self):
-        self.template_names = []
-        self.selection_names = []
+        self.ct_names = {
+            'template': [],
+            'selections': [],
+        }
         self.compare_types = []
 
         self.match_threshold = None

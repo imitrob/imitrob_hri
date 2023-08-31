@@ -6,6 +6,7 @@ import numpy as np
 
 template_list = ['pick', 'put', 'point']
 selection_names_list = ['potted meat can', 'tomato soup can', 'bowl', 'Cube', 'Peg', 'box', 'big box', 'aruco box']
+storage_names_list = ['green box', 'abstract zone']
 
 def normal(mu, sigma):
     ''' normal cropped (0 to 1) '''
@@ -21,6 +22,7 @@ class Configuration():
         self.ct_names = {
             'template': ['PickTask', 'PointTask', 'PutTask'],
             'selections': ['box', 'big box', 'table'],
+            'storages': ['green box', 'abstract zone']
         }
         self.match_threshold = 0.4
         self.clear_threshold = 0.34
@@ -90,6 +92,7 @@ for i_sample in range(100):
     # Sample True option
     y_template = np.random.choice(template_list)
     y_selection = np.random.choice(selection_names_list)
+    y_storage = np.random.choice(storage_names_list)
 
     ## Templates
     # Get observed gesture templates
@@ -116,13 +119,26 @@ for i_sample in range(100):
     ct_object_language_likelihood = [normal(unsure_prob_mu, unsure_prob_sigma) for i in range(len(ct_object_language_chosen_names))]
     ct_object_language_likelihood[np.where(ct_object_language_chosen_names == y_selection)[0][0]] = normal(activated_prob_mu, activated_prob_sigma)
 
+    ## Storages
+    storage_g_names = np.random.choice(storage_names_list, size=np.random.randint(1, len(storage_names_list) ), replace=False)
+    storage_g_names = add_if_not_there(storage_g_names, y_storage)
+    storage_g_p = [normal(unsure_prob_mu, unsure_prob_sigma) for i in range(len(storage_g_names))]
+    storage_g_p[np.where(storage_g_names == y_storage)[0][0]] = normal(activated_prob_mu, activated_prob_sigma)
+    
+    storage_l_names = np.random.choice(storage_names_list, size=np.random.randint(1, len(storage_names_list) ), replace=False)
+    storage_l_names = add_if_not_there(storage_l_names, y_storage)
+    storage_l_p = [normal(unsure_prob_mu, unsure_prob_sigma) for i in range(len(storage_l_names))]
+    storage_l_p[np.where(storage_l_names == y_storage)[0][0]] = normal(activated_prob_mu, activated_prob_sigma)
+
     G = {
         'template': ProbsVector(ct_template_gesture_likelihood, ct_template_gesture_chosen_names, c),
         'selections':ProbsVector(ct_object_gesture_likelihood, ct_object_gesture_chosen_names, c),
+        'storages':ProbsVector(storage_g_p, storage_g_names, c),
     }
     L = {
         'template': ProbsVector(ct_template_language_likelihood, ct_template_language_chosen_names, c),
         'selections':ProbsVector(ct_object_language_likelihood, ct_object_language_chosen_names, c),
+        'storages':ProbsVector(storage_l_p, storage_l_names, c),
     }
     s = MMSentence(L, G)
 
@@ -131,6 +147,7 @@ for i_sample in range(100):
         'y': {
             'template': y_template,
             'selections': y_selection,
+            'storages': y_storage,
         }
     }
     if i_sample == 0:
@@ -139,8 +156,8 @@ for i_sample in range(100):
 
 
 
-np.save(os.path.expanduser('~/ros2_ws/src/imitrob-hri/imitrob-hri/data/artificial_dataset_02.npy'), dataset)
+np.save(os.path.expanduser('~/ros2_ws/src/imitrob-hri/imitrob-hri/data/artificial_dataset_03.npy'), dataset)
 
 def get_sample():
-    dataset = np.load(os.path.expanduser('~/ros2_ws/src/imitrob-hri/imitrob-hri/data/artificial_dataset_02.npy'), allow_pickle=True)
+    dataset = np.load(os.path.expanduser('~/ros2_ws/src/imitrob-hri/imitrob-hri/data/artificial_dataset_03.npy'), allow_pickle=True)
     return dataset[0]
