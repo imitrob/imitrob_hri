@@ -1,20 +1,23 @@
-from configuration import Configuration
-from modality_merger import ProbsVector, SingleTypeModalityMerger, ModalityMerger, MultiProbsVector
+
+import sys, os; sys.path.append(os.path.dirname(os.path.abspath(__file__))+"/..")
+from modality_merger import ModalityMerger
 from utils import *
-import sys, os; sys.path.append("..")
-from nlp_new.nlp_utils import make_conjunction, to_default_name
+from nlp_new.nlp_utils import make_conjunction
+import data.datagen_utils as datagen_utils 
 import numpy as np
 
 if __name__ == '__main__':
-    dataset = np.load(os.path.expanduser('~/ros2_ws/src/imitrob-hri/imitrob-hri/data/artificial_dataset_04.npy'), allow_pickle=True)
+    dataset_n = int(sys.argv[1])
+
+    dataset = np.load(os.path.expanduser(f'~/ros2_ws/src/imitrob-hri/imitrob-hri/data/artificial_dataset_0{dataset_n}.npy'), allow_pickle=True)
     
     ''' Set configuration '''
-    c = dataset[0]['config']
-
     acc = 0
+    print(dataset)
     nsamples = len(dataset)
     for n,sample in enumerate(dataset):
         print(f"{'*' * 10} {n}th sample {'*' * 10}")
+        c = sample['config']
         s = sample['x_sentence'] 
         s.make_conjunction(c)
         

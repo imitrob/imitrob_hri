@@ -1,34 +1,47 @@
-
+import sys; sys.path.append("..")
+from nlp_new.templates.MoveUpTask import MoveUpTask
+from nlp_new.templates.PickTask import PickTask
+from nlp_new.templates.PlaceTask import PlaceTask
+from nlp_new.templates.PointTask import PointTask
+from nlp_new.templates.PourTask import PourTask
+from nlp_new.templates.PushTask import PushTask
+from nlp_new.templates.PutTask import PutTask
+from nlp_new.templates.ReleaseTask import ReleaseTask
+from nlp_new.templates.StopTask import StopTask
 
 # names unique, [0] is default name
 template_name_synonyms = {
-    '0': ['noop'],
-    '16': ['grip'],
+    #'0': ['noop'],
+    #'16': ['grip'],
     '32': ['release', "release", "pustit"],
     '64': ['point', 'point', 'ukaž', 'POINT_TASK', 'ukaz', 'PointTask'], # point towards a location
     '80': ['pick', 'PICK_TASK', 'seber', 'pick', 'PickTask'], # pick an object
     '128': ['place', 'place'], # place an object (assuming something is being held)
-    '208': ['pnp'], # pick n place
-    '209': ['store'], # pick an object an place it into a storage
-    '210': ['stash'], # pick an object an place it into the robot storage (backstage)
-    '212': ['fetch'], # take object from backstage and put it near the user
-    '213': ['fetch_to'], # take object from backstage and put it into a storage
-    '214': ['TIDY', 'TIDY_TASK', 'ukliď'], # take all objects from the front and put them into a storage
+    #'208': ['pnp'], # pick n place
+    #'209': ['store'], # pick an object an place it into a storage
+    #'210': ['stash'], # pick an object an place it into the robot storage (backstage)
+    #'212': ['fetch'], # take object from backstage and put it near the user
+    #'213': ['fetch_to'], # take object from backstage and put it into a storage
+    #'214': ['TIDY', 'TIDY_TASK', 'ukliď'], # take all objects from the front and put them into a storage
     '256': ['stop', 'stop'],  # stop the robot arm(s)
-    '?': ['put', 'put', 'polož', 'PutTask'],
-    '15645644565': ['push', 'push'],
+    '1000': ['put', 'put', 'polož', 'PutTask', 'put into'],
+    '1001': ['push', 'push'],
+    '1002': ['move up', 'nahoru', 'up', 'move away'],
+    '1003': ['pour', 'nalij', 'nalit', 'pour into'],
 
-    '512': ['retract'],  # retract to starting position
-    '2048': ['move'],  # move eef to a location
+    #'512': ['retract'],  # retract to starting position
+    #'2048': ['move'],  # move eef to a location
 
-    '4294967296': ['rem_cmd_last', 'REMOVE_COMMAND_LAST', 'Zruš poslední příkaz', 'remove_last_command'],  # removes last added command
-    '4294967297': ['rem_cmd_x', 'REMOVE_COMMAND_X', "remove_command", "Zruš příkaz"],  # removes the specified command
-    '8589934592': ['define_storage'], # start process of marker recognition, polyhedron calculation and addition of this entry to the ontology
-    '8589934593': ['define_position'], # start process of marker recognition and addition of this entry to the ontology
-    '8589934594': ['build_assembly', 'BUILD', 'build', 'stavět', 'Postav', 'build_assembly'], #starts process of building a given assembly based on the recipe using aplanner
-    '8589934595': ['build_assembly_cancel', 'BUILD_CANCEL'], #cancels process of building a given assembly based on the recipe using aplanner
+    #'4294967296': ['rem_cmd_last', 'REMOVE_COMMAND_LAST', 'Zruš poslední příkaz', 'remove_last_command'],  # removes last added command
+    #'4294967297': ['rem_cmd_x', 'REMOVE_COMMAND_X', "remove_command", "Zruš příkaz"],  # removes the specified command
+    #'8589934592': ['define_storage'], # start process of marker recognition, polyhedron calculation and addition of this entry to the ontology
+    #'8589934593': ['define_position'], # start process of marker recognition and addition of this entry to the ontology
+    #'8589934594': ['build_assembly', 'BUILD', 'build', 'stavět', 'Postav', 'build_assembly'], #starts process of building a given assembly based on the recipe using aplanner
+    #'8589934595': ['build_assembly_cancel', 'BUILD_CANCEL'], #cancels process of building a given assembly based on the recipe using aplanner
 
-    '1111111111': ['product_remove', "remove_product", "Odeber výrobek"],
+    #'1111111111': ['product_remove', "remove_product", "Odeber výrobek"],
+
+    
 }
 
 selections_name_synonyms = {
@@ -39,15 +52,23 @@ selections_name_synonyms = {
 
     '10': ['Cube'],
     '11': ['Peg'],
+    '12': ['wrench'],
+    '13': ['paper'],
+
     '100': ['tomato soup can'], 
     '101': ['potted meat can'],
     '102': ['bowl'],
     '103': ['cup'],
+
+    '1000': ['glued wrench'],
 }
 
 storages_name_synonyms = {
-    '0': ['abstract zone'],
-    '1': ['green box'],
+    '0': ['paper box'],
+    '1': ['abstract marked zone'],
+    '2': ['out of table'],
+    '3': ['on the table'],
+
 }
 
 '''
@@ -177,3 +198,18 @@ def make_conjunction(gesture_templates, language_templates, gesture_likelihoods,
     
     #print(f"[conj fun][{len(unique_list)}] final templates: {unique_list}")
     return unique_list, language_likelihoods_unified, gesture_likelihoods_unified
+
+def create_template(template_name):
+    template_name = to_default_name(template_name)
+    
+    return {
+    'release': MoveUpTask(),
+    'point': PickTask(),
+    'pick': PlaceTask(),
+    'place': PointTask(),
+    'stop': PourTask(),
+    'put': PushTask(),
+    'push': PutTask(),
+    'move up': ReleaseTask(),
+    'pour': StopTask(),
+    }[template_name]

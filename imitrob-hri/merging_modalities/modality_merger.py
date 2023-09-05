@@ -12,10 +12,7 @@ from os import listdir
 from os.path import isfile, join
 
 import sys; sys.path.append("..")
-from nlp_new.templates.PickTask import PickTask
-from nlp_new.templates.PointTask import PointTask
-from nlp_new.templates.PutTask import PutTask
-from nlp_new.nlp_utils import make_conjunction, to_default_name
+from nlp_new.nlp_utils import make_conjunction, to_default_name, create_template
 from copy import deepcopy
 
 """
@@ -483,9 +480,7 @@ class ModalityMerger():
         return f"** Modality merge summary: **\n{s}**"
 
     def get_all_templates(self):
-        mypath = os.getcwd()+"/../nlp_new/templates"
-        # list only .py files without .py extension
-        return [f[0:-3] for f in listdir(mypath) if (isfile(join(mypath, f)) and f[-3:]=='.py')]
+        return self.c.ct_names['template']
         
     def get_names_for_compare_type(self, compare_type):
         return {
@@ -615,7 +610,7 @@ class ModalityMerger():
             print(f"Template BEFORE: {template_ct_penalized.p}")
 
         for nt, template in enumerate(templates): # point, pick, place
-            template_obj = eval(template)()
+            template_obj = create_template(template)
 
             alpha = 1.0
             beta = 1.0
@@ -682,7 +677,7 @@ class MMSentence():
             c (Configuration()) (pointer)
         '''
         for ct in c.ct_names.keys():
-            c.ct_names[ct], self.G[ct].p, self.L[ct].p = make_conjunction( \
+            c.ct_names[ct], self.L[ct].p, self.G[ct].p = make_conjunction( \
                                         self.G[ct].names, self.L[ct].names, \
                                         self.G[ct].p, self.L[ct].p, ct=ct)
             self.G[ct].names = c.ct_names[ct]
@@ -698,6 +693,7 @@ class MMSentence():
 
     def check_merged(self, y, c):
         success = True
+        each_ct = []
         for ct in c.ct_names.keys():
             if y[ct] == self.M[ct].activated:
                 print(f"{cc.H}{y[ct]} == {self.M[ct].activated}{cc.E}", end="; ")
@@ -707,6 +703,7 @@ class MMSentence():
             if ct in y.keys():
                 if y[ct] != self.M[ct].activated:
                     success = False
+            each_ct.append(success)
         print()
         return success
 
