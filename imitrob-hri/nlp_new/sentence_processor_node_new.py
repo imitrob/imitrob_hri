@@ -190,7 +190,7 @@ class SentenceProcessor(Node):
         if printer: print(f"{cc.B}language_template_likelihoods: {language_template_likelihoods}{cc.E}\n{cc.B}gesture_template_likelihoods: {gesture_template_likelihoods}{cc.E}")
         
         # 3. Conjunction template vectors
-        templates, t_g, t_l = nlp_utils.make_conjunction(gesture_templates, language_templates, \
+        templates, t_l, t_g = nlp_utils.make_conjunction(gesture_templates, language_templates, \
                                     gesture_template_likelihoods, language_template_likelihoods, ct='template')
 
         if printer: print(f"{cc.W}Conjunction templates:{cc.E} {templates}\nt_g: {t_g}\nt_l: {t_l}")
@@ -207,7 +207,7 @@ class SentenceProcessor(Node):
         
         # 6. make_conjunction selection vectors
         # TODO: GET ALL OBJECT NAMES FROM THE SCENE
-        selections, o_g, o_l = nlp_utils.make_conjunction(selections, selections, \
+        selections, o_l, o_g = nlp_utils.make_conjunction(selections, selections, \
                                        selection_likelihoods, selection_likelihoods, ct='selection')
 
         if printer: print(f"{cc.W}Conjunction templates:{cc.E} {selections}\no_g: {o_g}\no_l: {o_l}")
