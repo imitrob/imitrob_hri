@@ -456,8 +456,6 @@ class SelectionTypeModalityMerger(SingleTypeModalityMerger):
 
 class ModalityMerger():
     def __init__(self, c):
-        ''' Now compare types needs to be ['template', 'selection']
-        '''
         assert len(c.ct_names.keys()) > 0
         self.c = c
         self.mms = {}
@@ -481,7 +479,7 @@ class ModalityMerger():
 
     def get_all_templates(self):
         return self.c.ct_names['template']
-        
+    '''
     def get_names_for_compare_type(self, compare_type):
         return {
             '-': ['abc', 'def', 'ghi']
@@ -495,7 +493,7 @@ class ModalityMerger():
 
     def get_num_of_angular_needed_for_template_magic(self, template):
         return 0
-
+    '''
     @staticmethod
     def is_zeros(arr, threshold=1e-3):
         return np.allclose(arr, np.zeros(arr.shape), atol=threshold)
@@ -544,8 +542,8 @@ class ModalityMerger():
         # Note: aon deleted
         aon = self.get_num_of_selection_needed_for_template_magic(template_po.activated)
         if aon > 0:
-            assert aon == len(language_sentence.target_selections) == len(gesture_sentence.target_selections), f"Target selection num don't match: lan {language_sentence.target_selection}, ges {gesture_sentence.target_selection}"
-            # 2. Selection merge
+            assert aon == len(language_sentence.target_selections) == len(gesture_sentence.target_selections), f"Target selections num don't match: lan {language_sentence.target_selection}, ges {gesture_sentence.target_selection}"
+            # 2. Selections merge
             selection_po = self.selection.merge(language_sentence.target_selections, gesture_sentence.deictic_confidence * gesture_sentence.target_selection)
             
             if not selection_po.conclusion_use:
@@ -582,7 +580,7 @@ class ModalityMerger():
 
         return False
     
-    def feedforward2(self, ls, gs, epsilon=0.05, gamma=0.5):
+    def feedforward2(self, ls, gs, scene, epsilon=0.05, gamma=0.5, alpha_penal=0.9, model=1):
         ''' 
             gs: gesture_sentence, ls: language_sentence
 
@@ -591,6 +589,10 @@ class ModalityMerger():
 
             alpha - penalizes if template does/doesn't have compare type which is in the sentence
         '''
+        counter_properties = 0
+        counter_no_properties = 0
+        alpha_counter = 0
+        beta_counter = 0
         # A.) Data preprocessing
         ls, gs = self.preprocessing(ls, gs, epsilon, gamma)
 
@@ -605,64 +607,100 @@ class ModalityMerger():
         # 2. Penalize likelihood for every template
         templates = self.get_all_templates()
         template_ct_penalized = deepcopy(S_naive['template']) # 1D (templates)
+        template_ct_penalized_real = deepcopy(S_naive['template']) # 1D (templates)
         
         if self.c.DEBUG:
             print(f"Template BEFORE: {template_ct_penalized.p}")
 
-        for nt, template in enumerate(templates): # point, pick, place
-            template_obj = create_template(template)
+        if model > 1:
 
-            alpha = 1.0
-            beta = 1.0
-            for nct, compare_type in enumerate(self.compare_types): # selections, storages, distances, ...
-                # if compare type is missing in sentence or in template -> penalize
-                compare_type_in_sentence = (self.is_ct_visible(ls, compare_type) or self.is_ct_visible(gs, compare_type))
-                compare_type_in_template = template_obj.has_compare_type(compare_type) 
-                if (compare_type_in_template and compare_type_in_sentence):
-                    alpha *= 1.0
-                else:
-                    alpha *= 0.9
-                if template_obj.has_compare_type(compare_type):
-                    #                       properties              x         names
-                    b = np.ones((len(self.c.ct_properties[compare_type]), len(S_naive.names)))
-                    for n,property_name in enumerate(self.c.ct_properties[compare_type]):
+            for nt, template in enumerate(templates): # point, pick, place
+                template_obj = create_template(template)
+
+                alpha = 1.0
+                beta = 1.0
+                beta_real = 1.0
+                for nct, compare_type in enumerate(self.compare_types): # selections, storages, distances, ...
+                    # if compare type is missing in sentence or in template -> penalize
+                    compare_type_in_sentence = (self.is_ct_visible(ls, compare_type) or self.is_ct_visible(gs, compare_type))
+                    compare_type_in_template = template_obj.has_compare_type(compare_type) 
+                    if (compare_type_in_template and compare_type_in_sentence):
+                        alpha *= 1.0
+                    else:
+                        alpha *= alpha_penal
+                        alpha_counter += 1
+
+                    if model > 2: 
+                        if template_obj.has_compare_type(compare_type):
+                            #                       properties              x         names
+                            b = np.ones((len(self.c.ct_properties[compare_type]), len(S_naive[compare_type].names)))
+                            b_real = np.ones((len(self.c.ct_properties[compare_type]), len(S_naive[compare_type].names)))
+                            if len(self.c.ct_properties[compare_type]) > 0:
+                                
+                                for n,property_name in enumerate(self.c.ct_properties[compare_type]):
+                                    
+                                    # check properties, penalize non-compatible ones
+                                    b[n], b_real[n] = penalize_properties(template_obj, property_name, compare_type, S_naive[compare_type], self.c, scene)
+
+                                if max(b.prod(1)) != 1.0:
+                                    print(f"beta: {max(b.prod(1))}. {compare_type}, t {template_obj.name}")
+
+                                # BIG QUESTION HOW TO PENALIZE?
+                                beta *= max(b.prod(1)) # this is draft how it should look like
+                                # look at notes in notebook for more info
+                                beta_real *= max(b_real.prod(1)) # this is draft how it should look like
+                                counter_properties += 1
+                                if beta != 1:
+                                    beta_counter += 1
+                            else:
+                                counter_no_properties += 1
+
                         
-                        # check properties, penalize non-compatible ones
-                        b[n] = penalize_properties(template, property_name, compare_type, S_naive[compare_type], self.c)
-                    # BIG QUESTION HOW TO PENALIZE?
-                    beta *= max(b.prod(1)) # this is draft how it should look like
-                    # look at notes in notebook for more info
-            if self.c.DEBUG: 
-                print(f"alpha: {alpha}")
-                print(f"beta:  {beta}")
-            template_ct_penalized.p[nt] *= alpha
-            template_ct_penalized.p[nt] *= beta
+                if self.c.DEBUG: 
+                    print(f"alpha: {alpha}")
+                    print(f"beta:  {beta}")
+                template_ct_penalized.p[nt] *= alpha
+                template_ct_penalized.p[nt] *= beta
+
+                template_ct_penalized_real.p[nt] *= beta_real
             
         if self.c.DEBUG: 
             print(f"Template AFTER: {template_ct_penalized.p}")
         # hack
         template_ct_penalized.p = np.clip(1.4 * template_ct_penalized.p, 0, 1)
         S_naive['template'] = template_ct_penalized
+        
+        S_naive['storages'].p = np.clip(1.4 * S_naive['storages'].p, 0, 1)
+        
+
+        print("properties counter: ", counter_no_properties, counter_properties)
+        print("alpha beta counter: ", alpha_counter, beta_counter)
+
         return S_naive
     
-def penalize_properties(template, property_name, compare_type, S_naive_c, c):
+def penalize_properties(template_obj, property_name, compare_type, S_naive_c, c, scene):
     '''
     template (String): e.g. 'PickTask'
     property_name (String): e.g. 'reachable', 'pickable', ...
-    compare_type (String): e.g. 'template', 'selection', ...
+    compare_type (String): e.g. 'template', 'selections', ...
     S_naive_c: Sentence naive merged - single compare type
     '''
     ret = np.ones((len(S_naive_c.p)))
+    ret_real = np.ones((len(S_naive_c.p)))
     if c.DEBUG: print(f"[penalize properties] len items p: {len(S_naive_c.p)}")
-    if compare_type == 'selection':
+    if compare_type == 'selections':
         #if not (len(S_naive_c.p) == 0):
-        for n, p, name in enumerate(zip(S_naive_c.p, S_naive_c.names)):
+        n = 0
+        for p, name in zip(S_naive_c.p, S_naive_c.names):
+            if scene.get_object(name).properties[property_name] is not None:
+                penalization, eval = scene.get_object(name).properties[property_name]()
+                if template_obj.task_property_penalization(property_name) < 1.0:
+                    
+                    ret[n] = p * penalization 
+                    ret_real[n] = p * bool(eval)
 
-            if not c.object_properties[name][property_name]:
-                ret[n] = p * c.task_property_penalization[template][property_name]
-                
-                if c.DEBUG: print(f"[penalize properties] {ret} *= {p} * {c.selection_penalization[template][property_name]}")
-    return ret
+            n += 1
+    return ret, ret_real
     
 
 class MMSentence():
@@ -707,3 +745,5 @@ class MMSentence():
         print()
         return success
 
+    def __str__(self):
+        return f"L:\n{self.L['template']}\n{self.L['selections']}\n{self.L['storages']}, G:\n{self.G['template']}\n{self.G['selections']}\n{self.G['storages']}"

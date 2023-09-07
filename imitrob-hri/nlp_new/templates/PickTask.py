@@ -35,7 +35,7 @@ class PickTask(Template):
         self.logger = logging.getLogger(__name__)
 
         # related to parameters ?
-        self.compare_types = ['action', 'selection']
+        self.compare_types = ['action', 'selections']
 
     def match(self, tagged_text : TaggedText, language = 'en', client = None) -> None:
         od = ObjectDetector(language = language, client = client)
@@ -67,7 +67,8 @@ class PickTask(Template):
 '''
 class PickTask():
     def __init__(self):
-        self.compare_types = ['action', 'selection']
+        self.name = 'pick'
+        self.compare_types = ['template', 'selections']
         self.complexity = 1
 
     def has_compare_type(self, compare_type):
@@ -81,11 +82,18 @@ class PickTask():
             Set up using common sense
             e.g. when object is not reachable, how much it matters for pick-task -> quite significant
         '''
-        return {'reachable': 0.4, # When object is not reachable, I still may want to   pick it, but the constraint action is penalized
-            'pickable': 0.0, # When object is not pickable it cannot be picked at all
-            'reachable': 0.0, # When object is not pickable it cannot be picked at all
-            'stackable': 1.0, # When object is not pickable it cannot be picked at all
-            'pushable': 0.0, # When object is not pickable it cannot be picked at all
-            'full': 1.0, # When the object is full it can be still picked
-            'glued': 1.0,
+        return {'reachable': 0.4, # When object is not reachable, I still may want to  pick it, but the constraint action is penalized
+                'pickable':  0.0, # When object is not pickable it cannot be picked at all
+                'stackable': 1.0, 
+                'pushable':  1.0, 
+                'full':      0.8, # When the object is full it can be still picked
+                'glued':     0.0, # When the object is glued it cannot be picked
             }[property]
+    
+    def is_feasible(self, o, s=None):
+        if ( o.properties['reachable'] and  # When object is not reachable, I still may want to   pick it, but the constraint action is penalized
+             o.properties['pickable'] and  # When object is not pickable it cannot be picked at all
+             not o.properties['glued'] ):
+            return True
+        else:
+            return False

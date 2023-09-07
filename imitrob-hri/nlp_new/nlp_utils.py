@@ -163,7 +163,7 @@ def make_conjunction(gesture_templates, language_templates, gesture_likelihoods,
     assert len(gesture_templates) == len(gesture_likelihoods), "items & likelihoods different sizes"
     assert len(language_templates) == len(language_likelihoods), "items & likelihoods different sizes"
     assert len(gesture_templates) == 0 or isinstance(gesture_templates[0], str), "names must be string"
-    assert len(language_templates) == 0 or isinstance(language_templates[0], str), "names must be string"
+    assert len(language_templates) == 0 or isinstance(language_templates[0], str), f"names must be string {language_templates}"
     assert len(gesture_likelihoods) == 0 or isinstance(gesture_likelihoods[0], float), "likelihoods must be float"
     assert len(language_likelihoods) == 0 or isinstance(language_likelihoods[0], float), "likelihoods must be float"
 
@@ -203,13 +203,13 @@ def create_template(template_name):
     template_name = to_default_name(template_name)
     
     return {
-    'release': MoveUpTask(),
-    'point': PickTask(),
-    'pick': PlaceTask(),
-    'place': PointTask(),
-    'stop': PourTask(),
-    'put': PushTask(),
-    'push': PutTask(),
-    'move up': ReleaseTask(),
-    'pour': StopTask(),
+    'release': ReleaseTask(),
+    'point': PointTask(),
+    'pick': PickTask(),
+    'place': PlaceTask(),
+    'stop': StopTask(),
+    'put': PutTask(),
+    'push': PushTask(),
+    'move up': MoveUpTask(),
+    'pour': PourTask(),
     }[template_name]

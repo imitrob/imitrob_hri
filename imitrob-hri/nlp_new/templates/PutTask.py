@@ -24,7 +24,7 @@ class PutTask(Template):
         self.templ_det = self.ui.load_file('templates_detection.json')
 
         # related to parameters ?
-        self.compare_types = ['action', 'selection']
+        self.compare_types = ['action', 'selections']
 
     def match(self, tagged_text : TaggedText, language = 'en') -> None:
         od = ObjectDetector(language = language)
@@ -62,12 +62,9 @@ class PutTask(Template):
 '''    
 class PutTask():
     def __init__(self):
-        self.compare_types = ['action', 'selection', 'storage']
+        self.name = 'put'
+        self.compare_types = ['template', 'selections', 'storages']
         self.complexity = 2
-
-    def has_compare_type(self, compare_type):
-        return False
-
 
     def has_compare_type(self, compare_type):
         if compare_type in self.compare_types:
@@ -81,11 +78,25 @@ class PutTask():
             e.g. when object is not reachable, how much it matters for pick-task -> quite significant
         '''
         return {'reachable': 0.3,
-            'pickable': 1.0, 
-            'reachable': 0.3,
-            'stackable': 0.0,
-            'pushable': 0.0, 
-            'full': 0.0,
-            'glued': 1.0,
+                'pickable':  1.0, 
+                'stackable': 0.0,
+                'pushable':  0.0, 
+                'full':      0.0,
+                'glued':     1.0,
             }[property]
-    
+
+    def is_feasible(self, o, s=None):
+        if o is None:
+            return None
+
+        if (o.properties['reachable'] and
+            o.properties['pickable'] and
+            not o.properties['glued'] and
+            (s is None or ( # if condition on s given it is checked
+                s.properties['reachable'] and
+                not (s.properties['full'] or s.properties['stackable'])
+                ))
+            ):
+            return True
+        else:
+            return False

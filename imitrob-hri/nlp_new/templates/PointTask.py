@@ -28,7 +28,7 @@ class PointTask(Template):
         self.logger = logging.getLogger(__name__)
 
         # related to parameters ?
-        self.compare_types = ['action', 'selection']
+        self.compare_types = ['action', 'selections']
 
     def match(self, tagged_text : TaggedText, language = 'en', client = None) -> None:
         psd = PositionStorageDetector(language=language, client = client)
@@ -76,18 +76,15 @@ class PointTask(Template):
 '''
 class PointTask():
     def __init__(self):
-        self.compare_types = ['action', 'selection']
+        self.name = 'point'
+        self.compare_types = ['template', 'selections']
         self.complexity = 1
-
-    def has_compare_type(self, compare_type):
-        return False
 
     def has_compare_type(self, compare_type):
         if compare_type in self.compare_types:
             return True
         else:
             return False
-        
 
     def task_property_penalization(self, property):
         ''' How much to penalize for given property - weighted
@@ -95,15 +92,18 @@ class PointTask():
             e.g. when object is not reachable, how much it matters for pick-task -> quite significant
         '''
         return {'reachable': 1.0,
-            'pickable': 1.0, 
-            'reachable': 0.0,
-            'stackable': 1.0,
-            'pushable': 0.0, 
-            'full': 1.0,
-            'glued': 1.0,
+                'pickable':  1.0, 
+                'stackable': 1.0,
+                'pushable':  1.0, 
+                'full':      1.0,
+                'glued':     1.0,
             }[property]
 
-
+    def is_feasible(self, o=None, s=None):
+        if True:
+            return True
+        else:
+            return False
 
 
 
