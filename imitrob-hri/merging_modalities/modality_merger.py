@@ -55,6 +55,10 @@ class ProbsVector():
         if len(p) == 0: self.p = np.zeros(len(template_names))
         
         assert len(p) == len(template_names), f"p {p} != template_names {template_names}"
+        
+        if len(p) > 0:
+            for tn in template_names:
+                assert isinstance(tn, str) and tn[0] != '0', f"template name not string: {tn}"
 
         self.p = np.array(p)
         self.template_names = template_names
@@ -589,10 +593,7 @@ class ModalityMerger():
 
             alpha - penalizes if template does/doesn't have compare type which is in the sentence
         '''
-        counter_properties = 0
-        counter_no_properties = 0
-        alpha_counter = 0
-        beta_counter = 0
+        DEBUGdata = []
         # A.) Data preprocessing
         ls, gs = self.preprocessing(ls, gs, epsilon, gamma)
 
@@ -624,16 +625,29 @@ class ModalityMerger():
                     # if compare type is missing in sentence or in template -> penalize
                     compare_type_in_sentence = (self.is_ct_visible(ls, compare_type) or self.is_ct_visible(gs, compare_type))
                     compare_type_in_template = template_obj.has_compare_type(compare_type) 
-                    if (compare_type_in_template and compare_type_in_sentence):
-                        alpha *= 1.0
-                    else:
-                        alpha *= alpha_penal
-                        alpha_counter += 1
 
+                    #print("template", template, "compare_type", compare_type, "compare_type_in_template", compare_type_in_template, "compare_type_in_sentence", compare_type_in_sentence)
+                    #input()
+                    if compare_type_in_template != compare_type_in_sentence:
+                        alpha *= alpha_penal
+                        
+
+                if model > 2:
+                    beta = 0.0
+                    for o in scene.selections:
+                        for s in scene.storages:
+                            if template_obj.is_feasible(o, s):
+                                beta = 1.0
+                    # feasible template on current scene?
+                    '''
                     if model > 2: 
-                        if template_obj.has_compare_type(compare_type):
+                        #print("template_obj.has_compare_type(compare_type):", template_obj.name, compare_type, template_obj.has_compare_type(compare_type))
+                        if template_obj.has_compare_type(compare_type) and \
+                            compare_type == 'selections': # TEMP FOR DEBUG
                             #                       properties              x         names
                             b = np.ones((len(self.c.ct_properties[compare_type]), len(S_naive[compare_type].names)))
+
+                            
                             b_real = np.ones((len(self.c.ct_properties[compare_type]), len(S_naive[compare_type].names)))
                             if len(self.c.ct_properties[compare_type]) > 0:
                                 
@@ -645,20 +659,17 @@ class ModalityMerger():
                                 if max(b.prod(1)) != 1.0:
                                     print(f"beta: {max(b.prod(1))}. {compare_type}, t {template_obj.name}")
 
+
+                                #print("jakoby b  ", b)
                                 # BIG QUESTION HOW TO PENALIZE?
                                 beta *= max(b.prod(1)) # this is draft how it should look like
                                 # look at notes in notebook for more info
                                 beta_real *= max(b_real.prod(1)) # this is draft how it should look like
-                                counter_properties += 1
                                 if beta != 1:
                                     beta_counter += 1
-                            else:
-                                counter_no_properties += 1
 
-                        
-                if self.c.DEBUG: 
-                    print(f"alpha: {alpha}")
-                    print(f"beta:  {beta}")
+                            DEBUGdata.append((template, compare_type, self.c.ct_properties[compare_type], S_naive[compare_type].names, b, beta))
+                    '''
                 template_ct_penalized.p[nt] *= alpha
                 template_ct_penalized.p[nt] *= beta
 
@@ -672,11 +683,7 @@ class ModalityMerger():
         
         S_naive['storages'].p = np.clip(1.4 * S_naive['storages'].p, 0, 1)
         
-
-        print("properties counter: ", counter_no_properties, counter_properties)
-        print("alpha beta counter: ", alpha_counter, beta_counter)
-
-        return S_naive
+        return S_naive, DEBUGdata
     
 def penalize_properties(template_obj, property_name, compare_type, S_naive_c, c, scene):
     '''
@@ -687,19 +694,25 @@ def penalize_properties(template_obj, property_name, compare_type, S_naive_c, c,
     '''
     ret = np.ones((len(S_naive_c.p)))
     ret_real = np.ones((len(S_naive_c.p)))
-    if c.DEBUG: print(f"[penalize properties] len items p: {len(S_naive_c.p)}")
+    #print(f"[penalize properties] len items p: {len(S_naive_c.p)}")
     if compare_type == 'selections':
-        #if not (len(S_naive_c.p) == 0):
-        n = 0
-        for p, name in zip(S_naive_c.p, S_naive_c.names):
-            if scene.get_object(name).properties[property_name] is not None:
-                penalization, eval = scene.get_object(name).properties[property_name]()
-                if template_obj.task_property_penalization(property_name) < 1.0:
-                    
-                    ret[n] = p * penalization 
-                    ret_real[n] = p * bool(eval)
+        task_property_penalization = template_obj.task_property_penalization_selections(property_name)
+    elif compare_type == 'storages':
+        task_property_penalization = template_obj.task_property_penalization_storages(property_name)
+    else: raise Exception()
 
-            n += 1
+    #if not (len(S_naive_c.p) == 0):
+    n = 0
+    for p, name in zip(S_naive_c.p, S_naive_c.names):
+        #if scene.get_object(name).properties[property_name] is not None:
+        penalization, eval = scene.get_object(name).properties[property_name]()
+        if task_property_penalization < 1.0:
+            
+            ret[n] = int(eval) #to see that it works,,,, p * penalization 
+            ret_real[n] = p * bool(eval)
+
+        n += 1
+    
     return ret, ret_real
     
 
@@ -729,20 +742,23 @@ class MMSentence():
                 self.G['template'].names = c.ct_names['template']
                 self.L['template'].names = c.ct_names['template']
 
-    def check_merged(self, y, c):
+    def check_merged(self, y, c, printer=True):
         success = True
         each_ct = []
         for ct in c.ct_names.keys():
             if y[ct] == self.M[ct].activated:
-                print(f"{cc.H}{y[ct]} == {self.M[ct].activated}{cc.E}", end="; ")
+                if printer:
+                    print(f"{cc.H}{y[ct]} == {self.M[ct].activated}{cc.E}", end="; ")
             else:
-                print(f"{cc.F}{y[ct]} != {self.M[ct].activated}{cc.E}", end="; ")
+                if printer:
+                    print(f"{cc.F}{y[ct]} != {self.M[ct].activated}{cc.E}", end="; ")
             
             if ct in y.keys():
                 if y[ct] != self.M[ct].activated:
                     success = False
             each_ct.append(success)
-        print()
+        if printer:
+            print()
         return success
 
     def __str__(self):

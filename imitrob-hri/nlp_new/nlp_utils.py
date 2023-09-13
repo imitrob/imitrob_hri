@@ -1,13 +1,14 @@
 import sys; sys.path.append("..")
 from nlp_new.templates.MoveUpTask import MoveUpTask
 from nlp_new.templates.PickTask import PickTask
-from nlp_new.templates.PlaceTask import PlaceTask
+from nlp_new.templates.UnglueTask import UnglueTask
 from nlp_new.templates.PointTask import PointTask
 from nlp_new.templates.PourTask import PourTask
 from nlp_new.templates.PushTask import PushTask
-from nlp_new.templates.PutTask import PutTask
+from nlp_new.templates.PutIntoTask import PutIntoTask
 from nlp_new.templates.ReleaseTask import ReleaseTask
 from nlp_new.templates.StopTask import StopTask
+from nlp_new.templates.StackTask import StackTask
 
 # names unique, [0] is default name
 template_name_synonyms = {
@@ -24,10 +25,12 @@ template_name_synonyms = {
     #'213': ['fetch_to'], # take object from backstage and put it into a storage
     #'214': ['TIDY', 'TIDY_TASK', 'ukliď'], # take all objects from the front and put them into a storage
     '256': ['stop', 'stop'],  # stop the robot arm(s)
-    '1000': ['put', 'put', 'polož', 'PutTask', 'put into'],
+    '1000': ['put-into', 'put', 'polož', 'PutTask', 'put into', 'put'],
     '1001': ['push', 'push'],
-    '1002': ['move up', 'nahoru', 'up', 'move away'],
+    '1002': ['move-up', 'nahoru', 'up', 'move away', 'move up'],
     '1003': ['pour', 'nalij', 'nalit', 'pour into'],
+    '1004': ['unglue'],
+    '1005': ['stack'],
 
     #'512': ['retract'],  # retract to starting position
     #'2048': ['move'],  # move eef to a location
@@ -203,13 +206,14 @@ def create_template(template_name):
     template_name = to_default_name(template_name)
     
     return {
-    'release': ReleaseTask(),
-    'point': PointTask(),
-    'pick': PickTask(),
-    'place': PlaceTask(),
     'stop': StopTask(),
-    'put': PutTask(),
+    'release': ReleaseTask(),
+    'move-up': MoveUpTask(),
+    'pick': PickTask(),
+    'point': PointTask(),
     'push': PushTask(),
-    'move up': MoveUpTask(),
+    'unglue': UnglueTask(),
+    'put-into': PutIntoTask(),
     'pour': PourTask(),
+    'stack': StackTask(),
     }[template_name]

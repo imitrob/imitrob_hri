@@ -11,10 +11,7 @@ class ReleaseTask():
             return False
     
     def task_property_penalization(self, property):
-        ''' How much to penalize for given property - weighted
-            Set up using common sense
-            e.g. when object is not reachable, how much it matters for pick-task -> quite significant
-        '''
+        raise Exception("Should not have properties")
         return {'reachable': 1.0,
                 'pickable':  1.0, 
                 'stackable': 1.0,
@@ -24,8 +21,7 @@ class ReleaseTask():
             }[property]
 
     def is_feasible(self, o=None, s=None):
+        #assert o is None
+        #assert s is None
 
-        if o is None and s is None:
-            return True
-        else:
-            return False
+        return True

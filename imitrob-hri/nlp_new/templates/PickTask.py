@@ -77,7 +77,7 @@ class PickTask():
         else:
             return False
 
-    def task_property_penalization(self, property):
+    def task_property_penalization_selections(self, property):
         ''' How much to penalize for given property - weighted
             Set up using common sense
             e.g. when object is not reachable, how much it matters for pick-task -> quite significant
@@ -86,11 +86,15 @@ class PickTask():
                 'pickable':  0.0, # When object is not pickable it cannot be picked at all
                 'stackable': 1.0, 
                 'pushable':  1.0, 
-                'full':      0.8, # When the object is full it can be still picked
+                'full-stack':1.0, #0.8, # When the object is full it can be still picked
+                'full-liquid':1.0,
                 'glued':     0.0, # When the object is glued it cannot be picked
             }[property]
     
     def is_feasible(self, o, s=None):
+        #assert s is None
+        assert o is not None
+
         if ( o.properties['reachable'] and  # When object is not reachable, I still may want to   pick it, but the constraint action is penalized
              o.properties['pickable'] and  # When object is not pickable it cannot be picked at all
              not o.properties['glued'] ):

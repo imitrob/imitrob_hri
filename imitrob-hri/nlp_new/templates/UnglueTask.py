@@ -1,8 +1,11 @@
-"""
-class PlaceTask():
+#!/usr/bin/env python3
+
+import logging
+
+class UnglueTask():
     def __init__(self):
-        self.name = 'place'
-        self.compare_types = ['template', 'storages']
+        self.name = 'unglue'
+        self.compare_types = ['template', 'selections']
         self.complexity = 1
 
     def has_compare_type(self, compare_type):
@@ -11,27 +14,25 @@ class PlaceTask():
         else:
             return False
 
-    def task_property_penalization(self, property):
+    def task_property_penalization_selections(self, property):
         ''' How much to penalize for given property - weighted
             Set up using common sense
             e.g. when object is not reachable, how much it matters for pick-task -> quite significant
         '''
-        return {'reachable': 0.0,
+        return {'reachable': 1.0,
                 'pickable':  1.0, 
-                'stackable': 0.0,
+                'stackable': 1.0,
                 'pushable':  1.0, 
-                'full':      0.0,
-                'glued':     1.0,
+                'full-stack':1.0,
+                'full-liquid':1.0,
+                'glued':     0.0,
             }[property]
 
     def is_feasible(self, o=None, s=None):
-        
-        if s is None:
-            return False
-        
-        if ( s.properties['reachable']
-            ):
+        #assert s is None
+        assert o is not None
+
+        if ( o.properties['glued'] ):
             return True
         else:
             return False
-"""

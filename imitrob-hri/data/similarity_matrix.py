@@ -1,7 +1,7 @@
 
 import numpy as np
 
-def get_similarity_matrix(template_list=['move up', 'release', 'stop', 'pick', 'place', 'push', 'point', 'pour', 'put']):
+def get_similarity_matrix():
 
     similarity_matrix = np.diag(np.ones(9))
     similarity_matrix = np.array([

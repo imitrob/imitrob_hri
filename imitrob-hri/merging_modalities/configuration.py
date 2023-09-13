@@ -1,13 +1,14 @@
 ''' Default configuration class '''
 from abc import ABC
+import numpy as np
 
 class Configuration(ABC):
     @property
     def ct_properties_default(self):
         return {
             'template': [],
-            'selections': ['pickable', 'reachable', 'stackable', 'pushable', 'full', 'glued'],
-            'storages': ['pickable', 'reachable', 'stackable', 'pushable', 'full', 'glued'],
+            'selections': ['pickable', 'reachable', 'stackable', 'pushable', 'full-liquid', 'full-stack', 'glued'],
+            'storages': ['pickable', 'reachable', 'stackable', 'pushable', 'full-liquid', 'full-stack', 'glued'],
         }
     
     @property
@@ -16,7 +17,7 @@ class Configuration(ABC):
             'selections_n': ('uniform', 1, 4),
             'storages_n': ('uniform', 0, 3),
         }
-    
+
     @property
     def match_threshold_default(self):
         return 0.55
@@ -52,6 +53,113 @@ class Configuration(ABC):
     def storages(self):
         return self.ct_names['storages']
 
+
+class Configuration11(Configuration):
+    def __init__(self):
+        self.ct_names = {'template': ['move-up', 'release', 'stop', ],
+            'selections': ['potted meat can', 'tomato soup can', 'bowl', 'box', 'alt box', 'paper', 'wrench', 'mouse'],
+            'storages': [],
+        }
+        self.scene_gen_config = {
+            'selections_n': ('uniform', 1, 3),
+            'storages_n': ('uniform', 0, 1),
+        }
+        #self.ct_properties = self.ct_properties_default
+
+        self.match_threshold = 0.4
+        self.clear_threshold = 0.4
+        self.unsure_threshold = self.unsure_threshold_default
+        self.diffs_threshold = self.diffs_threshold_default
+
+        self.epsilon = self.epsilon_default
+        self.gamma = self.gamma_default
+        self.alpha_penal = 0.0
+
+        self.DEBUG = False
+
+        self.sim_table = np.array([
+            [1.0, 0.2, 0.2], 
+            [0.2, 1.0, 0.2], 
+            [0.2, 0.2, 1.0], 
+        ])
+
+class Configuration12(Configuration):
+    def __init__(self):
+        self.ct_names = {'template': ['move-up', 'release', 'stop',
+            'pick', 'push', 'unglue', #'point'
+            ],
+            'selections': ['potted meat can', 'tomato soup can', 'bowl', 'box', 'alt box', 'paper', 'wrench', 'mouse'],
+            'storages': ['paper box', 'abstract marked zone', 'out of table', 'on the table'],
+        }
+        self.scene_gen_config = {
+            'selections_n': ('uniform', 2, 5),
+            'storages_n': ('uniform', 0, 2),
+        }
+        #self.ct_properties = self.ct_properties_default
+
+        self.match_threshold = 0.4
+        self.clear_threshold = 0.4
+        self.unsure_threshold = self.unsure_threshold_default
+        self.diffs_threshold = self.diffs_threshold_default
+
+        self.epsilon = self.epsilon_default
+        self.gamma = self.gamma_default
+        self.alpha_penal = 0.0
+
+        self.DEBUG = False
+
+        self.sim_table = np.array([
+            [1.00, 0.20, 0.20, 0.20, 0.20, 0.20, 0.20], 
+            [0.20, 1.00, 0.20, 0.20, 0.20, 0.20, 0.20], 
+            [0.20, 0.20, 1.00, 0.20, 0.20, 0.20, 0.20], 
+            [0.20, 0.20, 0.20, 1.00, 0.20, 0.20, 0.20], 
+            [0.20, 0.20, 0.20, 0.20, 1.00, 0.20, 0.20], 
+            [0.20, 0.20, 0.20, 0.20, 0.20, 1.00, 0.20], 
+            [0.20, 0.20, 0.20, 0.20, 0.20, 0.20, 1.00], 
+        ])
+
+
+class Configuration13(Configuration):
+    def __init__(self):
+        self.ct_names = {'template': ['move-up', 'release', 'stop',
+                'pick', 'push', 'unglue', # 'point'
+                'pour', 'put-into', 'stack',
+                ],
+            'selections': ['potted meat can', 'tomato soup can', 'bowl', 'box', 'alt box', 'paper', 'wrench', 'mouse'],
+            'storages': ['paper box', 'abstract marked zone', 'out of table', 'on the table'],
+        }
+        self.scene_gen_config = {
+            'selections_n': ('uniform', 3, 7),
+            'storages_n': ('uniform', 2, 3),
+        }
+        #self.ct_properties = self.ct_properties_default
+        
+        self.match_threshold = self.match_threshold_default
+        self.clear_threshold = self.clear_threshold_default
+        self.unsure_threshold = self.unsure_threshold_default
+        self.diffs_threshold = self.diffs_threshold_default
+
+        self.epsilon = self.epsilon_default
+        self.gamma = self.gamma_default
+        self.alpha_penal = 0.0
+
+        self.DEBUG = False
+
+        self.sim_table = np.array([
+            [1.0 , 0.2 , 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2], 
+            [0.2 , 1.0 , 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2], 
+            [0.2 , 0.2 , 1.0, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2], 
+            [0.2 , 0.2 , 0.2, 1.0, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2], 
+            [0.2 , 0.2 , 0.2, 0.2, 1.0, 0.2, 0.2, 0.2, 0.2, 0.2], 
+            [0.2 , 0.2 , 0.2, 0.2, 0.2, 1.0, 0.2, 0.2, 0.2, 0.2], 
+            [0.2 , 0.2 , 0.2, 0.2, 0.2, 0.2, 1.0, 0.2, 0.2, 0.2], 
+            [0.2 , 0.2 , 0.2, 0.2, 0.2, 0.2, 0.2, 1.0, 0.2, 0.2], 
+            [0.2 , 0.2 , 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 1.0, 0.2], 
+            [0.2 , 0.2 , 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 1.0], 
+        ])
+
+
+## Old ##
 class Configuration1(Configuration):
     def __init__(self):
         self.ct_names = {'template': ['move up', 'release', 'stop', ],
@@ -125,3 +233,4 @@ class Configuration3(Configuration):
         self.alpha_penal = self.alpha_penal_default
 
         self.DEBUG = False
+
