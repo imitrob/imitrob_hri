@@ -2,6 +2,7 @@
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button
 import matplotlib.patches as mpatches
+import numpy as np
 
 def interactive_probs_plotter(cl, cg, action_names, clear_threshold, unsure_threshold, diffs_threshold, mo):
     '''
@@ -130,3 +131,37 @@ class cc:
     E = '\033[0m'
     B = '\033[1m'
     U = '\033[4m'
+
+
+
+
+
+def entropy(v):
+    return -np.sum([x * np.log2(x) for x in v])
+
+def safe_entropy(v):
+    v = np.asarray(v, dtype=float)
+    v += np.finfo(float).eps  # add epsilon against x / 0
+    v = v / np.sum(v) # normalize
+    return entropy(v)
+
+def normalized_entropy(v):
+    return safe_entropy(v) / np.log2(len(v))
+
+def cross_entropy(v, q):
+    return -np.sum([vx * np.log2(qx) for vx, qx in zip(v, q)])
+
+def safe_cross_entropy(v, q):
+    assert len(v) == len(q)
+    v, q = np.asarray(v, dtype=float), np.asarray(q, dtype=float)
+    v += np.finfo(float).eps  # add epsilon against x / 0
+    q += np.finfo(float).eps  # add epsilon against x / 0
+    v = v / np.sum(v) # normalize
+    q = q / np.sum(q) # normalize
+    return cross_entropy(v, q)
+
+def normalized_cross_entropy(v, q):
+    return safe_cross_entropy(v, q) / np.log2(len(v))
+
+def  diagonal_cross_entropy(v):
+    return [normalized_cross_entropy(np.eye(len(v))[i], v) for i in range(len(v))]

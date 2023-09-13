@@ -5,22 +5,31 @@ from utils import *
 from nlp_new.nlp_utils import make_conjunction
 import data.datagen_utils as datagen_utils 
 import numpy as np
+from sklearn.metrics import precision_score, recall_score, accuracy_score
 
 def tester_all():
     accs = np.zeros((3,3,4,3))
+    results_save = np.zeros((3,3,4,3), dtype=object)
     for cn,c in enumerate(['c1', 'c2', 'c3']):
         for nn,n in enumerate(['n1', 'n2', 'n3']):
             for pn,p in enumerate(['p0','p1','p2','p3']):
-                for mn,m in enumerate([3]):
+                for mn,m in enumerate([1,2,3]):
                     dataset = np.load(os.path.expanduser(f'~/ros2_ws/src/imitrob-hri/imitrob-hri/data/artificial_dataset_{c}_{n}_{p}.npy'), allow_pickle=True)
-                    acc = tester_on_data(dataset, m, printer=False)
+                    acc, results = tester_on_data(dataset, m, printer=False)
                     accs[cn,nn,pn,mn] = acc
                     print(f"{c} {n} {p} {m}: {acc}")
+                    print(cn,nn,pn,mn, results)
+                    results_save[cn,nn,pn,mn] = results
+                    print(results)
                     np.save("/home/petr/Downloads/accs.npy", accs)
-    np.save("/home/petr/Downloads/accs.npy", accs)
+                    np.save("/home/petr/Downloads/results.npy", results)
+    exit()
 
 def tester_on_data(dataset, model, printer=False):
     ''' Set configuration '''
+    y_pred_cts = []
+    y_true_cts = []
+
     acc = 0
     nsamples = len(dataset)
     for n,sample in enumerate(dataset):
@@ -30,7 +39,7 @@ def tester_on_data(dataset, model, printer=False):
         s.make_conjunction(c)
         
         mm = ModalityMerger(c)
-        s.M, DEBUGdata = mm.feedforward2(s.L, s.G, scene=sample['x_scene'], epsilon=c.epsilon, gamma=c.gamma, alpha_penal=c.alpha_penal, model=model)
+        s.M, DEBUGdata = mm.feedforward3(s.L, s.G, scene=sample['x_scene'], epsilon=c.epsilon, gamma=c.gamma, alpha_penal=c.alpha_penal, model=model)
 
         if s.check_merged(sample['y'], c, printer):
             acc +=1
@@ -53,9 +62,24 @@ def tester_on_data(dataset, model, printer=False):
                 print("-- end post --")
                 #print(DEBUGdata)
                 #input()
+        y_true_ct, y_pred_ct = s.get_true_and_pred(sample['y'], c)
+        y_pred_cts.append(y_pred_ct)
+        y_true_cts.append(y_true_ct)
+
+    y_pred_cts = np.asarray(y_pred_cts)
+    y_true_cts = np.asarray(y_true_cts)
+
+    results = []
+    for ct in range(3): # todo
+        precision = precision_score(y_true_cts[:,ct], y_pred_cts[:,ct], average='micro')
+        recall = recall_score(y_true_cts[:,ct], y_pred_cts[:,ct], average='micro')
+        accuracy = accuracy_score(y_true_cts[:,ct], y_pred_cts[:,ct])
+        
+        results.append((accuracy, precision, recall))
+
 
     print(f"Final acc: {acc/nsamples*100}%")
-    return acc/nsamples*100
+    return acc/nsamples*100, results
 
 if __name__ == '__main__':
     dataset_n = sys.argv[1]

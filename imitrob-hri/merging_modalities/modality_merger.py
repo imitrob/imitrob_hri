@@ -15,6 +15,7 @@ import sys; sys.path.append("..")
 from nlp_new.nlp_utils import make_conjunction, to_default_name, create_template
 from copy import deepcopy
 
+
 """
 class ModalityReceiver():
     ''' Is this already implemented?
@@ -258,6 +259,28 @@ class ProbsVector():
         p_ = np.array(p_)
         assert p_.ndim == 1
         self.p_ = p_
+
+
+class EntropyProbsVector(ProbsVector):
+
+    def __init__(self, p, clear_ids, unsure_ids, template_names=[], c=None):
+        super().__init__(p, template_names, c)
+        self._clear_ids = clear_ids
+        self._unsure_ids = unsure_ids
+        self._negative_ids = [i for i in range(len(p)) if i not in self._clear_ids + self._unsure_ids]
+
+    @property
+    def clear_id(self):
+        return self._clear_ids
+
+    @property
+    def unsure_id(self):
+        return self._unsure_ids
+
+    @property
+    def negative_id(self):
+        return self._negative_ids
+
 
 class MultiProbsVector():
     ''' Saving multiple ProbsVectors '''
@@ -576,6 +599,30 @@ class ModalityMerger():
         else: raise Exception("compare_type not in self.compare_types")
         return mm.merge(lsp, gsp)
     
+    def entropy_modality_merge(self, compare_type, lsp, gsp):
+        if compare_type in self.compare_types:
+            mm = self.mms[compare_type]
+        else:
+            raise Exception("compare_type not in self.compare_types")
+
+        # penalize according to entropy?
+        PENALIZE_BY_ENTROPY = True  #  penalize by entropy prior to merge
+        # UNIFORM_ENTROPY_TH = 0.89  # approx uniform noise entropy
+        UNIFORM_ENTROPY_TH = 0
+
+        if PENALIZE_BY_ENTROPY:
+            lsp /= diagonal_cross_entropy(lsp)
+            gsp /= diagonal_cross_entropy(gsp)
+        msp = lsp + gsp  # "merge"
+        msp /= np.sum(msp)  # normalize
+
+        clear_th = UNIFORM_ENTROPY_TH or normalized_entropy(msp)  # fixed threshold or entropy
+
+        dcross_ent = np.asarray(diagonal_cross_entropy(msp))
+        clear_ids = np.where(dcross_ent < clear_th)[0].tolist()
+        unsure_ids = np.where(np.logical_and(dcross_ent >= clear_th, np.asarray(msp) > 0.1))[0].tolist()
+        return EntropyProbsVector(msp, clear_ids, unsure_ids, mm.names, mm.c)
+
     def is_ct_visible(self, s_, ct_target, threshold = 0.1):
         for ct in self.compare_types:
             if sum(s_[ct].p) > threshold:
@@ -585,7 +632,7 @@ class ModalityMerger():
         return False
     
     def feedforward2(self, ls, gs, scene, epsilon=0.05, gamma=0.5, alpha_penal=0.9, model=1):
-        ''' 
+        ''' v2 - more general version (testing in process)
             gs: gesture_sentence, ls: language_sentence
 
             templates: point, pick, place
@@ -626,20 +673,9 @@ class ModalityMerger():
                     compare_type_in_sentence = (self.is_ct_visible(ls, compare_type) or self.is_ct_visible(gs, compare_type))
                     compare_type_in_template = template_obj.has_compare_type(compare_type) 
 
-                    #print("template", template, "compare_type", compare_type, "compare_type_in_template", compare_type_in_template, "compare_type_in_sentence", compare_type_in_sentence)
-                    #input()
                     if compare_type_in_template != compare_type_in_sentence:
                         alpha *= alpha_penal
                         
-
-                if model > 2:
-                    beta = 0.0
-                    for o in scene.selections:
-                        for s in scene.storages:
-                            if template_obj.is_feasible(o, s):
-                                beta = 1.0
-                    # feasible template on current scene?
-                    '''
                     if model > 2: 
                         #print("template_obj.has_compare_type(compare_type):", template_obj.name, compare_type, template_obj.has_compare_type(compare_type))
                         if template_obj.has_compare_type(compare_type) and \
@@ -669,7 +705,7 @@ class ModalityMerger():
                                     beta_counter += 1
 
                             DEBUGdata.append((template, compare_type, self.c.ct_properties[compare_type], S_naive[compare_type].names, b, beta))
-                    '''
+                    
                 template_ct_penalized.p[nt] *= alpha
                 template_ct_penalized.p[nt] *= beta
 
@@ -681,6 +717,73 @@ class ModalityMerger():
         template_ct_penalized.p = np.clip(1.4 * template_ct_penalized.p, 0, 1)
         S_naive['template'] = template_ct_penalized
         
+        S_naive['storages'].p = np.clip(1.4 * S_naive['storages'].p, 0, 1)
+        
+        return S_naive, DEBUGdata
+    
+    def feedforward3(self, ls, gs, scene, epsilon=0.05, gamma=0.5, alpha_penal=0.9, model=1, use_entropy=True):
+        ''' v3 (final version)
+            - entropy modality merge as default
+            - properties modeled as if_feasible function for template
+
+            gs: gesture_sentence, ls: language_sentence
+
+            templates: point, pick, place
+            compare_types: selections, storages, distances, ...
+
+            alpha - penalizes if template does/doesn't have compare type which is in the sentence
+        '''
+        DEBUGdata = []
+        # A.) Data preprocessing
+        ls, gs = self.preprocessing(ls, gs, epsilon, gamma)
+
+        # B.) Merging
+        # 1. Compare types independently
+        S_naive = {}
+        for compare_type in self.compare_types: # storages, distances, ...
+            # single compare-type merger e.g. [box1, cube1, ...] (probs.)
+            if use_entropy:
+                S_naive[compare_type] = self.entropy_modality_merge(compare_type, \
+                                            ls[compare_type].p,
+                                            gs[compare_type].p)
+            else:
+                S_naive[compare_type] = self.single_modality_merge(compare_type, \
+                                            ls[compare_type].p,
+                                            gs[compare_type].p)                
+        # 2. Penalize likelihood for every template
+        templates = self.get_all_templates()
+        template_ct_penalized = deepcopy(S_naive['template']) # 1D (templates)
+        template_ct_penalized_real = deepcopy(S_naive['template']) # 1D (templates)
+        
+        if model > 1:
+            for nt, template in enumerate(templates): # point, pick, place
+                template_obj = create_template(template)
+
+                alpha = 1.0
+                beta = 1.0
+                beta_real = 1.0
+                for nct, compare_type in enumerate(self.compare_types): # selections, storages, distances, ...
+                    # if compare type is missing in sentence or in template -> penalize
+                    compare_type_in_sentence = (self.is_ct_visible(ls, compare_type) or self.is_ct_visible(gs, compare_type))
+                    compare_type_in_template = template_obj.has_compare_type(compare_type) 
+
+                    if compare_type_in_template != compare_type_in_sentence:
+                        alpha *= alpha_penal
+
+                if model > 2:
+                    beta = 0.0
+                    for o in scene.selections:
+                        for s in scene.storages:
+                            if template_obj.is_feasible(o, s):
+                                beta = 1.0
+                template_ct_penalized.p[nt] *= alpha
+                template_ct_penalized.p[nt] *= beta
+
+                template_ct_penalized_real.p[nt] *= beta_real
+            
+        # hack
+        template_ct_penalized.p = np.clip(1.4 * template_ct_penalized.p, 0, 1)
+        S_naive['template'] = template_ct_penalized
         S_naive['storages'].p = np.clip(1.4 * S_naive['storages'].p, 0, 1)
         
         return S_naive, DEBUGdata
@@ -744,7 +847,6 @@ class MMSentence():
 
     def check_merged(self, y, c, printer=True):
         success = True
-        each_ct = []
         for ct in c.ct_names.keys():
             if y[ct] == self.M[ct].activated:
                 if printer:
@@ -756,10 +858,24 @@ class MMSentence():
             if ct in y.keys():
                 if y[ct] != self.M[ct].activated:
                     success = False
-            each_ct.append(success)
-        if printer:
-            print()
+        if printer: print()
         return success
+    
+    def get_true_and_pred(self, y, c, max_only=False):
+        '''
+        
+        '''
+        y_true_cts, y_pred_cts = [], []
+        for ct in c.ct_names.keys():
+            if max_only:
+                y_true_cts.append(str(y[ct]))
+                y_pred_cts.append(str(self.M[ct].max))
+            else:
+                y_true_cts.append(str(y[ct]))
+                y_pred_cts.append(str(self.M[ct].activated))
+        return y_true_cts, y_pred_cts
+
+
 
     def __str__(self):
         return f"L:\n{self.L['template']}\n{self.L['selections']}\n{self.L['storages']}, G:\n{self.G['template']}\n{self.G['selections']}\n{self.G['storages']}"
