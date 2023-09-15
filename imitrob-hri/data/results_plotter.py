@@ -5,18 +5,20 @@ import plotly.graph_objs as go
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
+import os
 from sklearn.metrics import multilabel_confusion_matrix
 from sklearn.metrics import f1_score
+from extraction_funs import *
 
 def jakobysingleplot(data, filepartname, plot=False):
-    m1 = data[:,:,:,0].reshape(36)
-    m2 = data[:,:,:,1].reshape(36)
-    m3 = data[:,:,:,2].reshape(36)
+    m1 = data[:,:,:,0].reshape(45)
+    m2 = data[:,:,:,1].reshape(45)
+    m3 = data[:,:,:,2].reshape(45)
 
 
     # set width of bar
     barWidth = 0.25
-    fig = plt.subplots(figsize =(7,5))
+    fig = plt.figure(figsize =(14,8))
 
     # set height of bar
     #teleop =   [48, 118, 119]
@@ -28,7 +30,7 @@ def jakobysingleplot(data, filepartname, plot=False):
     # gesture2_ = [7, 9, 8]
 
     # Set position of bar on X axis
-    br1 = np.arange(36)
+    br1 = np.arange(45)
     br2 = [x + barWidth for x in br1]
     br3 = [x + barWidth for x in br2]
     plt.grid(axis='y')
@@ -59,18 +61,23 @@ def jakobysingleplot(data, filepartname, plot=False):
     gen_x_axis_list = []
     for c in ['c1', 'c2', 'c3']:
         for n in ['n1', 'n2', 'n3']:
-            for p in ['p0','p1','p2','p3']:
+            for p in ['p0','p1','p2','p3','p4']:
                 gen_x_axis_list.append(f"{c},{n},{p}")
 
     plt.xlabel('Setup (c - config, n - noise level, p - dataset policy)', fontsize = 15)
     plt.ylabel('Accuracy [%]', fontsize = 15)
-    plt.xticks([r + barWidth for r in range(36)],
+    plt.xticks([r + barWidth for r in range(45)],
             gen_x_axis_list)
     plt.xticks(rotation=90)
 
     plt.legend()
-    plt.savefig(f"/home/petr/Pictures/merging_modalities_{name}_{filepartname}.eps")
-    plt.savefig(f"/home/petr/Pictures/merging_modalities_{name}_{filepartname}.png")
+    
+    try:
+        os.mkdir(f"/home/petr/Pictures/mm_pics/{name}")
+    except OSError as error:
+        print(error)  
+    plt.savefig(f"/home/petr/Pictures/mm_pics/{name}/{filepartname}.eps", dpi=fig.dpi, bbox_inches='tight')
+    plt.savefig(f"/home/petr/Pictures/mm_pics/{name}/{filepartname}.png", dpi=fig.dpi, bbox_inches='tight')
     if plot:
         plt.show()
 
@@ -83,53 +90,12 @@ jakobysingleplot(accs, filepartname='accs', plot=True)
 
 results = np.load(f"/home/petr/Downloads/results_{name}.npy", allow_pickle=True)
 
+template_accuracy = get_from_results('template', 'accuracy', results)
+template_precision = get_from_results('template', 'precision', results)
+template_recall = get_from_results('template', 'recall', results)
 
-
-def get_from_results(ct, metric):
-    ret = np.zeros((3,3,4,3))
-    for cn,c in enumerate(['c1', 'c2', 'c3']):
-        for nn,n in enumerate(['n1', 'n2', 'n3']):
-            for pn,p in enumerate(['p0','p1','p2','p3']):
-                for mn,m in enumerate(['m1', 'm2', 'm3']):
-                    ret[cn,nn,pn,mn] = results[cn,nn,pn,mn].item()[ct][metric]
-    return ret
-
-def get_specificity(ct):
-    ret = np.zeros((3,3,4,3))
-    for cn,c in enumerate(['c1', 'c2', 'c3']):
-        for nn,n in enumerate(['n1', 'n2', 'n3']):
-            for pn,p in enumerate(['p0','p1','p2','p3']):
-                for mn,m in enumerate(['m1', 'm2', 'm3']):
-                    Y_pred = results[cn,nn,pn,mn].item()[ct]['y_pred_cts']
-                    Y_true = results[cn,nn,pn,mn].item()[ct]['y_true_cts']
-
-                    cm = multilabel_confusion_matrix(Y_true, Y_pred)
-                    specificity = []
-                    for item in cm:
-                        tn, fp, fn, tp = item[0,0], item[0,1], item[1,0], item[1,1]
-                        specificity.append( tn / (tn + fp) )
-                    specificity = np.array(specificity).mean()
-
-                    ret[cn,nn,pn,mn] = specificity
-    return ret
-
-def get_f1(ct):
-    ret = np.zeros((3,3,4,3))
-    for cn,c in enumerate(['c1', 'c2', 'c3']):
-        for nn,n in enumerate(['n1', 'n2', 'n3']):
-            for pn,p in enumerate(['p0','p1','p2','p3']):
-                for mn,m in enumerate(['m1', 'm2', 'm3']):
-                    Y_pred = results[cn,nn,pn,mn].item()[ct]['y_pred_cts']
-                    Y_true = results[cn,nn,pn,mn].item()[ct]['y_true_cts']
-                    ret[cn,nn,pn,mn] = f1_score(Y_true, Y_pred, average='micro')
-    return ret
-
-template_accuracy = get_from_results('template', 'accuracy')
-template_precision = get_from_results('template', 'precision')
-template_recall = get_from_results('template', 'recall')
-
-template_specificity = get_specificity('template')
-template_f1 = get_f1('template')
+template_specificity = get_specificity('template', results)
+template_f1 = get_f1('template', results)
 
 
 # selections_accuracy = get_from_results('selections', 'accuracy')

@@ -12,7 +12,7 @@ class NormalModel():
 
     def __call__(self, size=1):
         ''' normal cropped (0 to 1) '''
-        return np.clip(np.random.normal(self.mu * np.ones((size)), self.sigma * np.ones((size))), 0, 1)
+        return np.random.normal(self.mu * np.ones((size)), self.sigma * np.ones((size)))
 
 
 
@@ -71,10 +71,19 @@ gesture_noise_model2 = MixtureModel([
     ], factor=1.0, negative_noise=True)
 
 def entropy_tester():
+    nm = NormalModel(0.0, 0.05)
+    plt.hist(nm(10000), bins=np.linspace(0.001,1,200))
+    plt.hist(gesture_noise_model.rvs(10000), bins=np.linspace(0.001, 1, 200))
+    plt.hist(gesture_noise_model2.rvs(10000), bins=np.linspace(0.001, 1, 200))
+    plt.legend(['$n1$', '$n2$', '$n3$'])
+    #plt.hist(gesture_det_model.rvs(10000), bins=np.linspace(0, 1, 200))
+    plt.xlabel("Noise level [-]")
+    plt.ylabel("Occurance [-]")
+    plt.grid()
+    plt.axis([0.0, 0.6, 0, 1000])
 
-    #plt.hist(gesture_noise_model.rvs(10000), bins=np.linspace(-2, 2, 2000))
-    plt.hist(gesture_det_model.rvs(10000), bins=np.linspace(0, 1, 200))
-    
+    plt.savefig("/home/petr/Downloads/noise_model.eps")
+
     plt.show()
     for i in range(10):
         print(gesture_noise_model.rvs(1))

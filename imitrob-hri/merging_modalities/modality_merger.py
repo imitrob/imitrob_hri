@@ -865,10 +865,14 @@ class ModalityMerger():
 
                 template_ct_penalized_real.p[nt] *= beta_real
             
-        # hack
-        template_ct_penalized.p = np.clip(1.4 * template_ct_penalized.p, 0, 1)
+        
+        if use_magic == 'entropy' or use_magic == 'entropy_add_2':
+            template_ct_penalized.recompute_ids()
+        # hack - only if mul
+        if use_magic == 'mul' or use_magic == 'entropy':
+            template_ct_penalized.p = np.clip(1.4 * template_ct_penalized.p, 0, 1)
+            S_naive['storages'].p = np.clip(1.4 * S_naive['storages'].p, 0, 1)
         S_naive['template'] = template_ct_penalized
-        S_naive['storages'].p = np.clip(1.4 * S_naive['storages'].p, 0, 1)
         
         return S_naive, DEBUGdata
     

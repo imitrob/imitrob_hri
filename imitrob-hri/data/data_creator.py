@@ -18,24 +18,44 @@ def generate_dataset(gen_params):
             iteration = 0
             while y_template is None:
                 iteration += 1
-                if iteration > 10000: raise Exception("Iterations")
+                if iteration > 100000: raise Exception(f"Iterations, debug: {scene} {get_random_feasible_triplet(scene)} {get_templates_decisive_based_on_properties(names=c.templates, true_name=y_template, min_ch=1, scene=scene)}")
 
                 scene = get_random_scene(c)
                 y_template, y_selection, y_storages = get_random_feasible_triplet(scene)
+
+                # check that any decidable
+                if rp == 'fake_properties_decidable_wrt_true' and len(c.templates)>3:
+                    tdp = get_templates_decisive_based_on_properties(names=c.templates, true_name=y_template, min_ch=1, scene=scene)
+                    if len(tdp) == 0:
+                        print("discarded sample")
+                        y_template = None
                 
             det_fun = gen_params['det_fun']
             noise_fun = gen_params['noise_fun']
             
-            G = {
-                'template': ProbsVector(*generate_probs(names=c.templates,           true_name=y_template, det_fun=det_fun, min_ch=1, sim_table=c.sim_table_gesture, scene=scene, regulation_policy=rp, noise_fun=noise_fun), c),
-                'selections': ProbsVector(*generate_probs(names=scene.selection_names, true_name=y_selection, det_fun=det_fun, min_ch=0, sim_table=c.sim_table_gesture_objects, scene=scene, regulation_policy='-', noise_fun=noise_fun), c),
-                'storages': ProbsVector(*generate_probs(names=scene.storage_names,   true_name=y_storages, det_fun=det_fun, min_ch=0, sim_table=c.sim_table_gesture_storages, scene=scene, regulation_policy='-', noise_fun=noise_fun), c),
-            }
-            L = {
-                'template': ProbsVector(*generate_probs(names=c.templates,           true_name=y_template, det_fun=det_fun, min_ch=1, sim_table=c.sim_table_language, scene=scene, regulation_policy=rp, noise_fun=noise_fun), c),
-                'selections':ProbsVector(*generate_probs(names=scene.selection_names, true_name=y_selection, det_fun=det_fun, min_ch=0, sim_table=c.sim_table_language_objects, scene=scene, regulation_policy='-', noise_fun=noise_fun), c),
-                'storages':ProbsVector(*generate_probs(names=scene.storage_names,   true_name=y_storages, det_fun=det_fun, min_ch=0, sim_table=c.sim_table_language_storages, scene=scene, regulation_policy='-', noise_fun=noise_fun), c),
-            }
+            if rp == 'one_bigger':
+                
+                G = {
+                    'template': ProbsVector(*generate_probs(names=c.templates,           true_name=y_template, det_fun=det_fun, min_ch=1, sim_table=c.sim_table_gesture, scene=scene, regulation_policy='one_bigger', noise_fun=noise_fun), c),
+                    'selections': ProbsVector(*generate_probs(names=scene.selection_names, true_name=y_selection, det_fun=det_fun, min_ch=0, sim_table=c.sim_table_gesture_objects, scene=scene, regulation_policy='-', noise_fun=noise_fun), c),
+                    'storages': ProbsVector(*generate_probs(names=scene.storage_names,   true_name=y_storages, det_fun=det_fun, min_ch=0, sim_table=c.sim_table_gesture_storages, scene=scene, regulation_policy='-', noise_fun=noise_fun), c),
+                }
+                L = {
+                    'template': ProbsVector(*generate_probs(names=c.templates,           true_name=y_template, det_fun=det_fun, min_ch=1, sim_table=c.sim_table_language, scene=scene, regulation_policy='-', noise_fun=noise_fun), c),
+                    'selections':ProbsVector(*generate_probs(names=scene.selection_names, true_name=y_selection, det_fun=det_fun, min_ch=0, sim_table=c.sim_table_language_objects, scene=scene, regulation_policy='-', noise_fun=noise_fun), c),
+                    'storages':ProbsVector(*generate_probs(names=scene.storage_names,   true_name=y_storages, det_fun=det_fun, min_ch=0, sim_table=c.sim_table_language_storages, scene=scene, regulation_policy='-', noise_fun=noise_fun), c),
+                }
+            else:
+                G = {
+                    'template': ProbsVector(*generate_probs(names=c.templates,           true_name=y_template, det_fun=det_fun, min_ch=1, sim_table=c.sim_table_gesture, scene=scene, regulation_policy=rp, noise_fun=noise_fun), c),
+                    'selections': ProbsVector(*generate_probs(names=scene.selection_names, true_name=y_selection, det_fun=det_fun, min_ch=0, sim_table=c.sim_table_gesture_objects, scene=scene, regulation_policy='-', noise_fun=noise_fun), c),
+                    'storages': ProbsVector(*generate_probs(names=scene.storage_names,   true_name=y_storages, det_fun=det_fun, min_ch=0, sim_table=c.sim_table_gesture_storages, scene=scene, regulation_policy='-', noise_fun=noise_fun), c),
+                }
+                L = {
+                    'template': ProbsVector(*generate_probs(names=c.templates,           true_name=y_template, det_fun=det_fun, min_ch=1, sim_table=c.sim_table_language, scene=scene, regulation_policy=rp, noise_fun=noise_fun), c),
+                    'selections':ProbsVector(*generate_probs(names=scene.selection_names, true_name=y_selection, det_fun=det_fun, min_ch=0, sim_table=c.sim_table_language_objects, scene=scene, regulation_policy='-', noise_fun=noise_fun), c),
+                    'storages':ProbsVector(*generate_probs(names=scene.storage_names,   true_name=y_storages, det_fun=det_fun, min_ch=0, sim_table=c.sim_table_language_storages, scene=scene, regulation_policy='-', noise_fun=noise_fun), c),
+                }
 
             if gen_params['complementary']:
                 for k in G.keys():
@@ -69,8 +89,9 @@ def gen_dataset(c,n,p):
     policies_list = [
         '-',
         'fake_arity_decidable_wrt_true',
-        'undecidable_wrt_true',
         'fake_properties_decidable_wrt_true',
+        'undecidable_wrt_true',
+        'one_bigger',
     ]
     policies = []
     for char in policies_str:
@@ -84,14 +105,14 @@ def gen_dataset(c,n,p):
         'policies': policies,
     })
 
-    np.save(os.path.expanduser(f'~/ros2_ws/src/imitrob-hri/imitrob-hri/data/artificial_dataset_{c}_{n}_{p}.npy'), dataset)
+    #np.save(os.path.expanduser(f'~/ros2_ws/src/imitrob-hri/imitrob-hri/data/artificial_dataset_{c}_{n}_{p}.npy'), dataset)
 
 if __name__ == '__main__':
     dataset_name = sys.argv[1]
     if dataset_name == 'all':
         for c in ['c1', 'c2', 'c3']:
             for n in ['n1', 'n2', 'n3']:
-                for p in ['p0','p1','p2','p3']:
+                for p in ['p2']:
                     gen_dataset(c,n,p)
     
     else:

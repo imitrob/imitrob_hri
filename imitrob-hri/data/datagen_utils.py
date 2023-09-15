@@ -338,7 +338,9 @@ def generate_probs(names, true_name, det_fun, min_ch, sim_table, scene, regulati
         chosen_names_subset_2 = get_templates_decisive_based_on_properties(names, true_name, min_ch, scene)
         chosen_names_subset_ = list(set(chosen_names_subset_1 + chosen_names_subset_2))
 
-        for chosen_name_subset_ in chosen_names_subset_:
+        chosen_names_subset_inv = [nm for nm in names if nm not in chosen_names_subset_]
+
+        for chosen_name_subset_ in chosen_names_subset_inv:
             if chosen_name_subset_ not in chosen_names_subset:
                 chosen_names_subset = np.append(chosen_names_subset,chosen_name_subset_)
                 P = np.append(P, activated_normal)
@@ -358,6 +360,25 @@ def generate_probs(names, true_name, det_fun, min_ch, sim_table, scene, regulati
                 id = list(chosen_names_subset).index(chosen_name_subset_)
                 P[id] = np.clip(activated_normal + added_noise_regulation_policy,0,1)
 
+    if regulation_policy == 'one_bigger':
+
+        chosen_names_subset_1 = get_templates_decisive_based_on_arity(names, true_name, min_ch, scene)
+        chosen_names_subset_2 = get_templates_decisive_based_on_properties(names, true_name, min_ch, scene)
+        chosen_names_subset_ = list(set(chosen_names_subset_1 + chosen_names_subset_2))
+
+        chosen_names_subset_inv = [nm for nm in names if nm not in chosen_names_subset_]
+        # choose one undecisive
+        if len(chosen_names_subset_inv) > 0:
+            chosen_name_subset_ = chosen_names_subset_inv[0]
+        else:
+            chosen_name_subset_ = chosen_names_subset_[0]
+
+        if chosen_name_subset_ not in chosen_names_subset:
+            chosen_names_subset = np.append(chosen_names_subset,chosen_name_subset_)
+            P = np.append(P, 1.0)
+        else:
+            id = list(chosen_names_subset).index(chosen_name_subset_)
+            P[id] = np.clip(1.0,0,1)
 
     return P, chosen_names_subset
 
@@ -425,3 +446,4 @@ def get_templates_decisive_based_on_properties(names, true_name, min_ch, scene):
 
 
     return unfeasible_templates
+

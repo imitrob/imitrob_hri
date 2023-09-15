@@ -8,11 +8,11 @@ import numpy as np
 from sklearn.metrics import precision_score, recall_score, accuracy_score
 
 def tester_all(use_magic):
-    accs = np.zeros((3,3,4,3))
-    results_save = np.zeros((3,3,4,3), dtype=object)
+    accs = np.zeros((3,3,5,3))
+    results_save = np.zeros((3,3,5,3), dtype=object)
     for cn,c in enumerate(['c1', 'c2', 'c3']):
         for nn,n in enumerate(['n1', 'n2', 'n3']):
-            for pn,p in enumerate(['p0','p1','p2','p3']):
+            for pn,p in enumerate(['p0','p1','p2','p3','p4']):
                 for mn,m in enumerate([1,2,3]):
                     dataset = np.load(os.path.expanduser(f'~/ros2_ws/src/imitrob-hri/imitrob-hri/data/artificial_dataset_{c}_{n}_{p}.npy'), allow_pickle=True)
                     acc, results = tester_on_data(dataset, m, use_magic, printer=False)
