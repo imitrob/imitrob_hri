@@ -3,11 +3,7 @@ import sys, os; sys.path.append(os.path.dirname(os.path.abspath(__file__))+"/.."
 from merging_modalities.utils import cc
 from nlp_new.nlp_utils import create_template
 from copy import deepcopy
-
-def normal(mu, sigma):
-    ''' normal cropped (0 to 1) '''
-    return np.clip(np.random.normal(mu, sigma), 0, 1)
-
+from merging_modalities import noise_model
 
 def add_if_not_there(a, b):
     if b not in a:
@@ -106,7 +102,7 @@ class Object3():
     
     
 class Scene3():
-    def __init__(self, selections, storages, template_names=['move-up', 'release', 'stop', 'pick', 'point', 'push', 'unglue', 'pour', 'put-into', 'stack']):
+    def __init__(self, selections, storages, template_names):
         self.templates = []
         for template_name in template_names:
             self.templates.append( create_template(template_name) )
@@ -275,7 +271,7 @@ def triplet_to_name(template, object, storage):
 
 
 
-def generate_probs(names, true_name, activated_mu, activated_sigma, min_ch, sim_table, scene, regulation_policy, noise_sigma):
+def generate_probs(names, true_name, det_fun, min_ch, sim_table, scene, regulation_policy, noise_fun):
     ''' approach v2
     Parameters:
         names (String[]): e.g. template names
@@ -290,15 +286,15 @@ def generate_probs(names, true_name, activated_mu, activated_sigma, min_ch, sim_
     elif regulation_policy == 'not aligned':
         pass # do something
 
-    # 1. Get observed gesture templates: [pick, pour] chosen from all [pick, pour, point, push, ...]
+    # 1. Get observed gesture templates: [pick, pour] chosen from all e.g. [pick, pour, point, push, ...]
     chosen_names_subset = np.random.choice(names, size=np.random.randint(min_ch, len(names) ), replace=False)
     # 2. If true_name == 'stack' -> is not in chosen_names_subset -> add it 
     chosen_names_subset = add_if_not_there(chosen_names_subset, true_name)
-    # 3. Give all likelihoods zeros [1.0, 1.0, 1.0], [pick, pour, stack]
+    # 3. Give all likelihoods ones [1.0, 1.0, 1.0], [pick, pour, stack]
     P = [1.0] * len(chosen_names_subset)
     # 4. Give the true value the activated prob -> [1.0, 1.0, 1.0], [pick, pour, stack]
     id_activated = np.where(chosen_names_subset == true_name)[0][0]
-    activated_normal = normal(activated_mu, activated_sigma)
+    activated_normal = det_fun()
     # 5.1. Prepare sim_table_subset
     name_ids = []
     for name in chosen_names_subset: # 
@@ -312,8 +308,17 @@ def generate_probs(names, true_name, activated_mu, activated_sigma, min_ch, sim_
     # pour  [0.8 , 1   , 0.6  ]
     # stack [0.7 , 0.6 , 1    ] -> [0.7*~0.9, 0.6*~0.9, 1.0*~0.9] 
     l = len(sim_table_subset[id_activated])
-    
-    P = np.clip(sim_table_subset[id_activated] * activated_normal + normal(np.zeros(l),noise_sigma * np.ones(l)), 0, 1)
+
+    # 6. Model added noise
+    added_noise = noise_fun(l) #normal(np.zeros(l),noise_fun(l) * np.ones(l))
+    added_noise_regulation_policy = noise_fun() #normal(0, noise_fun())
+
+    #print("added_noise", added_noise)
+    #print("activated_normal", activated_normal)
+    #print("sim_table_subset[id_activated] * activated_normal", sim_table_subset[id_activated] * activated_normal)
+    P = np.clip(sim_table_subset[id_activated] * activated_normal + added_noise, 0 , 1)
+    #print("P", P)
+    #input()
 
     if regulation_policy == 'fake_arity_decidable_wrt_true': # All templates which can be recognized has activate type
         chosen_names_subset_ = get_templates_decisive_based_on_arity(names, true_name, min_ch, scene)
@@ -324,7 +329,7 @@ def generate_probs(names, true_name, activated_mu, activated_sigma, min_ch, sim_
                 P = np.append(P, activated_normal)
             else:
                 id = list(chosen_names_subset).index(chosen_name_subset_)
-                P[id] = np.clip(activated_normal + normal(0, noise_sigma), 0,1)
+                P[id] = np.clip(activated_normal + added_noise_regulation_policy, 0,1)
 
     elif regulation_policy == 'undecidable_wrt_true':
         # 1. choose random subset 
@@ -339,7 +344,7 @@ def generate_probs(names, true_name, activated_mu, activated_sigma, min_ch, sim_
                 P = np.append(P, activated_normal)
             else:
                 id = list(chosen_names_subset).index(chosen_name_subset_)
-                P[id] = np.clip(activated_normal + normal(0, noise_sigma),0,1)
+                P[id] = np.clip(activated_normal + added_noise_regulation_policy,0,1)
 
     if regulation_policy == 'fake_properties_decidable_wrt_true':
         chosen_names_subset_ = get_templates_decisive_based_on_properties(names, true_name, 
@@ -351,7 +356,7 @@ def generate_probs(names, true_name, activated_mu, activated_sigma, min_ch, sim_
                 P = np.append(P, activated_normal)
             else:
                 id = list(chosen_names_subset).index(chosen_name_subset_)
-                P[id] = np.clip(activated_normal + normal(0, noise_sigma),0,1)
+                P[id] = np.clip(activated_normal + added_noise_regulation_policy,0,1)
 
 
     return P, chosen_names_subset

@@ -167,8 +167,10 @@ class ProbsVector():
         Returns:
             activated template (String) or None
         '''
-        if len(self.clear) == 1 and self.diffs_above_threshold():
-            return self.clear_id[0] 
+        if len(self.clear) > 0 and self.diffs_above_threshold():
+            return self.clear_id[0]
+        #elif (len(self.unsure) > 0 and self.diffs_above_threshold()):
+        #    return self.unsure_id[0] 
 
     @property
     def activated(self):
@@ -176,7 +178,7 @@ class ProbsVector():
 
     @property
     def activated_prob(self):
-        if len(self.clear) == 1 and self.diffs_above_threshold():
+        if len(self.clear) > 0 and self.diffs_above_threshold():
             return self.p[self.clear_id[0]] 
         else: return 0.0
     
@@ -185,7 +187,7 @@ class ProbsVector():
         return self.clear_id[0] if len(self.clear) == 1 else None
 
     def is_match(self):
-        if self.activated != None and self.p[self.single_clear_id] > self.c.match_threshold:
+        if self.single_clear_id != None and self.p[self.single_clear_id] > self.c.match_threshold:
             return True
         else:
             return False
@@ -261,13 +263,29 @@ class ProbsVector():
         self.p_ = p_
 
 
-class EntropyProbsVector(ProbsVector):
 
-    def __init__(self, p, clear_ids, unsure_ids, template_names=[], c=None):
+
+class EntropyProbsVector(ProbsVector):
+    # UNIFORM_ENTROPY_TH = 0.85
+    UNIFORM_ENTROPY_TH = 0
+    NOISE_TH = 0.05
+
+    def __init__(self, p, template_names=[], c=None):
         super().__init__(p, template_names, c)
+
+    def recompute_ids(self):
+        clear_th = self.UNIFORM_ENTROPY_TH or normalized_entropy(self.p_)  # fixed threshold or entropy
+
+        dcross_ent = np.asarray(diagonal_cross_entropy(self.p_))
+        clear_ids = np.where(dcross_ent < clear_th)[0].tolist()
+        unsure_ids = np.where(np.logical_and(dcross_ent >= clear_th, np.asarray(self.p_) > self.NOISE_TH))[0].tolist()
+
+        self._set_ids(clear_ids, unsure_ids)
+
+    def _set_ids(self, clear_ids, unsure_ids):
         self._clear_ids = clear_ids
         self._unsure_ids = unsure_ids
-        self._negative_ids = [i for i in range(len(p)) if i not in self._clear_ids + self._unsure_ids]
+        self._negative_ids = [i for i in range(len(self.p)) if i not in self._clear_ids + self._unsure_ids]
 
     @property
     def clear_id(self):
@@ -281,6 +299,36 @@ class EntropyProbsVector(ProbsVector):
     def negative_id(self):
         return self._negative_ids
 
+    @property
+    def p(self):
+        return self.p_
+
+    @p.setter
+    def p(self, p_):
+        p_ = np.array(p_)
+        assert p_.ndim == 1
+        self.p_ = p_
+        self.recompute_ids()
+
+class NaiveProbsVector(ProbsVector):
+    def __init__(self, p, template_names=[], c=None):
+        super().__init__(p, template_names, c)   
+
+    @property
+    def clear_id(self):
+        if len(self.p) == 0: return []
+        return [np.argmax(self.p)]
+
+    @property
+    def unsure_id(self):
+        return None
+
+    @property
+    def negative_id(self):
+        arange = list(range(len(self.p)))
+        if self.clear_id is not None:
+            arange.remove(self.clear_id)        
+        return arange
 
 class MultiProbsVector():
     ''' Saving multiple ProbsVectors '''
@@ -329,7 +377,7 @@ class SingleTypeModalityMerger():
         self.prior_confidence_gestures = cg_prior
         self.fun = fun
         self.names = names
-        assert self.fun in np.array(['mul', 'abs_sub'])
+        assert self.fun in np.array(['mul', 'add_2', 'entropy', 'baseline', 'entropy_add_2'])
 
         assert c is not None
         self.c = c
@@ -482,15 +530,16 @@ class SelectionTypeModalityMerger(SingleTypeModalityMerger):
 
 
 class ModalityMerger():
-    def __init__(self, c):
+    def __init__(self, c, use_magic):
         assert len(c.ct_names.keys()) > 0
         self.c = c
         self.mms = {}
         for ct in c.ct_names.keys():
-            mm = SingleTypeModalityMerger(names=c.ct_names[ct], c=self.c)
+            mm = SingleTypeModalityMerger(names=c.ct_names[ct], c=self.c, fun=use_magic)
             self.mms[ct] = mm
         
         self.compare_types = c.ct_names.keys()
+        self.use_magic = use_magic
 
     def get_cts_type_objs(self):
         cts = []
@@ -538,12 +587,11 @@ class ModalityMerger():
     def preprocessing(self, ls, gs, epsilon, gamma):
         ''' Data preprocessing '''
         # 1. Add epsilon
-
-        for ct in self.c.ct_names.keys():
-            if self.is_zeros(ls[ct].p):
-                ls[ct].p += epsilon
-            if self.is_zeros(gs[ct].p):
-                gs[ct].p += epsilon
+        # for ct in self.c.ct_names.keys():
+        #     if self.is_zeros(ls[ct].p):
+        #         ls[ct].p += epsilon
+        #     if self.is_zeros(gs[ct].p):
+        #         gs[ct].p += epsilon
 
         # 2. Add gamma, if language includes one value
         for ct in self.c.ct_names.keys():
@@ -592,13 +640,25 @@ class ModalityMerger():
 
         return f'template: {template_po.activated}, What to do: {template_po.conclusion} \n selections:{selection_po.activated}, What to do: {selection_po.conclusion}'
     
+    def naive_modality_merge(self, compare_type, lsp, gsp):
+        if compare_type in self.compare_types:
+            mm = self.mms[compare_type]
+        else:
+            raise Exception("compare_type not in self.compare_types")
+
+        merged_p = []
+        for lp, gp in zip(lsp, gsp):
+            merged_p.append(max(lp, gp))
+
+        return NaiveProbsVector(merged_p, mm.names, mm.c)
+
     def single_modality_merge(self, compare_type, lsp, gsp):
         # Get single modality merger
         if compare_type in self.compare_types:
             mm = self.mms[compare_type] 
         else: raise Exception("compare_type not in self.compare_types")
         return mm.merge(lsp, gsp)
-    
+
     def entropy_modality_merge(self, compare_type, lsp, gsp):
         if compare_type in self.compare_types:
             mm = self.mms[compare_type]
@@ -606,22 +666,30 @@ class ModalityMerger():
             raise Exception("compare_type not in self.compare_types")
 
         # penalize according to entropy?
-        PENALIZE_BY_ENTROPY = True  #  penalize by entropy prior to merge
-        # UNIFORM_ENTROPY_TH = 0.89  # approx uniform noise entropy
-        UNIFORM_ENTROPY_TH = 0
+        PENALIZE_BY_ENTROPY = True
+        DISCARD_ENTROPY_THRESHOLD = 0.85
 
-        if PENALIZE_BY_ENTROPY:
-            lsp /= diagonal_cross_entropy(lsp)
-            gsp /= diagonal_cross_entropy(gsp)
-        msp = lsp + gsp  # "merge"
+        if normalized_entropy(lsp) > DISCARD_ENTROPY_THRESHOLD:
+            # lsp = np.ones_like(lsp) * np.finfo(lsp.dtype).eps
+            msp = gsp
+        elif normalized_entropy(gsp) > DISCARD_ENTROPY_THRESHOLD:
+            # gsp = np.ones_like(gsp) * np.finfo(gsp.dtype).eps
+            msp = lsp
+        else:
+            if PENALIZE_BY_ENTROPY:
+                lsp /= diagonal_cross_entropy(lsp)
+                gsp /= diagonal_cross_entropy(gsp)
+
+            if self.use_magic == 'entropy':
+                msp = lsp * gsp  # "merge"
+            elif self.use_magic == 'entropy_add_2':
+                msp = lsp + gsp
+            else:
+                raise Exception("TODO?")
+
         msp /= np.sum(msp)  # normalize
 
-        clear_th = UNIFORM_ENTROPY_TH or normalized_entropy(msp)  # fixed threshold or entropy
-
-        dcross_ent = np.asarray(diagonal_cross_entropy(msp))
-        clear_ids = np.where(dcross_ent < clear_th)[0].tolist()
-        unsure_ids = np.where(np.logical_and(dcross_ent >= clear_th, np.asarray(msp) > 0.1))[0].tolist()
-        return EntropyProbsVector(msp, clear_ids, unsure_ids, mm.names, mm.c)
+        return EntropyProbsVector(msp, mm.names, mm.c)
 
     def is_ct_visible(self, s_, ct_target, threshold = 0.1):
         for ct in self.compare_types:
@@ -634,10 +702,6 @@ class ModalityMerger():
     def feedforward2(self, ls, gs, scene, epsilon=0.05, gamma=0.5, alpha_penal=0.9, model=1):
         ''' v2 - more general version (testing in process)
             gs: gesture_sentence, ls: language_sentence
-
-            templates: point, pick, place
-            compare_types: selections, storages, distances, ...
-
             alpha - penalizes if template does/doesn't have compare type which is in the sentence
         '''
         DEBUGdata = []
@@ -662,7 +726,7 @@ class ModalityMerger():
 
         if model > 1:
 
-            for nt, template in enumerate(templates): # point, pick, place
+            for nt, template in enumerate(templates): # e.g. pick, push, put-into
                 template_obj = create_template(template)
 
                 alpha = 1.0
@@ -713,6 +777,9 @@ class ModalityMerger():
             
         if self.c.DEBUG: 
             print(f"Template AFTER: {template_ct_penalized.p}")
+
+        template_ct_penalized.recompute_ids()
+
         # hack
         template_ct_penalized.p = np.clip(1.4 * template_ct_penalized.p, 0, 1)
         S_naive['template'] = template_ct_penalized
@@ -721,16 +788,12 @@ class ModalityMerger():
         
         return S_naive, DEBUGdata
     
-    def feedforward3(self, ls, gs, scene, epsilon=0.05, gamma=0.5, alpha_penal=0.9, model=1, use_entropy=True):
+    def feedforward3(self, ls, gs, scene, epsilon=0.05, gamma=0.5, alpha_penal=0.9, model=1, use_magic='entropy'):
         ''' v3 (final version)
             - entropy modality merge as default
             - properties modeled as if_feasible function for template
 
             gs: gesture_sentence, ls: language_sentence
-
-            templates: point, pick, place
-            compare_types: selections, storages, distances, ...
-
             alpha - penalizes if template does/doesn't have compare type which is in the sentence
         '''
         DEBUGdata = []
@@ -741,22 +804,33 @@ class ModalityMerger():
         # 1. Compare types independently
         S_naive = {}
         for compare_type in self.compare_types: # storages, distances, ...
-            # single compare-type merger e.g. [box1, cube1, ...] (probs.)
-            if use_entropy:
+            
+            # single information only?
+            if self.is_zeros(ls[compare_type].p):
+                S_naive[compare_type] = gs[compare_type]
+            elif self.is_zeros(gs[compare_type].p):
+                S_naive[compare_type] = ls[compare_type]
+
+            if use_magic == 'baseline':
+                S_naive[compare_type] = self.naive_modality_merge(compare_type, \
+                            ls[compare_type].p,
+                            gs[compare_type].p)
+            elif use_magic == 'entropy' or use_magic == 'entropy_add_2':
                 S_naive[compare_type] = self.entropy_modality_merge(compare_type, \
                                             ls[compare_type].p,
                                             gs[compare_type].p)
-            else:
+            elif use_magic == 'mul' or use_magic == 'add_2':
                 S_naive[compare_type] = self.single_modality_merge(compare_type, \
                                             ls[compare_type].p,
                                             gs[compare_type].p)                
+            else: raise Exception("Wrong")
         # 2. Penalize likelihood for every template
         templates = self.get_all_templates()
         template_ct_penalized = deepcopy(S_naive['template']) # 1D (templates)
         template_ct_penalized_real = deepcopy(S_naive['template']) # 1D (templates)
         
         if model > 1:
-            for nt, template in enumerate(templates): # point, pick, place
+            for nt, template in enumerate(templates): # e.g. pick, push, put=into
                 template_obj = create_template(template)
 
                 alpha = 1.0
@@ -771,11 +845,21 @@ class ModalityMerger():
                         alpha *= alpha_penal
 
                 if model > 2:
-                    beta = 0.0
-                    for o in scene.selections:
-                        for s in scene.storages:
-                            if template_obj.is_feasible(o, s):
+                    if template_obj.compare_types == ['template', 'selections', 'storages']:
+                        beta = 0.0
+                        for o in scene.selections:
+                            for s in scene.storages:
+                                if template_obj.is_feasible(o, s):
+                                    beta = 1.0
+                    elif template_obj.compare_types == ['template', 'selections']:
+                        beta = 0.0
+                        for o in scene.selections:
+                            if template_obj.is_feasible(o):
                                 beta = 1.0
+                    elif template_obj.compare_types == ['template']:
+                        beta = 1.0
+                    else: raise Exception(f"TODO {template_obj.compare_types}")
+
                 template_ct_penalized.p[nt] *= alpha
                 template_ct_penalized.p[nt] *= beta
 
@@ -836,14 +920,14 @@ class MMSentence():
                                         self.G[ct].p, self.L[ct].p, ct=ct)
             self.G[ct].names = c.ct_names[ct]
             self.L[ct].names = c.ct_names[ct]
-        # special case: extend to all loaded templates
-        for template in ['pick', 'point', 'PutTask']:
-            if to_default_name(template) not in c.ct_names['template']:
-                c.ct_names['template'] = np.append(c.ct_names['template'], to_default_name(template))
-                self.G['template'].p = np.append(self.G['template'].p, 0.0)
-                self.L['template'].p = np.append(self.L['template'].p, 0.0)
-                self.G['template'].names = c.ct_names['template']
-                self.L['template'].names = c.ct_names['template']
+        # special case: extend to all loaded templates (from files)
+        # for template in ['pick', 'point', 'PutTask']:
+        #     if to_default_name(template) not in c.ct_names['template']:
+        #         c.ct_names['template'] = np.append(c.ct_names['template'], to_default_name(template))
+        #         self.G['template'].p = np.append(self.G['template'].p, 0.0)
+        #         self.L['template'].p = np.append(self.L['template'].p, 0.0)
+        #         self.G['template'].names = c.ct_names['template']
+        #         self.L['template'].names = c.ct_names['template']
 
     def check_merged(self, y, c, printer=True):
         success = True

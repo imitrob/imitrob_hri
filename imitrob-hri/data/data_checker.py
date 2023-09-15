@@ -4,7 +4,7 @@ from collections import Counter
 
 if __name__ == '__main__':
     n = sys.argv[1]
-    dataset = np.load(os.path.expanduser(f'~/ros2_ws/src/imitrob-hri/imitrob-hri/data/artificial_dataset_1{n}.npy'), allow_pickle=True)
+    dataset = np.load(os.path.expanduser(f'~/ros2_ws/src/imitrob-hri/imitrob-hri/data/artificial_dataset_{n}.npy'), allow_pickle=True)
     
     tmplts = []
     slctns = []
@@ -18,12 +18,6 @@ if __name__ == '__main__':
     print(f"templates: {Counter(tmplts)}")
     print(f"selections: {Counter(slctns)}")
     print(f"storages: {Counter(strgs)}")
-
-    print("---")
-    print(f"y: {sample['y']['template']}, {sample['y']['selections']}, {sample['y']['storages']}")
-    print(f"config {sample['config']}")
-    print(f"x {sample['x_scene']}")
-    print(f"x {sample['x_sentence']}")
 
     print("---")
 
@@ -40,10 +34,19 @@ if __name__ == '__main__':
         reachable_n += int(sample['x_scene'].selections[0].reachable()[1])
         stackable_n += int(sample['x_scene'].selections[0].stackable()[1])
         pushable_n += int(sample['x_scene'].selections[0].pushable()[1])
-        full_n += int(sample['x_scene'].selections[0].full()[1])
+        full_n += int(sample['x_scene'].selections[0].full_stack()[1])
 
     print(glued_n, pickable_n, reachable_n, stackable_n, pushable_n, full_n)
+    print("  ----   ")
 
-    print("---")
+    for n,sample in enumerate(dataset):
+        print("--- SAMPLE {n} ---")
+        
+        print(f"y: {sample['y']['template']}, {sample['y']['selections']}, {sample['y']['storages']}")
+        print(f"config {sample['config']}")
+        print(f"x {sample['x_scene']}")
+        print(f"x {sample['x_sentence']}")
 
-    print(dataset[0]['x_sentence'])
+        
+
+        input()

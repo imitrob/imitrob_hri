@@ -5,6 +5,7 @@ import numpy as np
 from data.datagen_utils import *
 from nlp_new.nlp_utils import create_template
 from merging_modalities.configuration import *
+import merging_modalities.noise_model as nm
 
 def generate_dataset(gen_params):
 
@@ -22,20 +23,18 @@ def generate_dataset(gen_params):
                 scene = get_random_scene(c)
                 y_template, y_selection, y_storages = get_random_feasible_triplet(scene)
                 
-            activated_mu_template = gen_params['activated_mu_template']
-            activated_sigma_template = gen_params['activated_sigma_template']
-            activated_mu = gen_params['activated_mu']
-            activated_sigma = gen_params['activated_sigma']
-            noise_sigma = gen_params['noise_sigma']
+            det_fun = gen_params['det_fun']
+            noise_fun = gen_params['noise_fun']
+            
             G = {
-                'template': ProbsVector(*generate_probs(names=c.templates,           true_name=y_template, activated_mu=activated_mu_template, activated_sigma=activated_sigma_template, min_ch=1, sim_table=c.sim_table, scene=scene, regulation_policy=rp, noise_sigma=noise_sigma), c),
-                'selections': ProbsVector(*generate_probs(names=scene.selection_names, true_name=y_selection, activated_mu=activated_mu, activated_sigma=activated_sigma, min_ch=0, sim_table=c.sim_table, scene=scene, regulation_policy='-', noise_sigma=noise_sigma), c),
-                'storages': ProbsVector(*generate_probs(names=scene.storage_names,   true_name=y_storages, activated_mu=activated_mu, activated_sigma=activated_sigma, min_ch=0, sim_table=c.sim_table, scene=scene, regulation_policy='-', noise_sigma=noise_sigma), c),
+                'template': ProbsVector(*generate_probs(names=c.templates,           true_name=y_template, det_fun=det_fun, min_ch=1, sim_table=c.sim_table_gesture, scene=scene, regulation_policy=rp, noise_fun=noise_fun), c),
+                'selections': ProbsVector(*generate_probs(names=scene.selection_names, true_name=y_selection, det_fun=det_fun, min_ch=0, sim_table=c.sim_table_gesture_objects, scene=scene, regulation_policy='-', noise_fun=noise_fun), c),
+                'storages': ProbsVector(*generate_probs(names=scene.storage_names,   true_name=y_storages, det_fun=det_fun, min_ch=0, sim_table=c.sim_table_gesture_storages, scene=scene, regulation_policy='-', noise_fun=noise_fun), c),
             }
             L = {
-                'template': ProbsVector(*generate_probs(names=c.templates,           true_name=y_template, activated_mu=activated_mu_template, activated_sigma=activated_sigma_template, min_ch=1, sim_table=c.sim_table, scene=scene, regulation_policy=rp, noise_sigma=noise_sigma), c),
-                'selections':ProbsVector(*generate_probs(names=scene.selection_names, true_name=y_selection, activated_mu=activated_mu, activated_sigma=activated_sigma, min_ch=0, sim_table=c.sim_table, scene=scene, regulation_policy='-', noise_sigma=noise_sigma), c),
-                'storages':ProbsVector(*generate_probs(names=scene.storage_names,   true_name=y_storages, activated_mu=activated_mu, activated_sigma=activated_sigma, min_ch=0, sim_table=c.sim_table, scene=scene, regulation_policy='-', noise_sigma=noise_sigma), c),
+                'template': ProbsVector(*generate_probs(names=c.templates,           true_name=y_template, det_fun=det_fun, min_ch=1, sim_table=c.sim_table_language, scene=scene, regulation_policy=rp, noise_fun=noise_fun), c),
+                'selections':ProbsVector(*generate_probs(names=scene.selection_names, true_name=y_selection, det_fun=det_fun, min_ch=0, sim_table=c.sim_table_language_objects, scene=scene, regulation_policy='-', noise_fun=noise_fun), c),
+                'storages':ProbsVector(*generate_probs(names=scene.storage_names,   true_name=y_storages, det_fun=det_fun, min_ch=0, sim_table=c.sim_table_language_storages, scene=scene, regulation_policy='-', noise_fun=noise_fun), c),
             }
 
             if gen_params['complementary']:
@@ -63,7 +62,9 @@ def generate_dataset(gen_params):
 
 def gen_dataset(c,n,p):
     config = {'c1': Configuration11(), 'c2':Configuration12(), 'c3': Configuration13()}[c]
-    noise = {'n1': (0.9, 0.01, 0.9, 0.01, 0.05), 'n2': (0.8, 0.15, 0.9, 0.01, 0.15), 'n3': (0.75, 0.2, 0.9, 0.01, 0.2)}[n]
+    noise = {'n1': (nm.NormalModel(0.9, 0.01), nm.NormalModel(0.0,0.05)), 
+             'n2': (nm.gesture_det_model, nm.gesture_noise_model),
+             'n3': (nm.gesture_det_model, nm.gesture_noise_model2),}[n]
     policies_str = p[1:]
     policies_list = [
         '-',
@@ -77,13 +78,10 @@ def gen_dataset(c,n,p):
 
     dataset = generate_dataset(gen_params = {
         'configuration': config,
-        'activated_mu_template': noise[0],
-        'activated_sigma_template': noise[1],
-        'activated_mu': noise[2],
-        'activated_sigma': noise[3],
+        'det_fun': noise[0],
+        'noise_fun': noise[1],
         'complementary': False,
         'policies': policies,
-        'noise_sigma': noise[4],
     })
 
     np.save(os.path.expanduser(f'~/ros2_ws/src/imitrob-hri/imitrob-hri/data/artificial_dataset_{c}_{n}_{p}.npy'), dataset)

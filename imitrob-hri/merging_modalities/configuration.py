@@ -20,13 +20,13 @@ class Configuration(ABC):
 
     @property
     def match_threshold_default(self):
-        return 0.55
+        return 0.25
     @property
     def clear_threshold_default(self):
-        return 0.50
+        return 0.2
     @property
     def unsure_threshold_default(self):
-        return 0.15
+        return 0.11
     @property
     def diffs_threshold_default(self):
         return 0.01
@@ -52,12 +52,67 @@ class Configuration(ABC):
     @property
     def storages(self):
         return self.ct_names['storages']
+    
+    @property
+    def sim_table_gesture_default(self):
 
+        return np.array([
+            [1,	    0.01,	0.003,	0.032,	0,	    0.446,	0,	    0.014, 0.002],
+            [0.001,	1,  	0,	    0.001,	0.002,	0.002,	0,	    0,     0.   ],
+            [0, 	0,  	1,	    0,      0.011,	0.007,	0.603,	0,     0.014],
+            [0.005,	0.002,	0,	    1,	    0.013,	0.01,	0,	    0,     0.002],
+            [0, 	0.016,	0.017,	0.002,	1,	    0,	    0.002,	0.042, 0.009],
+            [0.37,	0.001,	0.049,	0.026,	0.001,	1,	    0.019,	0,     0.4  ],
+            [0.018,	0.001,	0,	    0.6,	0.01,	0.015,	1,	    0,     0.020],
+            [0.006,	0.002,	0,	    0.6,	0.016,	0.011,	0,	    1,     0.   ],
+            [0.002,	0.001,	0,	    0.01,	0.01,	0.005,	0,	    0,     1    ],
+        ])
 
+    @property
+    def sim_table_language_default(self):
+        return np.array([
+            [ 1.  , 0.  , 0.33, 0.4 , 0.33, 0.40, 0.33, 0.4 , 0.4 ],
+            [ 0.  , 1.  , 0.33, 0.  , 0.67, 0.  , 0.  , 0.4 , 0.  ],
+            [ 0.33, 0.33, 1.  , 0.4 , 0.33, 0.40, 0.33, 0.40, 0.40],
+            [ 0.40, 0.  , 0.4 , 1.  , 0.4 , 0.5 , 0.4 , 0.5 , 0.5 ],
+            [ 0.33, 0.67, 0.33, 0.40, 1.  , 0.4 , 0.33, 0.40, 0.4 ],
+            [ 0.40, 0.  , 0.40, 0.50, 0.4 , 1.  , 0.4 , 0.5 , 0.5 ],
+            [ 0.33, 0.  , 0.33, 0.40, 0.33, 0.4 , 1.  , 0.4 , 0.8 ],
+            [ 0.4 , 0.4 , 0.4 , 0.5 , 0.4 , 0.5 , 0.4 , 1.  , 0.5 ],
+            [ 0.4 , 0.  , 0.4 , 0.5 , 0.4 , 0.5 , 0.8 , 0.5 , 1.  ],
+        ])
+
+    @property
+    def sim_table_language_objects_default(self):
+        #['potted meat can', 'tomato soup can', 'bowl', 'box', 'big box', 'paper', 'wrench']
+        return np.array([
+            [1.  , 0.71, 0.22, 0.4 , 0.33, 0.2 , 0.2 ],
+            [0.71, 1.  , 0.22, 0.4 , 0.33, 0.2 , 0.2 ],
+            [0.22, 0.22, 1.  , 0.4 , 0.29, 0.4 , 0.  ],
+            [0.4 , 0.4 , 0.4 , 1.  , 0.75, 0.33, 0.  ],
+            [0.33, 0.33, 0.29, 0.75, 1.  , 0.5 , 0.  ],
+            [0.2 , 0.2 , 0.4 , 0.33, 0.5 , 1.  , 0.33],
+            [0.2 , 0.2 , 0.  , 0.  , 0.  , 0.33, 1.  ],
+       ])
+
+    @property
+    def sim_table_gesture_objects_default(self):
+        #['potted meat can', 'tomato soup can', 'bowl', 'box', 'big box', 'paper', 'wrench']
+        # TODO
+        return np.array([
+            [1.  , 0.22, 0.22, 0.22, 0.22, 0.22, 0.22],
+            [0.22, 1.  , 0.22, 0.22, 0.22, 0.22, 0.22],
+            [0.22, 0.22, 1.  , 0.22, 0.22, 0.22, 0.22],
+            [0.22, 0.22 ,0.22, 1.  ,0.22, 0.22, 0.22],
+            [0.22, 0.22, 0.22, 0.22, 1.  , 0.22, 0.22],
+            [0.22, 0.22, 0.22, 0.22, 0.22, 1.  , 0.22],
+            [0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 1.  ],
+       ])
+    
 class Configuration11(Configuration):
     def __init__(self):
         self.ct_names = {'template': ['move-up', 'release', 'stop', ],
-            'selections': ['potted meat can', 'tomato soup can', 'bowl', 'box', 'alt box', 'paper', 'wrench', 'mouse'],
+            'selections': ['potted meat can', 'tomato soup can', 'bowl', 'box', 'alt box', 'paper', 'wrench'],
             'storages': [],
         }
         self.scene_gen_config = {
@@ -77,18 +132,22 @@ class Configuration11(Configuration):
 
         self.DEBUG = False
 
-        self.sim_table = np.array([
-            [1.0, 0.2, 0.2], 
-            [0.2, 1.0, 0.2], 
-            [0.2, 0.2, 1.0], 
-        ])
+        self.sim_table_gesture = self.sim_table_gesture_default[0:3,0:3]
+        self.sim_table_language = self.sim_table_language_default[0:3,0:3]
+
+        self.sim_table_language_objects = self.sim_table_language_objects_default
+        self.sim_table_gesture_objects = self.sim_table_gesture_objects_default
+
+        self.sim_table_language_storages = self.sim_table_gesture_objects_default[0:4,0:4] # TODO
+        self.sim_table_gesture_storages = self.sim_table_gesture_objects_default[0:4,0:4] # TODO
+
 
 class Configuration12(Configuration):
     def __init__(self):
         self.ct_names = {'template': ['move-up', 'release', 'stop',
-            'pick', 'push', 'unglue', #'point'
+                                    'pick', 'push', 'unglue',
             ],
-            'selections': ['potted meat can', 'tomato soup can', 'bowl', 'box', 'alt box', 'paper', 'wrench', 'mouse'],
+            'selections': ['potted meat can', 'tomato soup can', 'bowl', 'box', 'alt box', 'paper', 'wrench'],
             'storages': ['paper box', 'abstract marked zone', 'out of table', 'on the table'],
         }
         self.scene_gen_config = {
@@ -104,28 +163,26 @@ class Configuration12(Configuration):
 
         self.epsilon = self.epsilon_default
         self.gamma = self.gamma_default
-        self.alpha_penal = 0.0
+        self.alpha_penal = 0.1
 
         self.DEBUG = False
 
-        self.sim_table = np.array([
-            [1.00, 0.20, 0.20, 0.20, 0.20, 0.20, 0.20], 
-            [0.20, 1.00, 0.20, 0.20, 0.20, 0.20, 0.20], 
-            [0.20, 0.20, 1.00, 0.20, 0.20, 0.20, 0.20], 
-            [0.20, 0.20, 0.20, 1.00, 0.20, 0.20, 0.20], 
-            [0.20, 0.20, 0.20, 0.20, 1.00, 0.20, 0.20], 
-            [0.20, 0.20, 0.20, 0.20, 0.20, 1.00, 0.20], 
-            [0.20, 0.20, 0.20, 0.20, 0.20, 0.20, 1.00], 
-        ])
+        self.sim_table_gesture = self.sim_table_gesture_default[0:6,0:6]
+        self.sim_table_language = self.sim_table_language_default[0:6,0:6]
 
+        self.sim_table_language_objects = self.sim_table_language_objects_default
+        self.sim_table_gesture_objects = self.sim_table_gesture_objects_default
+
+        self.sim_table_language_storages = self.sim_table_gesture_objects_default[0:4,0:4] # TODO
+        self.sim_table_gesture_storages = self.sim_table_gesture_objects_default[0:4,0:4] # TODO
 
 class Configuration13(Configuration):
     def __init__(self):
         self.ct_names = {'template': ['move-up', 'release', 'stop',
-                'pick', 'push', 'unglue', # 'point'
-                'pour', 'put-into', 'stack',
+                                    'pick', 'push', 'unglue',
+                                    'pour', 'put-into', 'stack',
                 ],
-            'selections': ['potted meat can', 'tomato soup can', 'bowl', 'box', 'alt box', 'paper', 'wrench', 'mouse'],
+            'selections': ['potted meat can', 'tomato soup can', 'bowl', 'box', 'alt box', 'paper', 'wrench'],
             'storages': ['paper box', 'abstract marked zone', 'out of table', 'on the table'],
         }
         self.scene_gen_config = {
@@ -141,23 +198,18 @@ class Configuration13(Configuration):
 
         self.epsilon = self.epsilon_default
         self.gamma = self.gamma_default
-        self.alpha_penal = 0.0
+        self.alpha_penal = 0.2
 
         self.DEBUG = False
 
-        self.sim_table = np.array([
-            [1.0 , 0.2 , 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2], 
-            [0.2 , 1.0 , 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2], 
-            [0.2 , 0.2 , 1.0, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2], 
-            [0.2 , 0.2 , 0.2, 1.0, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2], 
-            [0.2 , 0.2 , 0.2, 0.2, 1.0, 0.2, 0.2, 0.2, 0.2, 0.2], 
-            [0.2 , 0.2 , 0.2, 0.2, 0.2, 1.0, 0.2, 0.2, 0.2, 0.2], 
-            [0.2 , 0.2 , 0.2, 0.2, 0.2, 0.2, 1.0, 0.2, 0.2, 0.2], 
-            [0.2 , 0.2 , 0.2, 0.2, 0.2, 0.2, 0.2, 1.0, 0.2, 0.2], 
-            [0.2 , 0.2 , 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 1.0, 0.2], 
-            [0.2 , 0.2 , 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 1.0], 
-        ])
+        self.sim_table_gesture = self.sim_table_gesture_default
+        self.sim_table_language = self.sim_table_language_default
 
+        self.sim_table_language_objects = self.sim_table_language_objects_default
+        self.sim_table_gesture_objects = self.sim_table_gesture_objects_default
+
+        self.sim_table_language_storages = self.sim_table_gesture_objects_default[0:4,0:4] # TODO
+        self.sim_table_gesture_storages = self.sim_table_gesture_objects_default[0:4,0:4] # TODO
 
 ## Old ##
 class Configuration1(Configuration):
