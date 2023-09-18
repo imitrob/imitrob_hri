@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button
 import matplotlib.patches as mpatches
 import numpy as np
+import os
 
 def interactive_probs_plotter(cl, cg, action_names, clear_threshold, unsure_threshold, diffs_threshold, mo):
     '''
@@ -165,3 +166,62 @@ def normalized_cross_entropy(v, q):
 
 def  diagonal_cross_entropy(v):
     return [normalized_cross_entropy(np.eye(len(v))[i], v) for i in range(len(v))]
+
+
+
+def singlehistplot_customized(data, filename, labels=['baseline','M1', 'M2', 'M3'],
+                              xticks=['D1','D2','D3','D4','D5'], ylbl='Accuracy [%]', 
+                              bottom=0, plot=False, savefig=True, figsize=(6,3)):
+    ''' Plot histogram plot: Used at MM paper results
+    Parameters:
+        data (Float[][]): (bars, series?)
+        filename (String): Saved file name (without extension)
+        labels (String[]): Series names
+        xticks (String[]): Histogram names
+        ylbl (String): Y axis label
+        bottom (Float): Bar numbering from this number
+            (e.g. show accuracy data from 80% to 100%: bottom = 80)
+        plot (Bool): plt.show()
+        save (Bool): savefig
+    '''
+    
+    print("Data", data)
+    shape = data.shape
+    xl = shape[0]
+    yl = shape[1]
+
+    # set width of bar
+    barWidth = 0.2
+    fig = plt.figure(figsize=figsize)
+
+    # bars
+    brs = [np.arange(xl)]
+    for i in range(1,yl):
+        brs.append( [x + barWidth for x in brs[i-1]])
+    plt.grid(axis='y')
+    
+    colors = iter([plt.cm.tab20(i) for i in range(20)])
+
+    arange = list(range(-1, -len(brs)-1,-1))
+    for n in arange:
+        br, d_, l_ = brs[n], data[:,n], labels[n]
+        plt.bar(br, d_-bottom, color =next(colors), width = barWidth,
+                edgecolor ='grey', label =l_, bottom=bottom)
+
+    # Adding Xticks
+    plt.rcParams['pdf.fonttype'] = 42
+    plt.rcParams['ps.fonttype'] = 42
+
+    #plt.xlabel(xlbl, fontsize = 15)
+    plt.ylabel(ylbl, fontsize = 15)
+    plt.xticks([r + barWidth for r in range(xl)],
+            xticks)
+    plt.xticks(rotation=90)
+
+    plt.legend(loc='lower left')
+    
+    if savefig:
+        plt.savefig(f"os.path.expanduser(f'{os.path.dirname(os.path.abspath(__file__))}/../data/pictures/{filename}.eps", dpi=fig.dpi, bbox_inches='tight')
+        plt.savefig(f"os.path.expanduser(f'{os.path.dirname(os.path.abspath(__file__))}/../data/pictures/{filename}.png", dpi=fig.dpi, bbox_inches='tight')
+    if plot:
+        plt.show()

@@ -12,17 +12,17 @@ def tester_all(use_magic):
     results_save = np.zeros((3,3,5,3), dtype=object)
     for cn,c in enumerate(['c1', 'c2', 'c3']):
         for nn,n in enumerate(['n1', 'n2', 'n3']):
-            for pn,p in enumerate(['p0','p1','p2','p3','p4']):
+            for pn,d in enumerate(['D1','D2','D3','D4','D5']):
                 for mn,m in enumerate([1,2,3]):
-                    dataset = np.load(os.path.expanduser(f'~/ros2_ws/src/imitrob-hri/imitrob-hri/data/artificial_dataset_{c}_{n}_{p}.npy'), allow_pickle=True)
+                    dataset = np.load(os.path.expanduser(f'{os.path.dirname(os.path.abspath(__file__))}/saves/artificial_dataset_{c}_{n}_{d}.npy'), allow_pickle=True)
                     acc, results = tester_on_data(dataset, m, use_magic, printer=False)
                     accs[cn,nn,pn,mn] = acc
-                    print(f"{c} {n} {p} {m}: {acc}")
+                    print(f"{c} {n} {d} {m}: {acc}")
                     #print(cn,nn,pn,mn, results)
                     results_save[cn,nn,pn,mn] = np.asanyarray(results, dtype=object)
                     #print(results)
-                    np.save(f"/home/petr/Downloads/accs_{use_magic}.npy", accs)
-                    np.save(f"/home/petr/Downloads/results_{use_magic}.npy", results_save)
+                    np.save(f"{os.path.dirname(os.path.abspath(__file__))}/results/accs_{use_magic}.npy", accs)
+                    np.save(f"{os.path.dirname(os.path.abspath(__file__))}/results/results_{use_magic}.npy", results_save)
     exit()
 
 def tester_on_data(dataset, model, use_magic, printer=False):
@@ -46,21 +46,23 @@ def tester_on_data(dataset, model, use_magic, printer=False):
             acc +=1
         else:
             if printer:
-                print("Scene:", sample['x_scene'])
-
-                print("y", sample['y'])
-
-                print(s.M['template'])
-                print(s.M['selections'])
-                print(s.M['storages'])
-                print("-- post --")
+                print("-- Scene: --")
+                print(sample['x_scene'])
+                print("-- Input Language --")
                 print(s.L['template'])
                 print(s.L['selections'])
                 print(s.L['storages'])
+                print("-- Input Gesture --")
                 print(s.G['template'])
                 print(s.G['selections'])
                 print(s.G['storages'])
-                print("-- end post --")
+                print("-- Output --")
+                print(s.M['template'])
+                print(s.M['selections'])
+                print(s.M['storages'])
+                print("-- True Value: --")                
+                print(sample['y'])
+
                 #print(DEBUGdata)
                 #input()
         y_true_ct, y_pred_ct = s.get_true_and_pred(sample['y'], c)
@@ -84,11 +86,11 @@ def tester_on_data(dataset, model, use_magic, printer=False):
     return acc/n*100, results
 
 if __name__ == '__main__':
-    dataset_n = sys.argv[1]
+    dataset_name = sys.argv[1]
     use_magic = sys.argv[2]
-    if dataset_n == 'all':
+    if dataset_name == 'all':
         tester_all(use_magic)
     model = int(sys.argv[3]) if len(sys.argv) > 3 else 1
 
-    dataset = np.load(os.path.expanduser(f'~/ros2_ws/src/imitrob-hri/imitrob-hri/data/artificial_dataset_{dataset_n}.npy'), allow_pickle=True)
+    dataset = np.load(os.path.expanduser(f'{os.path.dirname(os.path.abspath(__file__))}/../data/results/artificial_dataset_{dataset_name}.npy'), allow_pickle=True)
     tester_on_data(dataset, model, use_magic=use_magic, printer=True)

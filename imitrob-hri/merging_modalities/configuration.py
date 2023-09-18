@@ -108,8 +108,12 @@ class Configuration(ABC):
             [0.22, 0.22, 0.22, 0.22, 0.22, 1.  , 0.22],
             [0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 1.  ],
        ])
+
+    @property
+    def samples_default(self):
+        return 10000
     
-class Configuration11(Configuration):
+class Configuration1(Configuration):
     def __init__(self):
         self.ct_names = {'template': ['move-up', 'release', 'stop', ],
             'selections': ['potted meat can', 'tomato soup can', 'bowl', 'box', 'alt box', 'paper', 'wrench'],
@@ -141,8 +145,10 @@ class Configuration11(Configuration):
         self.sim_table_language_storages = self.sim_table_gesture_objects_default[0:4,0:4] # TODO
         self.sim_table_gesture_storages = self.sim_table_gesture_objects_default[0:4,0:4] # TODO
 
+        self.samples = self.samples_default
 
-class Configuration12(Configuration):
+
+class Configuration2(Configuration):
     def __init__(self):
         self.ct_names = {'template': ['move-up', 'release', 'stop',
                                     'pick', 'push', 'unglue',
@@ -176,7 +182,9 @@ class Configuration12(Configuration):
         self.sim_table_language_storages = self.sim_table_gesture_objects_default[0:4,0:4] # TODO
         self.sim_table_gesture_storages = self.sim_table_gesture_objects_default[0:4,0:4] # TODO
 
-class Configuration13(Configuration):
+        self.samples = self.samples_default
+
+class Configuration3(Configuration):
     def __init__(self):
         self.ct_names = {'template': ['move-up', 'release', 'stop',
                                     'pick', 'push', 'unglue',
@@ -211,78 +219,4 @@ class Configuration13(Configuration):
         self.sim_table_language_storages = self.sim_table_gesture_objects_default[0:4,0:4] # TODO
         self.sim_table_gesture_storages = self.sim_table_gesture_objects_default[0:4,0:4] # TODO
 
-## Old ##
-class Configuration1(Configuration):
-    def __init__(self):
-        self.ct_names = {'template': ['move up', 'release', 'stop', ],
-            'selections': ['potted meat can', 'tomato soup can', 'bowl', 'box', 'big box', 'paper', 'wrench', 'glued wrench'],
-            'storages': [],
-        }
-        self.scene_gen_config = {
-            'selections_n': ('uniform', 1, 3),
-            'storages_n': ('uniform', 0, 1),
-        }
-        self.ct_properties = self.ct_properties_default
-
-        self.match_threshold = self.match_threshold_default
-        self.clear_threshold = self.clear_threshold_default
-        self.unsure_threshold = self.unsure_threshold_default
-        self.diffs_threshold = self.diffs_threshold_default
-
-        self.epsilon = self.epsilon_default
-        self.gamma = self.gamma_default
-        self.alpha_penal = self.alpha_penal_default
-
-        self.DEBUG = False
-
-class Configuration2(Configuration):
-    def __init__(self):
-        self.ct_names = {'template': ['move up', 'release', 'stop',
-            'pick', 'place', 'push', 'point',
-            ],
-            'selections': ['potted meat can', 'tomato soup can', 'bowl', 'box', 'big box', 'paper', 'wrench', 'glued wrench'],
-            'storages': ['paper box', 'abstract marked zone', 'out of table', 'on the table'],
-        }
-        self.scene_gen_config = {
-            'selections_n': ('uniform', 2, 5),
-            'storages_n': ('uniform', 0, 2),
-        }
-        self.ct_properties = self.ct_properties_default
-
-        self.match_threshold = self.match_threshold_default
-        self.clear_threshold = self.clear_threshold_default
-        self.unsure_threshold = self.unsure_threshold_default
-        self.diffs_threshold = self.diffs_threshold_default
-
-        self.epsilon = self.epsilon_default
-        self.gamma = self.gamma_default
-        self.alpha_penal = self.alpha_penal_default
-
-        self.DEBUG = False
-
-class Configuration3(Configuration):
-    def __init__(self):
-        self.ct_names = {'template': ['move up', 'release', 'stop',
-                'pick', 'place', 'push', 'point',
-                'pour', 'put',
-                ],
-            'selections': ['potted meat can', 'tomato soup can', 'bowl', 'box', 'big box', 'paper', 'wrench', 'glued wrench'],
-            'storages': ['paper box', 'abstract marked zone', 'out of table', 'on the table'],
-        }
-        self.scene_gen_config = {
-            'selections_n': ('uniform', 3, 7),
-            'storages_n': ('uniform', 2, 3),
-        }
-        self.ct_properties = self.ct_properties_default
-        
-        self.match_threshold = self.match_threshold_default
-        self.clear_threshold = self.clear_threshold_default
-        self.unsure_threshold = self.unsure_threshold_default
-        self.diffs_threshold = self.diffs_threshold_default
-
-        self.epsilon = self.epsilon_default
-        self.gamma = self.gamma_default
-        self.alpha_penal = self.alpha_penal_default
-
-        self.DEBUG = False
-
+        self.samples = self.samples_default

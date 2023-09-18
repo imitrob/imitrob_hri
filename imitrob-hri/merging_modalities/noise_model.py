@@ -3,9 +3,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
 import scipy.stats
+import os
 
 
 class NormalModel():
+    ''' Sample Normal Distribution '''
     def __init__(self, mu, sigma):
         self.mu = mu
         self.sigma = sigma
@@ -15,9 +17,7 @@ class NormalModel():
         return np.random.normal(self.mu * np.ones((size)), self.sigma * np.ones((size)))
 
 
-
 class MixtureModel():
-
     def __init__(self,  params, factor=1, negative_noise=False):
         self.models = []
         for p in params:
@@ -33,16 +33,15 @@ class MixtureModel():
         sign = 1
         if self.negative_noise:
             sign = np.random.randint(0,2,size) * 2 - 1
-            
-
+        
         return sign * self.factor * rvs
     
     def __call__(self, size=1):
         return self.rvs(size)
 
+# Static models to be accessible global 
+global gesture_det_model, gesture_noise_model, gesture_noise_model2
 
-global gesture_det_model
-global gesture_noise_model
 gesture_det_model = MixtureModel([
     ('norm', (0.70518772634005173, 0.11254289107220866)),
     ('norm', (0.8162473647795723, 0.10747602382933483))
@@ -59,12 +58,11 @@ proper = MixtureModel([
     ('norm', (0.7013723305787044, 0.01449694961189483)),
 ])
 
-
 gesture_noise_model = MixtureModel([
         ('expon', (1.0167785737536344e-08, 0.005827560175383218)),
         ('exponnorm', (1.768464920150208, 0.15072610225705982, 0.05762642382325739))
     ], factor=0.5, negative_noise=True)
-global gesture_noise_model2
+
 gesture_noise_model2 = MixtureModel([
         ('expon', (1.0167785737536344e-08, 0.005827560175383218)),
         ('exponnorm', (1.768464920150208, 0.15072610225705982, 0.05762642382325739))
@@ -72,23 +70,27 @@ gesture_noise_model2 = MixtureModel([
 
 def entropy_tester():
     nm = NormalModel(0.0, 0.05)
+    fig = plt.figure(figsize =(4,2))
     plt.hist(nm(10000), bins=np.linspace(0.001,1,200))
     plt.hist(gesture_noise_model.rvs(10000), bins=np.linspace(0.001, 1, 200))
     plt.hist(gesture_noise_model2.rvs(10000), bins=np.linspace(0.001, 1, 200))
-    plt.legend(['$n1$', '$n2$', '$n3$'])
+    plt.legend(['$n_1$', '$n_2$', '$n_3$'])
     #plt.hist(gesture_det_model.rvs(10000), bins=np.linspace(0, 1, 200))
-    plt.xlabel("Noise level [-]")
-    plt.ylabel("Occurance [-]")
+    plt.xlabel("Noise level [-]", fontsize = 15)
+    plt.ylabel("Occurance [-]", fontsize = 15)
     plt.grid()
     plt.axis([0.0, 0.6, 0, 1000])
 
-    plt.savefig("/home/petr/Downloads/noise_model.eps")
+    plt.rcParams['pdf.fonttype'] = 42
+    plt.rcParams['ps.fonttype'] = 42
+
+    plt.savefig(f"{os.path.dirname(os.path.abspath(__file__))}/noise_model.eps", dpi=fig.dpi, bbox_inches='tight')
 
     plt.show()
     for i in range(10):
         print(gesture_noise_model.rvs(1))
-    print("----")
-    for i in range(100):
+    print("---")
+    for i in range(10):
         print(gesture_det_model())
 
 if __name__ == '__main__':

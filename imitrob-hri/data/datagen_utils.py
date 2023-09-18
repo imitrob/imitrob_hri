@@ -273,18 +273,18 @@ def triplet_to_name(template, object, storage):
 
 def generate_probs(names, true_name, det_fun, min_ch, sim_table, scene, regulation_policy, noise_fun):
     ''' approach v2
+        - We have names of category items, true detected name
     Parameters:
         names (String[]): e.g. template names
-        true_name (String): Y
-        gen_params (Dict): { ... parameters ... }
-        min_ch (Int): minimum chosen itmes
+        true_name (String): Y, e.g. 'pick'
+        det_fun (function): det_fun() generates probability based model
+        min_ch (Int): minimum chosen itmes (there is min. 1 action, min. 0 objects)
         sim_table (Float[][]): Similarity table
-        names_table 
+        scene (Scene3())
+        regulation_policy (String)
     '''
     if len(names) == 0 or true_name is None: 
         return np.array([]), np.array([])
-    elif regulation_policy == 'not aligned':
-        pass # do something
 
     # 1. Get observed gesture templates: [pick, pour] chosen from all e.g. [pick, pour, point, push, ...]
     chosen_names_subset = np.random.choice(names, size=np.random.randint(min_ch, len(names) ), replace=False)
