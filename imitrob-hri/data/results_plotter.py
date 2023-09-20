@@ -71,7 +71,7 @@ if __name__ == '__main__':
 
     # ========================================================================
 
-    results = np.load(f"{os.path.dirname(os.path.abspath(__file__))}/results_{name}.npy", allow_pickle=True)
+    results = np.load(f"{os.path.dirname(os.path.abspath(__file__))}/results/results_{name}.npy", allow_pickle=True)
 
     template_accuracy = get_from_results('template', 'accuracy', results)
     template_precision = get_from_results('template', 'precision', results)
