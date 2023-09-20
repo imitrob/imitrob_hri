@@ -15,6 +15,7 @@ def generate_dataset(gen_params):
         for i_sample in range(c.samples):
             y_template, y_selection, y_storages = None, None, None
             # Scene depends on feasibility
+            # The scene should be able to be created as feasible for an action, but there might be scene on which nothing can be done which are discarded
             iteration = 0
             while y_template is None:
                 iteration += 1
@@ -27,7 +28,7 @@ def generate_dataset(gen_params):
                 if rp == 'fake_properties_decidable_wrt_true' and len(c.templates)>3:
                     tdp = get_templates_decisive_based_on_properties(names=c.templates, true_name=y_template, min_ch=1, scene=scene)
                     if len(tdp) == 0:
-                        print("discarded sample")
+                        #print("discarded sample")
                         y_template = None
                 
             det_fun = gen_params['det_fun']
@@ -76,7 +77,8 @@ def gen_dataset(c,n,d):
     config = {'c1': Configuration1(), 'c2':Configuration2(), 'c3': Configuration3()}[c]
     noise = {'n1': (nm.NormalModel(0.9, 0.01), nm.NormalModel(0.0,0.05)), 
              'n2': (nm.gesture_det_model, nm.gesture_noise_model),
-             'n3': (nm.gesture_det_model, nm.gesture_noise_model2),}[n]
+             'n3': (nm.gesture_det_model, nm.gesture_noise_model2),
+             'n4': (nm.gesture_det_model, nm.gesture_noise_model3),}[n]
     policies_str = d[1:]
     policies_list = [
         '-',
@@ -87,7 +89,7 @@ def gen_dataset(c,n,d):
     ]
     policies = []
     for char in policies_str:
-        policies.append(policies_list[int(char)+1])
+        policies.append(policies_list[int(char)-1])
 
     dataset = generate_dataset(gen_params = {
         'configuration': config,

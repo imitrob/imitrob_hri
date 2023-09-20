@@ -40,7 +40,7 @@ class MixtureModel():
         return self.rvs(size)
 
 # Static models to be accessible global 
-global gesture_det_model, gesture_noise_model, gesture_noise_model2
+global gesture_det_model, gesture_noise_model, gesture_noise_model2, gesture_noise_model3
 
 gesture_det_model = MixtureModel([
     ('norm', (0.70518772634005173, 0.11254289107220866)),
@@ -67,6 +67,11 @@ gesture_noise_model2 = MixtureModel([
         ('expon', (1.0167785737536344e-08, 0.005827560175383218)),
         ('exponnorm', (1.768464920150208, 0.15072610225705982, 0.05762642382325739))
     ], factor=1.0, negative_noise=True)
+
+gesture_noise_model3 = MixtureModel([
+        ('expon', (1.0167785737536344e-08, 0.005827560175383218)),
+        ('exponnorm', (1.768464920150208, 0.15072610225705982, 0.05762642382325739))
+    ], factor=2.0, negative_noise=True)
 
 def entropy_tester():
     nm = NormalModel(0.0, 0.05)

@@ -14,16 +14,16 @@ def tester_all(use_magic):
         for nn,n in enumerate(['n1', 'n2', 'n3']):
             for pn,d in enumerate(['D1','D2','D3','D4','D5']):
                 for mn,m in enumerate([1,2,3]):
-                    dataset = np.load(os.path.expanduser(f'{os.path.dirname(os.path.abspath(__file__))}/saves/artificial_dataset_{c}_{n}_{d}.npy'), allow_pickle=True)
+                    dataset = np.load(os.path.expanduser(f'{os.path.dirname(os.path.abspath(__file__))}/../data/saves/artificial_dataset_{c}_{n}_{d}.npy'), allow_pickle=True)
                     acc, results = tester_on_data(dataset, m, use_magic, printer=False)
                     accs[cn,nn,pn,mn] = acc
                     print(f"{c} {n} {d} {m}: {acc}")
                     #print(cn,nn,pn,mn, results)
                     results_save[cn,nn,pn,mn] = np.asanyarray(results, dtype=object)
                     #print(results)
-                    np.save(f"{os.path.dirname(os.path.abspath(__file__))}/results/accs_{use_magic}.npy", accs)
-                    np.save(f"{os.path.dirname(os.path.abspath(__file__))}/results/results_{use_magic}.npy", results_save)
-    exit()
+                    np.save(f"{os.path.dirname(os.path.abspath(__file__))}/../data/results/accs_{use_magic}.npy", accs)
+                    np.save(f"{os.path.dirname(os.path.abspath(__file__))}/../data/results/results_{use_magic}.npy", results_save)
+    
 
 def tester_on_data(dataset, model, use_magic, printer=False):
     ''' Set configuration '''
@@ -87,10 +87,18 @@ def tester_on_data(dataset, model, use_magic, printer=False):
 
 if __name__ == '__main__':
     dataset_name = sys.argv[1]
-    use_magic = sys.argv[2]
     if dataset_name == 'all':
-        tester_all(use_magic)
-    model = int(sys.argv[3]) if len(sys.argv) > 3 else 1
+        if len(sys.argv) > 2:
+            use_magic = sys.argv[2]
+            print(f"Running on single merge function: {use_magic}")
+            tester_all(use_magic)
+        else:
+            print(f"Running on all merge functions!")
+            for mgn,use_magic in enumerate(['mul', 'add_2', 'entropy', 'entropy_add_2']):
+                tester_all(use_magic)
+    else:
+        model = int(sys.argv[3]) if len(sys.argv) > 3 else 1
 
-    dataset = np.load(os.path.expanduser(f'{os.path.dirname(os.path.abspath(__file__))}/../data/results/artificial_dataset_{dataset_name}.npy'), allow_pickle=True)
-    tester_on_data(dataset, model, use_magic=use_magic, printer=True)
+        dataset = np.load(os.path.expanduser(f'{os.path.dirname(os.path.abspath(__file__))}/../data/results/artificial_dataset_{dataset_name}.npy'), allow_pickle=True)
+        use_magic = sys.argv[2]
+        tester_on_data(dataset, model, use_magic=use_magic, printer=True)

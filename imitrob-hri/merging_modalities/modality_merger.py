@@ -416,6 +416,9 @@ class SingleTypeModalityMerger():
     def mul(self, l, g):
         return l * g
 
+    def _get_single_probs_vector(self, p, names):
+        return ProbsVector(p, names, self.c)
+
 """
 class SelectionTypeModalityMerger(SingleTypeModalityMerger):
     def __init__(self, cl_prior = 0.9, cg_prior = 0.99, fun='mul', names=[]):

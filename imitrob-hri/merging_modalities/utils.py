@@ -5,7 +5,7 @@ import matplotlib.patches as mpatches
 import numpy as np
 import os
 
-def interactive_probs_plotter(cl, cg, action_names, clear_threshold, unsure_threshold, diffs_threshold, mo):
+def interactive_probs_plotter(cl, cg, action_names, clear_threshold, unsure_threshold, diffs_threshold, mo, save=False, save_file='somegoodname'):
     '''
     Parameters:
         cl (Float[]): Probability vector Language
@@ -35,7 +35,7 @@ def interactive_probs_plotter(cl, cg, action_names, clear_threshold, unsure_thre
         ax.text(2.55, clear_threshold, 'clear threshold', horizontalalignment='right',      verticalalignment='top', fontsize=6)
         ax.axhline(y=unsure_threshold, color='b', linestyle='--')
         ax.text(2.55, unsure_threshold, 'unsure threshold', horizontalalignment='right',      verticalalignment='top', fontsize=6)
-        ax.fill_between([-0.5,2.5], ret.max_prob, ret.max_prob-diffs_threshold)
+        ax.fill_between([0.,len(action_names)-0.5], ret.max_prob, ret.max_prob-diffs_threshold)
         ax.bar(x, ret.p, color=colors,
             edgecolor="black")
         ax.text(1.0, ret.max_prob, 'no-zone', horizontalalignment='left',      verticalalignment='top', fontsize=6)
@@ -51,77 +51,144 @@ def interactive_probs_plotter(cl, cg, action_names, clear_threshold, unsure_thre
     plt.subplots_adjust(bottom=0.4)
 
     action = mo
-    ret = action.match(cl, cg)
+
+    if cg is None: # Single ProbsVector plot? 
+        ret = mo._get_single_probs_vector(cl, action_names)
+    else:
+        ret = action.match(cl, cg)
     do_the_colors_and_texts(ax, ret)
     
-    # Create 6 axes for 6 sliders
-    axp1 = plt.axes([0.25, 0.3, 0.65, 0.03])
-    axp2 = plt.axes([0.25, 0.25, 0.65, 0.03])
-    axp3 = plt.axes([0.25, 0.2, 0.65, 0.03])
-    axp4 = plt.axes([0.25, 0.15, 0.65, 0.03])
-    axp5 = plt.axes([0.25, 0.1, 0.65, 0.03])
-    axp6 = plt.axes([0.25, 0.05, 0.65, 0.03])
-
+    axp1 = plt.axes([0.2, 0.2, 0.65, 0.03])
     s1 = Slider(axp1, f"{action_names[0]} (L)", 0.0, 1.0, cl[0])
-    s2 = Slider(axp2, f"{action_names[1]} (L)", 0.0, 1.0, cl[1])
-    s3 = Slider(axp3, f"{action_names[2]} (L)", 0.0, 1.0, cl[2])
-    s4 = Slider(axp4, f"{action_names[0]} (G)", 0.0, 1.0, cg[0])
-    s5 = Slider(axp5, f"{action_names[1]} (G)", 0.0, 1.0, cg[1])
-    s6 = Slider(axp6, f"{action_names[2]} (G)", 0.0, 1.0, cg[2])
+    if cg is not None: # Multi ProbsVector plot? 
+        axp2 = plt.axes([0.2, 0.15, 0.65, 0.03])
+        s2 = Slider(axp2, f"{action_names[0]} (G)", 0.0, 1.0, cg[0])
     
+    global interactive_probs_plotter__item_n
+    interactive_probs_plotter__item_n = 0
     # Create function to be called when slider value is changed    
     def update(val):
-        cl = [s1.val, s2.val, s3.val]
-        cg = [s4.val, s5.val, s6.val]
+        cl[interactive_probs_plotter__item_n] = s1.val
         action = mo
-        ret = action.match(cl, cg)
+        
+        if cg is not None: # multi probs vector plot ?
+            cg[interactive_probs_plotter__item_n] = s2.val
+        
+        if cg is None: # single probs vector plot ?
+            ret = mo._get_single_probs_vector(cl, action_names)
+        else:
+            ret = action.match(cl, cg)
         ax.cla()
         do_the_colors_and_texts(ax, ret)
     
     # Call update function when slider value is changed
     s1.on_changed(update)
-    s2.on_changed(update)
-    s3.on_changed(update)
-    s4.on_changed(update)
-    s5.on_changed(update)
-    s6.on_changed(update)
-
+    if cg is not None: # Multi ProbsVector plot? 
+        s2.on_changed(update)
+    
     # Create axes for reset button and create button
     resetax = plt.axes([0.8, 0.0, 0.1, 0.04])
     button = Button(resetax, 'Reset', color='gold',
                     hovercolor='skyblue')
 
-    funmodeax = plt.axes([0.2, 0.0, 0.1, 0.04])
-    funmodebutton = Button(funmodeax, 'a*b', color='gold',
+    funmodeax =  plt.axes([0.2, 0.0, 0.1, 0.04])
+    funmodebutton = Button(funmodeax, 'a*b', color='gold', 
                     hovercolor='skyblue')
     funmode2ax = plt.axes([0.3, 0.0, 0.1, 0.04])
     funmode2button = Button(funmode2ax, '|a+b|/2', color='gold',
                     hovercolor='skyblue')
+    funmode3ax = plt.axes([0.4, 0.0, 0.1, 0.04])
+    funmode3button = Button(funmode3ax, 'max', color='gold',
+                    hovercolor='skyblue')
+    funmode4ax = plt.axes([0.5, 0.0, 0.1, 0.04])
+    funmode4button = Button(funmode4ax, 'a*b (ent)', color='gold',
+                    hovercolor='skyblue')
+    funmode5ax = plt.axes([0.6, 0.0, 0.1, 0.04])
+    funmode5button = Button(funmode5ax, 'a+b (ent)', color='gold',
+                    hovercolor='skyblue')
+
+    # I don't know how to pass argument at the moment
+    def assign_set(nn):
+        global interactive_probs_plotter__item_n
+        interactive_probs_plotter__item_n = nn
+
+        s1.eventson = False
+        s1.set_val(cl[interactive_probs_plotter__item_n])
+        fig.canvas.draw()
+        s1.eventson = True
+        if cg is not None: # multi probs vector plot ?
+            s2.eventson = False
+            s2.set_val(cg[interactive_probs_plotter__item_n])
+            fig.canvas.draw()
+            s2.eventson = True
+
+    def assign_set_0(event):
+        assign_set(0)
+    def assign_set_1(event):
+        assign_set(1)
+    def assign_set_2(event):
+        assign_set(2)
+    def assign_set_3(event):
+        assign_set(3)
+    def assign_set_4(event):
+        assign_set(4)
+    def assign_set_5(event):
+        assign_set(5)
+    def assign_set_6(event):
+        assign_set(6)
+    def assign_set_7(event):
+        assign_set(7)
+    def assign_set_8(event):
+        assign_set(8)
+
+    switchingButtons = []
+    n = len(cl)
+    for i in range(n):
+        
+        tester = plt.axes([(1.0/n*0.78)*i+0.12, 0.35, (1.0/n)*0.78, 0.04])
+        button = Button(tester, action_names[i], color='gold',              hovercolor='skyblue')
+        fun = eval('assign_set_'+str(i))
+        button.on_clicked(fun)
+        switchingButtons.append(button)
+
 
     # Create a function resetSlider to set slider to
     # initial values when Reset button is clicked
     
     def resetSlider(event):
         s1.reset()
-        s2.reset()
-        s3.reset()        
-        s4.reset()
-        s5.reset()
-        s6.reset()
-
+        if cg is None: # Single ProbsVector plot? 
+            s2.reset()
+        
     def funmodebutton_(event):
         mo.fun = 'mul'
     def funmode2button_(event):
         mo.fun = 'add_2'
-    
+    def funmode3button_(event):
+        raise Exception("TODO")
+        mo.fun = 'baseline'
+    def funmode4button_(event):
+        raise Exception("TODO")
+        mo.fun = 'entropy'
+    def funmode5button_(event):
+        raise Exception("TODO")
+        mo.fun = 'entropy_add_2'
+
     # Call resetSlider function when clicked on reset button
     button.on_clicked(resetSlider)
     funmodebutton.on_clicked(funmodebutton_)
     funmode2button.on_clicked(funmode2button_)
+    funmode3button.on_clicked(funmode3button_)
+    funmode4button.on_clicked(funmode4button_)
+    funmode5button.on_clicked(funmode5button_)
     
     # Display graph
+    if save:
+        plt.savefig(f"/home/petr/Downloads/{save_file}.eps")
+        plt.savefig(f"/home/petr/Downloads/{save_file}.png")
     plt.show()
 
+    
 class cc:
     H = '\033[95m'
     OK = '\033[94m'
@@ -132,9 +199,6 @@ class cc:
     E = '\033[0m'
     B = '\033[1m'
     U = '\033[4m'
-
-
-
 
 
 def entropy(v):
