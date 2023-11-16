@@ -13,9 +13,10 @@ def tester_all(use_magic):
     for cn,c in enumerate(['c1', 'c2', 'c3']):
         for nn,n in enumerate(['n1', 'n2', 'n3']):
             for pn,d in enumerate(['D1','D2','D3','D4','D5']):
-                for mn,m in enumerate([1,2,3]):
+                for mn,m in enumerate(['M1','M2','M3']):
                     dataset = np.load(os.path.expanduser(f'{os.path.dirname(os.path.abspath(__file__))}/../data/saves/artificial_dataset_{c}_{n}_{d}.npy'), allow_pickle=True)
-                    acc, results = tester_on_data(dataset, m, use_magic, printer=False)
+                    model = int(m[1]) # (from M1 chooses the 1)
+                    acc, results = tester_on_data(dataset, model, use_magic, printer=False)
                     accs[cn,nn,pn,mn] = acc
                     print(f"{c} {n} {d} {m}: {acc}")
                     #print(cn,nn,pn,mn, results)
@@ -97,7 +98,7 @@ if __name__ == '__main__':
             for mgn,use_magic in enumerate(['mul', 'add_2', 'entropy', 'entropy_add_2']):
                 tester_all(use_magic)
     else:
-        model = int(sys.argv[3]) if len(sys.argv) > 3 else 1
+        model = sys.argv[3] if len(sys.argv) > 3 else 'M3'
 
         dataset = np.load(os.path.expanduser(f'{os.path.dirname(os.path.abspath(__file__))}/../data/results/artificial_dataset_{dataset_name}.npy'), allow_pickle=True)
         use_magic = sys.argv[2]

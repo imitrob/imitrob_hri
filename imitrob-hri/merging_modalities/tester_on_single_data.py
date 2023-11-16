@@ -33,6 +33,7 @@ def tester_on_single_data(dataset, sample_n, model, use_magic, printer=False):
     print(s.G['selections'])
     print(s.G['storages'])
     print("-- Output --")
+    print(s.M['template'].clear, s.M['template'].unsure, s.M['template'].negative)
     print(s.M['template'])
     print(s.M['selections'])
     print(s.M['storages'])
@@ -57,10 +58,15 @@ def tester_on_single_data(dataset, sample_n, model, use_magic, printer=False):
 if __name__ == '__main__':
 
     dataset_name = 'c3_n3_D3'
-    model = 2
 
     dataset = np.load(os.path.expanduser(f'{os.path.dirname(os.path.abspath(__file__))}/../data/saves/artificial_dataset_{dataset_name}.npy'), allow_pickle=True)
     use_magic = 'mul'
     sample_n = np.random.randint(0, 10000)
+    
+    model = 0
+    use_magic = 'baseline'
+    tester_on_single_data(dataset, sample_n, model, use_magic=use_magic, printer=True)
+
+    
     for model in [1,2,3]:
         tester_on_single_data(dataset, sample_n, model, use_magic=use_magic, printer=True)

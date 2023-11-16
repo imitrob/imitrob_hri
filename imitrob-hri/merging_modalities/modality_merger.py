@@ -321,13 +321,13 @@ class NaiveProbsVector(ProbsVector):
 
     @property
     def unsure_id(self):
-        return None
+        return []
 
     @property
     def negative_id(self):
         arange = list(range(len(self.p)))
-        if self.clear_id is not None:
-            arange.remove(self.clear_id)        
+        if self.clear_id != []:
+            arange.remove(self.clear_id[0])        
         return arange
 
 class MultiProbsVector():

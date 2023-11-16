@@ -105,7 +105,7 @@ if __name__ == '__main__':
     dataset_name = sys.argv[1]
     if dataset_name == 'all':
         for c in ['c1', 'c2', 'c3']:
-            for n in ['n1', 'n2', 'n3']:
+            for n in ['n1', 'n2', 'n3', 'n4']:
                 for d in ['D1', 'D2', 'D3', 'D4', 'D5']:
                     gen_dataset(c,n,d)
     

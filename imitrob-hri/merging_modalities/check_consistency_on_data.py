@@ -41,7 +41,7 @@ if __name__ == '__main__':
     use_magic = sys.argv[2]
     if dataset_name == 'all':
         tester_all(use_magic)
-    model = int(sys.argv[3]) if len(sys.argv) > 3 else 1
+    model = sys.argv[3] if len(sys.argv) > 3 else 'M3'
 
     dataset = np.load(os.path.expanduser(f'{os.path.dirname(os.path.abspath(__file__))}/../data/results/artificial_dataset_{dataset_name}.npy'), allow_pickle=True)
     tester_on_data(dataset, model, use_magic=use_magic, printer=True)

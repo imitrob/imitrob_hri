@@ -201,14 +201,14 @@ class SentenceProcessor(Node):
         gesture_selections = self.gesture_sentence.selections # ("red box", "blue box", "big container", "small container") - unique names
         
         if printer: print(f"{cc.W}CT selections language:{cc.E} {selections}\n{cc.W}CT selections gesture:{cc.E} {selections}")
-        # 5. Make selection likelihoods
+        # 5. Make selections likelihoods
         selection_likelihoods = self.make_one_hot_vector(selections, selection_name)
         selection_likelihoods = list(self.gesture_sentence.selection_likelihoods)
         
-        # 6. make_conjunction selection vectors
+        # 6. make_conjunction selections vectors
         # TODO: GET ALL OBJECT NAMES FROM THE SCENE
         selections, o_l, o_g = nlp_utils.make_conjunction(selections, selections, \
-                                       selection_likelihoods, selection_likelihoods, ct='selection')
+                                       selection_likelihoods, selection_likelihoods, ct='selections')
 
         if printer: print(f"{cc.W}Conjunction templates:{cc.E} {selections}\no_g: {o_g}\no_l: {o_l}")
         
@@ -234,7 +234,7 @@ class SentenceProcessor(Node):
     def mm_run(self, mm_info):
         templates, selections = mm_info[0]
         gs, ls = mm_info[1]
-        mm = ModalityMerger(templates, selections, compare_types=['action', 'selection'])
+        mm = ModalityMerger(templates, selections, compare_types=['template', 'selections'])
         print("[Modality merger] Here comes the magic:")
         todo = mm.feedforward2(ls, gs)
         print("=====================================")
@@ -409,7 +409,7 @@ class SentenceProcessor(Node):
 
 
 
-                if dict1.get('action', False):
+                if dict1.get('template', False):
                     data.append(dict1)
                     actions = json.dumps(data)
                     msg = StampedString()

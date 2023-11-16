@@ -217,3 +217,8 @@ def create_template(template_name):
     'pour': PourTask(),
     'stack': StackTask(),
     }[template_name]
+
+
+if __name__ == '__main__':
+    vv =make_conjunction(gesture_templates=['point', 'push', 'move up', 'stop'], language_templates=['point', 'move up', 'stop', 'push'], gesture_likelihoods=[0.1,0.2,0.3,0.4], language_likelihoods=[0.5,0.6,0.7,0.8])
+    print(vv)

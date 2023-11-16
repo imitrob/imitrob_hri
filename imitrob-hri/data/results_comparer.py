@@ -80,6 +80,30 @@ def _4_thresholding():
 
     singlehistplot_customized(100*data.T, 'exp_thresholding', labels=['$baseline$','$mul_{fixed}$','$add_{fixed}$', '$mul_{entropy}$'], xticks=['$D1$', '$D2$', '$D3$', '$D4$'], xlbl='Generation Policies', ylbl='Accuracy [%]', plot=True)
 
+def _5_noise_levels_compared_to_models():
+    data_accumulated = np.zeros((3,3))
+    for d in [0,1,2,4]:
+        mergefun = 1
+        c = 2
+        n = range(0,2)
+        #d = 0 # 
+        m = range(0,3)
+
+        data = results_all[mergefun,1,c,:,d,:]
+        index = ['n1','n2', 'n3']
+        columns = ['M1','M2','M3']
+
+        #singlehistplot_customized(100*data.T, 'exp_thresholding', labels=index, xticks=columns, ylbl='Accuracy [%]', plot=True)
+        
+
+        data_accumulated += data
+        print( pd.DataFrame(100*data, columns=columns, index=index) )
+
+    print( pd.DataFrame(100*data_accumulated, columns=columns, index=index) )
+    print( data_accumulated[0] )
+
+
+    singlehistplot_customized((100/4)*data_accumulated.T - (100/4)*data_accumulated[0:1].T, 'exp_thresholding', labels=index, xticks=columns, ylbl='Accuracy [%]', plot=True)
 
 if __name__ == '__main__':
     # 1. Load results data into 6D table
@@ -185,7 +209,9 @@ if __name__ == '__main__':
     # print("F1:")
     # print( pd.DataFrame(100*data5, columns=['p1', 'p2', 'p3', 'p4'], index=['mul', 'add']))
 
-    _1_ablation_study()
-    _2_noise_influence()
-    _3_types_merging()
-    _4_thresholding()
+    # _1_ablation_study()
+    # _2_noise_influence()
+    # _3_types_merging()
+    # _4_thresholding()
+
+    _5_noise_levels_compared_to_models()

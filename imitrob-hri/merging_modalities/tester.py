@@ -11,7 +11,7 @@ from nlp_new.nlp_utils import make_conjunction, to_default_name
 import numpy as np
 import scipy as sp
 import scipy.stats
-
+import noise_model
 
 def probs_vector_tester():
     ''' ProbsVector holds vector of probabilities and can do additional features 
@@ -140,42 +140,34 @@ def modality_merge_2_tester():
     r = mm.feedforward2(ls, gs)
     print(r)
 
+def interactive_probs_plotter_test(dataset_name='c2_n1_D1',
+                                   sample_n=0,
+                                   merge_fun='add_2',
+                                   model = 2,
+                                   category = 'template'):
+    # load some dataset's sample
+    dataset = np.load(os.path.expanduser(f'{os.path.dirname(os.path.abspath(__file__))}/../data/saves/artificial_dataset_{dataset_name}.npy'), allow_pickle=True)
+    sample = dataset[sample_n]
+    
+    c = sample['config']
+    s = sample['x_sentence'] 
+    s.make_conjunction(c)
+    
+    mm = ModalityMerger(c, merge_fun)
+    s.M, DEBUGdata = mm.feedforward3(s.L, s.G, scene=sample['x_scene'], epsilon=c.epsilon, gamma=c.gamma, alpha_penal=c.alpha_penal, model=model, use_magic=merge_fun)
 
-class MixtureModel():
+    print(f"merged: {s.check_merged(sample['y'], c)}")
 
-    def __init__(self,  params):
-        self.models = []
-        for p in params:
-            self.models.append(getattr(sp.stats, p[0])(*p[1]))
+    y_true_ct, y_pred_ct = s.get_true_and_pred(sample['y'], c)
+    print(f"y_true_ct {y_true_ct}, y_pred_ct {y_pred_ct}")        
 
-    def rvs(self, size):
-        submodel_choices = np.random.choice(len(self.models), size=size)
-        submodel_samples = [submodel.rvs(size=size) for submodel in self.models]
-        rvs = np.choose(submodel_choices, submodel_samples)
-        return rvs
-
-def entropy_tester():
-
-    det_model = MixtureModel([
-            ('norm', (0.40518772634005173, 0.11254289107220866)),
-            ('norm', (0.5162473647795723, 0.10747602382933483)),
-            ('norm', (0.29960713071618444, 0.028368399842165663)),
-            ('norm', (0.7337954978857516, 0.06631302990996413)),
-            ('norm', (0.5998625653155687, 0.09537271998949513)),
-            ('norm', (0.5331632665435483, 0.047239334976977285)),
-            ('norm', (0.4599737806474422, 0.04574923462552068)),
-            ('norm', (0.7013723305787044, 0.01449694961189483)),
-        ])
-
-    noise_model = MixtureModel([
-            ('expon', (1.0167785737536344e-08, 0.005827560175383218)),
-            ('exponnorm', (1.768464920150208, 0.15072610225705982, 0.05762642382325739))
-        ])
-
-    plt.hist(noise_model.rvs(10000), bins=np.linspace(0, 1, 200))
-    #plt.hist(det_model.rvs(10000), bins=np.linspace(0, 1, 200))
-    plt.show()
-
+    interactive_probs_plotter(s.L[category].p, 
+                              s.G[category].p, 
+                              mm.c.templates, 
+                              mm.c.clear_threshold, 
+                              mm.c.unsure_threshold, 
+                              mm.c.diffs_threshold, 
+                              mm.mms[category])
 
 if __name__ == '__main__':
     # print("1. Single probs vector tester: \n")
@@ -193,4 +185,6 @@ if __name__ == '__main__':
     # print("5. Modality merge 2 tester: \n")
     # modality_merge_2_tester()
 
-    entropy_tester()
+    #noise_model.entropy_tester()
+
+    interactive_probs_plotter_test()
