@@ -1,14 +1,14 @@
-import sys; sys.path.append("..")
-from nlp_new.templates.MoveUpTask import MoveUpTask
-from nlp_new.templates.PickTask import PickTask
-from nlp_new.templates.UnglueTask import UnglueTask
-from nlp_new.templates.PointTask import PointTask
-from nlp_new.templates.PourTask import PourTask
-from nlp_new.templates.PushTask import PushTask
-from nlp_new.templates.PutIntoTask import PutIntoTask
-from nlp_new.templates.ReleaseTask import ReleaseTask
-from nlp_new.templates.StopTask import StopTask
-from nlp_new.templates.StackTask import StackTask
+
+from imitrob_templates.templates.MoveUpTask import MoveUpTask
+from imitrob_templates.templates.PickTask import PickTask
+from imitrob_templates.templates.UnglueTask import UnglueTask
+from imitrob_templates.templates.PointTask import PointTask
+from imitrob_templates.templates.PourTask import PourTask
+from imitrob_templates.templates.PushTask import PushTask
+from imitrob_templates.templates.PutIntoTask import PutIntoTask
+from imitrob_templates.templates.ReleaseTask import ReleaseTask
+from imitrob_templates.templates.StopTask import StopTask
+from imitrob_templates.templates.StackTask import StackTask
 
 # names unique, [0] is default name
 template_name_synonyms = {

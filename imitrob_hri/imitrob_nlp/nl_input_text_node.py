@@ -27,6 +27,7 @@ from crow_ontology.crowracle_client import CrowtologyClient
 from rdflib.namespace import Namespace, RDF, RDFS, OWL, FOAF, XSD
 from rdflib import URIRef, BNode, Literal, Graph
 from rdflib.term import Identifier
+from crow_params.client import ParamClient
 
 ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
 CROW = Namespace(f"{ONTO_IRI}#")
@@ -38,6 +39,7 @@ class NLInput(Node):
         super().__init__(node_name)
         self.crowracle = CrowtologyClient(node=self)
         self.onto = self.crowracle.onto
+        self.pclient = ParamClient()
 
         # add the red cube to the ontology
         #red_cube = self.onto.makeEntity(CROW.meinhasenfuss, {CROW.hasColor: CROW.COLOR_RED, CROW.x: Literal(13), CROW.y: Literal(7)})
@@ -111,6 +113,7 @@ class NLInput(Node):
         qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
         self.nl_publisher = self.create_publisher(SentenceProgram, "/nl_input", qos)
         msg = SentenceProgram()
+        self.pclient.nlp_ongoing = True
         msg.header.stamp = self.get_clock().now().to_msg()
         msg.data = input_sentences
         print('will publish {}',msg.data)

@@ -32,6 +32,9 @@ class ROSComm(Node):
         self.create_subscription(HRICommand, '/mm/gestures_input', self.receiveHRIcommandG, 10)
         self.create_subscription(HRICommand, '/mm/natural_input', self.receiveHRIcommandL, 10)
         
+        self.create_subscription(Bool, '/mm/gestures_ongoing', self.ongoingG, 10)
+        self.create_subscription(Bool, '/mm/natural_ongoing', self.ongoingL, 10)
+        
         self.create_subscription(HRICommand, '/mm/crow_scene', self.receive_scene, 10)
         
         self.receivedHRIcommandG = None
@@ -63,20 +66,10 @@ class ROSComm(Node):
             self.mm_publisher(self.merge_modalities())
         
     def execution_trigger(self):
-        """ Time from receiving both modalities is less than constant (self.max_time_delay)
-
+        """  Should check ongoing topics
         Returns:
             Bool: Execution can begin
         """        ''''''
-        
-        time_now = time.perf_counter()
-        
-        time_last_L = self.receivedHRIcommandLstamp
-        time_last_G = self.receivedHRIcommandGstamp
-        
-        if time_now - time_last_L < self.max_time_delay and \
-            time_now - time_last_G < self.max_time_delay:
-            return True
         return False
         
     def merge_modalities(self):
