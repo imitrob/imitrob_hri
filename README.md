@@ -4,7 +4,20 @@ gesture, nlp and dialogue ros2 packages for common imitrob setup, jointly workin
 
 ## Merge modalities feature
 
+One of many features of this package.
+See related [paper](http://imitrob.ciirc.cvut.cz/publications/mm24/).
+
 Run tester: `python tester.py` (in `imitrob-hri/merging_modalities`)
+
+### Connection to `crow`
+
+```mermaid
+flowchart LR;
+
+INPUT -- "HRICommand<br>Natural<br>language" --> MM("Modality<br>Merger")
+INPUT -- "HRICommand<br>Gesture<br>language" --> MM("Modality<br>Merger") -- "HRICommand<br>Merged<br>language" --> OUTPUT
+
+```
 
 ### Install additional: (might be added to requirements or conda yml file)
 
