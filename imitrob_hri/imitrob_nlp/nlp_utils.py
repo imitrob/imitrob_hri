@@ -1,32 +1,21 @@
 
-from imitrob_templates.templates.MoveUpTask import MoveUpTask
-from imitrob_templates.templates.PickTask import PickTask
-from imitrob_templates.templates.UnglueTask import UnglueTask
-from imitrob_templates.templates.PointTask import PointTask
-from imitrob_templates.templates.PourTask import PourTask
-from imitrob_templates.templates.PushTask import PushTask
-from imitrob_templates.templates.PutIntoTask import PutIntoTask
-from imitrob_templates.templates.ReleaseTask import ReleaseTask
-from imitrob_templates.templates.StopTask import StopTask
-from imitrob_templates.templates.StackTask import StackTask
-
 # names unique, [0] is default name
 template_name_synonyms = {
     #'0': ['noop'],
     #'16': ['grip'],
-    '32': ['release', "release", "pustit"],
-    '64': ['point', 'point', 'ukaž', 'POINT_TASK', 'ukaz', 'PointTask'], # point towards a location
-    '80': ['pick', 'PICK_TASK', 'seber', 'pick', 'PickTask'], # pick an object
-    '128': ['place', 'place'], # place an object (assuming something is being held)
+    '32': ['release', "pustit"],
+    '64': ['point', 'ukaž', 'POINT_TASK', 'ukaz', 'PointTask'], # point towards a location
+    '80': ['pick', 'PICK_TASK', 'seber', 'PickTask'], # pick an object
+    '128': ['place'], # place an object (assuming something is being held)
     #'208': ['pnp'], # pick n place
     #'209': ['store'], # pick an object an place it into a storage
     #'210': ['stash'], # pick an object an place it into the robot storage (backstage)
     #'212': ['fetch'], # take object from backstage and put it near the user
     #'213': ['fetch_to'], # take object from backstage and put it into a storage
     #'214': ['TIDY', 'TIDY_TASK', 'ukliď'], # take all objects from the front and put them into a storage
-    '256': ['stop', 'stop'],  # stop the robot arm(s)
-    '1000': ['put-into', 'put', 'polož', 'PutTask', 'put into', 'put'],
-    '1001': ['push', 'push'],
+    '256': ['stop'],  # stop the robot arm(s)
+    '1000': ['put-into', 'put', 'polož', 'PutTask', 'put into'],
+    '1001': ['push'],
     '1002': ['move-up', 'nahoru', 'up', 'move away', 'move up'],
     '1003': ['pour', 'nalij', 'nalit', 'pour into'],
     '1004': ['unglue'],
@@ -202,21 +191,7 @@ def make_conjunction(gesture_templates, language_templates, gesture_likelihoods,
     #print(f"[conj fun][{len(unique_list)}] final templates: {unique_list}")
     return unique_list, language_likelihoods_unified, gesture_likelihoods_unified
 
-def create_template(template_name):
-    template_name = to_default_name(template_name)
-    
-    return {
-    'stop': StopTask(),
-    'release': ReleaseTask(),
-    'move-up': MoveUpTask(),
-    'pick': PickTask(),
-    'point': PointTask(),
-    'push': PushTask(),
-    'unglue': UnglueTask(),
-    'put-into': PutIntoTask(),
-    'pour': PourTask(),
-    'stack': StackTask(),
-    }[template_name]
+
 
 
 if __name__ == '__main__':

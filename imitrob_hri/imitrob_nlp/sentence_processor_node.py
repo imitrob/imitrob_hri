@@ -31,7 +31,7 @@ from rclpy.qos import QoSProfile
 from rclpy.qos import QoSReliabilityPolicy
 from crow_msgs.msg import SentenceProgram, StampedString # , ProcessedSentence, StringList, CommandType, #, NlpStatus
 
-from crow_nlp.nlp_crow.processing.NLProcessor import NLProcessor
+from imitrob_hri.imitrob_nlp.NLProcessor import NLProcessor
 # import message_filters
 import traceback as tb
 # import curses
@@ -43,7 +43,7 @@ from crow_ontology.crowracle_client import CrowtologyClient
 from rdflib.namespace import Namespace, RDF, RDFS, OWL, FOAF, XSD
 # from rdflib import URIRef, BNode, Literal, Graph
 # from rdflib.term import Identifier
-from crow_nlp.nlp_crow.processing.ProgramRunner import ProgramRunner
+from imitrob_hri.imitrob_nlp.ProgramRunner import ProgramRunner
 from crow_nlp.nlp_crow.modules.UserInputManager import UserInputManager
 from crow_params.client import ParamClient
 
@@ -55,9 +55,9 @@ if not NOT_PROFILING:
     from crow_control.utils.profiling import StatTimer
 
 import sys; sys.path.append("..")
-import imitrob_nlp.nlp_utils as nlp_utils
-from merging_modalities.modality_merger import ModalityMerger, UnifiedSentence
-from merging_modalities.utils import cc
+import nlp_utils as nlp_utils
+from imitrob_hri.merging_modalities.modality_merger import ModalityMerger
+from imitrob_hri.merging_modalities.utils import cc
 
 from teleop_msgs.msg import HRICommand
 
@@ -282,7 +282,7 @@ class SentenceProcessor(Node):
             return None
 
     def process_sentence_callback(self, nlInputMsg):
-        
+        print("process_sentence_callback")
         if not NOT_PROFILING:
             StatTimer.enter("semantic text processing")
         self.pclient.processor_busy_flag = True
@@ -349,9 +349,11 @@ class SentenceProcessor(Node):
                 # input()
                 # ''' MM END '''
                 
-                hricommand = HRICommand(data=['program_template_speech'])
+                hricommand = HRICommand(data=[str(program_template_speech)])
                 
-                self.sentence_publisher_hri_command.publish(hricommand)
+                while True:
+                    self.sentence_publisher_hri_command.publish(hricommand)
+                    time.sleep(1)
                 return
 
                 # start_attempt_time = time.time()

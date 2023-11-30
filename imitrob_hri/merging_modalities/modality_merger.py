@@ -3,7 +3,7 @@ import numpy as np
 from collections import deque
 
 try:
-    from utils import *
+    from imitrob_hri.merging_modalities.utils import *
 except ModuleNotFoundError:
     from merging_modalities.utils import *
 
@@ -12,7 +12,8 @@ from os import listdir
 from os.path import isfile, join
 
 import sys; sys.path.append("..")
-from nlp_new.nlp_utils import make_conjunction, to_default_name, create_template
+from imitrob_hri.imitrob_nlp.nlp_utils import make_conjunction, to_default_name
+from imitrob_templates.small_template_factory import create_template
 from copy import deepcopy
 
 
