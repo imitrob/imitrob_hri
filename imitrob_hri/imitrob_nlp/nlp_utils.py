@@ -5,7 +5,7 @@ template_name_synonyms = {
     #'16': ['grip'],
     '32': ['release', "pustit"],
     '64': ['point', 'ukaž', 'POINT_TASK', 'ukaz', 'PointTask'], # point towards a location
-    '80': ['pick', 'PICK_TASK', 'seber', 'PickTask'], # pick an object
+    '80': ['pick', 'PICK_TASK', 'seber', 'PickTask', 'pick up'], # pick an object
     '128': ['place'], # place an object (assuming something is being held)
     #'208': ['pnp'], # pick n place
     #'209': ['store'], # pick an object an place it into a storage

@@ -1,4 +1,4 @@
-import sys, os, time
+import sys, os, time, json
 import rclpy
 from rclpy.node import Node
 import numpy as np
@@ -12,12 +12,15 @@ import numpy as np
 # from sensor_msgs.msg import JointState
 
 from teleop_msgs.msg import HRICommand
+from std_msgs.msg import Bool
 # Something like:
 # from teleop_msgs.srv import MergeModalities
 from modality_merger import ModalityMerger, ProbsVector
 from configuration import Configuration3
 
-class ROSComm(Node):
+from imitrob_hri.merging_modalities.utils import Scene3, Object3
+
+class MMNode(Node):
     def __init__(self, max_time_delay = 5., model = 3, use_magic = 'entropy', c=Configuration3()):
         """Standard ROS Node
 
@@ -29,7 +32,7 @@ class ROSComm(Node):
 
         self.max_time_delay = max_time_delay
         
-        self.create_subscription(HRICommand, '/mm/gestures_input', self.receiveHRIcommandG, 10)
+        self.create_subscription(HRICommand, '/teleop_gesture_toolbox/action_sentence_mapped', self.receiveHRIcommandG, 10)
         self.create_subscription(HRICommand, '/mm/natural_input', self.receiveHRIcommandL, 10)
         
         self.create_subscription(Bool, '/mm/gestures_ongoing', self.ongoingG, 10)
@@ -51,6 +54,16 @@ class ROSComm(Node):
         self.c = c
         
         
+        self.isOnGoingG = False
+        self.isOnGoingL = False
+        
+    def ongoingG(self):
+        pass
+        # TODO
+    def ongoingL(self):
+        pass
+        # TODO
+        
     def receiveHRIcommandG(self, msg):
         self.receivedHRIcommandGstamp = time.perf_counter()
         self.receivedHRIcommandG = msg
@@ -70,6 +83,13 @@ class ROSComm(Node):
         Returns:
             Bool: Execution can begin
         """        ''''''
+        # Ongoing bool message frequency should be 10Hz
+        # -> Wait 30ms (factor 3)
+        time.sleep(0.03)
+        # If not gesturing and not speaking -> execute
+        if not self.isOnGoingL and not self.isOnGoingG:
+             return True
+         
         return False
         
     def merge_modalities(self):
@@ -83,23 +103,36 @@ class ROSComm(Node):
         """        ''''''
         inputs = self.receivedHRIcommandG, self.receivedHRIcommandL
         
-        self.receivedHRIcommandG['template_probs']
+        print("GG:")
+        print(inputs[0])
         
-        self.receivedHRIcommandG['template_names']
+        receivedHRIcommandGStringToParse = self.receivedHRIcommandG.data[0]
+        receivedHRIcommandG_parsed = json.loads(receivedHRIcommandGStringToParse)
+        ['template_probs']
+        
+        template_names = receivedHRIcommandG_parsed['actions']
+        receivedHRIcommandG_parsed['target_action']
+        template_probs = receivedHRIcommandG_parsed['action_probs']
+        receivedHRIcommandG_parsed['action_timestamp']
+        object_names = receivedHRIcommandG_parsed['objects']
+        object_probs = receivedHRIcommandG_parsed['object_probs']
+        receivedHRIcommandG_parsed['object_classes']
+        receivedHRIcommandG_parsed['parameters']
+        
         
         G = {
-            'template': ProbsVector(self.receivedHRIcommandG['template_probs'], self.receivedHRIcommandG['template_names'], c),
-            'selections': ProbsVector(self.receivedHRIcommandG['object_probs'], self.receivedHRIcommandG['object_names'], c),
-            'storages': ProbsVector(self.receivedHRIcommandG['storage_probs'], self.receivedHRIcommandG['storage_names'], c),
+            'template': ProbsVector(template_probs, template_names, self.c),
+            'selections': ProbsVector(object_probs, object_names, self.c),
+            'storages': ProbsVector([], [], self.c),
         }
         L = {
-            'template': ProbsVector(self.receivedHRIcommandG['template_probs'], self.receivedHRIcommandG['template_names'], c),
-            'selections': ProbsVector(self.receivedHRIcommandG['object_probs'], self.receivedHRIcommandG['object_names'], c),
-            'storages': ProbsVector(self.receivedHRIcommandG['storage_probs'], self.receivedHRIcommandG['storage_names'], c),
+            'template': ProbsVector([], [], self.c),
+            'selections': ProbsVector([], [], self.c),
+            'storages': ProbsVector([], [], self.c),
         }
         
         mm = ModalityMerger(self.c, self.use_magic)
-        M, DEBUGdata = mm.feedforward3(L, G, scene=sample['x_scene'], epsilon=self. c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=self.model, use_magic=self.use_magic)
+        M, DEBUGdata = mm.feedforward3(L, G, scene=sample['x_scene'], epsilon=self.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=self.model, use_magic=self.use_magic)
         
         return HRICommand(inputs)
     
@@ -142,19 +175,10 @@ class ROSComm(Node):
 
         scene = Scene3(objects, storages, template_names=c.templates)
 
-rclpy.init()
-service = Service()
-rclpy.spin(service) # Needed to serve (? - verify)
+def main():
+    rclpy.init()
+    mmn = MMNode()
+    rclpy.spin(mmn)
 
-
-
-def init(robot_interface='', setup='standalone'):
-    global roscm, rossem
-    rclpy.init(args=None)
-    rossem = threading.Semaphore()
-
-    if setup == 'standalone':
-        roscm = ROSComm(robot_interface=robot_interface)
-    elif setup == 'mirracle':
-        roscm = MirracleSetupInterface(robot_interface=robot_interface)
-    else: raise Exception()
+if __name__ == '__main__':
+    main()

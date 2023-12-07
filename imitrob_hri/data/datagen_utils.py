@@ -1,7 +1,7 @@
 import numpy as np
 import sys, os; sys.path.append(os.path.dirname(os.path.abspath(__file__))+"/..")
 from merging_modalities.utils import cc
-from nlp_new.nlp_utils import create_template
+from imitrob_templates.small_template_factory import create_template
 from copy import deepcopy
 from merging_modalities import noise_model
 
