@@ -925,7 +925,9 @@ class MMSentence():
         for ct in c.ct_names.keys():
             c.ct_names[ct], self.L[ct].p, self.G[ct].p = make_conjunction( \
                                         self.G[ct].names, self.L[ct].names, \
-                                        self.G[ct].p, self.L[ct].p, ct=ct)
+                                        self.G[ct].p, self.L[ct].p, ct=ct,
+                                        keep_only_items_in_c_templates=True,
+                                        c_templates=c.ct_names[ct])
             self.G[ct].names = c.ct_names[ct]
             self.L[ct].names = c.ct_names[ct]
         # special case: extend to all loaded templates (from files)

@@ -1,7 +1,7 @@
 import unittest
 
 import sys; sys.path.append("..")
-from nlp_new.nlp_utils import *
+from imitrob_nlp.nlp_utils import *
 
 
 import numpy as np

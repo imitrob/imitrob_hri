@@ -15,13 +15,15 @@ from teleop_msgs.msg import HRICommand
 from std_msgs.msg import Bool
 # Something like:
 # from teleop_msgs.srv import MergeModalities
-from modality_merger import ModalityMerger, ProbsVector
-from configuration import Configuration3
+from modality_merger import ModalityMerger, ProbsVector, MMSentence
+from configuration import ConfigurationCrow1
 
-from imitrob_hri.merging_modalities.utils import Scene3, Object3
+from imitrob_hri.data.scene3_def import Scene3, Object3
+
+from imitrob_templates.small_ontology_scene_reader import SceneOntologyClient
 
 class MMNode(Node):
-    def __init__(self, max_time_delay = 5., model = 3, use_magic = 'entropy', c=Configuration3()):
+    def __init__(self, max_time_delay = 5., model = 3, use_magic = 'entropy', c=ConfigurationCrow1()):
         """Standard ROS Node
 
         Args:
@@ -32,7 +34,7 @@ class MMNode(Node):
 
         self.max_time_delay = max_time_delay
         
-        self.create_subscription(HRICommand, '/teleop_gesture_toolbox/action_sentence_mapped', self.receiveHRIcommandG, 10)
+        self.create_subscription(HRICommand, '/hri/command', self.receiveHRIcommandG, 10)
         self.create_subscription(HRICommand, '/mm/natural_input', self.receiveHRIcommandL, 10)
         
         self.create_subscription(Bool, '/mm/gestures_ongoing', self.ongoingG, 10)
@@ -56,6 +58,12 @@ class MMNode(Node):
         
         self.isOnGoingG = False
         self.isOnGoingL = False
+        
+        self.soc = SceneOntologyClient(self)
+        self.soc.add_dummy_cube()
+        print(self.soc.get_scene3())
+        
+        print("Initialized")
         
     def ongoingG(self):
         pass
@@ -120,19 +128,40 @@ class MMNode(Node):
         receivedHRIcommandG_parsed['parameters']
         
         
-        G = {
+        mms = MMSentence(G = {
             'template': ProbsVector(template_probs, template_names, self.c),
             'selections': ProbsVector(object_probs, object_names, self.c),
             'storages': ProbsVector([], [], self.c),
-        }
+        },
         L = {
-            'template': ProbsVector([], [], self.c),
-            'selections': ProbsVector([], [], self.c),
+            'template': ProbsVector(template_probs, template_names, self.c),
+            'selections': ProbsVector(object_probs, object_names, self.c),
             'storages': ProbsVector([], [], self.c),
-        }
+        })
+        
+        scene = self.soc.get_scene3()
         
         mm = ModalityMerger(self.c, self.use_magic)
-        M, DEBUGdata = mm.feedforward3(L, G, scene=sample['x_scene'], epsilon=self.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=self.model, use_magic=self.use_magic)
+        print(
+            f"L: \n\
+template: {mms.L['template']}, \n\
+selections: {mms.L['selections']}, \n\
+storages: {mms.L['storages']}, \n\
+G: \n\
+template: {mms.G['template']}, \n\
+selections: {mms.G['selections']}, \n\
+storages: {mms.G['storages']}, \n\
+scene: {scene} \n\
+epsilon: {self.c.epsilon} \n\
+gamma: {self.c.gamma} \n\
+alpha_penal: {self.c.alpha_penal} \n\
+model: {self.model} \n\
+use_magic: {self.use_magic} \n\
+"
+        )
+        mms.make_conjunction(self.c)
+        
+        M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=self.c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=self.model, use_magic=self.use_magic)
         
         return HRICommand(inputs)
     

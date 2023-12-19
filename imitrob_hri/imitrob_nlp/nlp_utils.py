@@ -1,12 +1,21 @@
 
-# names unique, [0] is default name
+# Only EN
+# names unique,
+# Note:
+#   dict keys are ids
+#   first item of list is the ret of: is_default_name()
+
+
 template_name_synonyms = {
+    '1': ['pick', 'PICK_TASK', 'PickTask', 'pick up', 'lift', 'use'], #'seber'], # pick an object
+    '2': ['point', 'POINT_TASK', 'PointTask'], #'ukaz', 'ukaž'],
+    '3': ['pass', 'pass me', 'give me', 'bring', 'need'],
+    '4': ['release', 'place', 'put down'], # place an object (assuming something is being held)
+    
     #'0': ['noop'],
     #'16': ['grip'],
-    '32': ['release', "pustit"],
-    '64': ['point', 'ukaž', 'POINT_TASK', 'ukaz', 'PointTask'], # point towards a location
-    '80': ['pick', 'PICK_TASK', 'seber', 'PickTask', 'pick up'], # pick an object
-    '128': ['place'], # place an object (assuming something is being held)
+    '32': ['open', "pustit"],
+    # point towards a location
     #'208': ['pnp'], # pick n place
     #'209': ['store'], # pick an object an place it into a storage
     #'210': ['stash'], # pick an object an place it into the robot storage (backstage)
@@ -14,13 +23,20 @@ template_name_synonyms = {
     #'213': ['fetch_to'], # take object from backstage and put it into a storage
     #'214': ['TIDY', 'TIDY_TASK', 'ukliď'], # take all objects from the front and put them into a storage
     '256': ['stop'],  # stop the robot arm(s)
-    '1000': ['put-into', 'put', 'polož', 'PutTask', 'put into'],
+    '1000': ['put-into', 'put', 'PutTask', 'put into'], #, 'polož'],
     '1001': ['push'],
-    '1002': ['move-up', 'nahoru', 'up', 'move away', 'move up'],
-    '1003': ['pour', 'nalij', 'nalit', 'pour into'],
+    '1003': ['pour', 'pour into'], # 'nalij', 'nalit'],
     '1004': ['unglue'],
     '1005': ['stack'],
-
+    
+    '11': ['move-up', 'move up', 'up', 'move away', 'move up'], # 'nahoru'],
+    '12': ['move-down', 'move down', 'down', 'move closer', 'move table'],
+    '13': ['move-left', 'move left', 'left'],
+    '14': ['move-right', 'move right', 'right'],
+    
+    '30': ['replace', 'swap', 'change'],
+    
+    
     #'512': ['retract'],  # retract to starting position
     #'2048': ['move'],  # move eef to a location
 
@@ -46,11 +62,15 @@ selections_name_synonyms = {
     '11': ['Peg'],
     '12': ['wrench'],
     '13': ['paper'],
-
+    # YCB
     '100': ['tomato soup can'], 
     '101': ['potted meat can'],
     '102': ['bowl'],
     '103': ['cup'],
+    # Crow
+    '200': ['cube holes'],
+    '201': ['wheel'],
+    '202': ['sphere'],
 
     '1000': ['glued wrench'],
 }
@@ -126,6 +146,9 @@ def template_name_to_id(name):
 
 def to_default_name(name, ct='template'):
     name = name.lower()
+    if '_od_' in name:
+        name = name.split("_od_")[0]
+    name = name.replace("_", " ")
     assert isinstance(name, str), f"name is not string, it is {type(name)}"
     ct_name_synonyms = eval(ct+'_name_synonyms')
 
@@ -148,19 +171,17 @@ class cc:
     U = '\033[4m'
 
 
-def make_conjunction(gesture_templates, language_templates, gesture_likelihoods, language_likelihoods, ct='template'):
+def make_conjunction(gesture_templates, language_templates, gesture_likelihoods, language_likelihoods, ct='template', keep_only_items_in_c_templates=False, c_templates=None):
     ''' If language and gesture templates has different sizes or one/few templates are missing
         This function makes UNION from both template lists.
     '''
+    
     assert len(gesture_templates) == len(gesture_likelihoods), "items & likelihoods different sizes"
     assert len(language_templates) == len(language_likelihoods), "items & likelihoods different sizes"
     assert len(gesture_templates) == 0 or isinstance(gesture_templates[0], str), "names must be string"
     assert len(language_templates) == 0 or isinstance(language_templates[0], str), f"names must be string {language_templates}"
     assert len(gesture_likelihoods) == 0 or isinstance(gesture_likelihoods[0], float), "likelihoods must be float"
     assert len(language_likelihoods) == 0 or isinstance(language_likelihoods[0], float), "likelihoods must be float"
-
-    gesture_templates = list(gesture_templates)
-    language_templates = list(language_templates)
 
     #print(f"[conj fun][{len(gesture_templates)}] gesture_templates: {gesture_templates}") 
     #print(f"[conj fun][{len(language_templates)}] language_templates: {language_templates}")
@@ -170,6 +191,41 @@ def make_conjunction(gesture_templates, language_templates, gesture_likelihoods,
     for i in range(len(language_templates)):
         language_templates[i] = to_default_name(language_templates[i], ct=ct)
     
+
+    gesture_templates = list(gesture_templates)
+    language_templates = list(language_templates)
+    gesture_likelihoods = list(gesture_likelihoods)
+    language_likelihoods = list(language_likelihoods)
+
+    if keep_only_items_in_c_templates:
+        assert c_templates is not None
+        
+        print("c_templates", c_templates)        
+        discards_g = []
+        for n,gt in enumerate(gesture_templates):
+            if gt not in c_templates:
+                discards_g.append(n)
+        discards_g.reverse()
+        print("discards_g", discards_g)
+        print("gesture_templates", gesture_templates)
+        for i in discards_g:
+            gesture_templates.pop(i)
+            gesture_likelihoods.pop(i)
+        
+        discards_l = []        
+        print("discards_l", discards_l)
+        print("language_templates", language_templates)
+        for n,lt in enumerate(language_templates):
+            if lt not in c_templates:
+                discards_l.append(n)
+        discards_l.reverse()
+        for i in discards_l:
+            language_templates.pop(i)
+            language_likelihoods.pop(i)
+
+
+
+
     extended_list = gesture_templates.copy()
     extended_list.extend(language_templates)
     unique_list = list(set(extended_list))

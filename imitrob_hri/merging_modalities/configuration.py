@@ -220,3 +220,41 @@ class Configuration3(Configuration):
         self.sim_table_gesture_storages = self.sim_table_gesture_objects_default[0:4,0:4] # TODO
 
         self.samples = self.samples_default
+
+
+
+''' Crow '''
+
+class ConfigurationCrow1(Configuration):
+    def __init__(self):
+        self.ct_names = {'template': ['pick', 'point', 'pass-me','release'],
+            'selections': [],
+            'storages': [],
+        }
+        self.scene_gen_config = {
+            'selections_n': ('uniform', 3, 7),
+            'storages_n': ('uniform', 2, 3),
+        }
+        #self.ct_properties = self.ct_properties_default
+        
+        self.match_threshold = self.match_threshold_default
+        self.clear_threshold = self.clear_threshold_default
+        self.unsure_threshold = self.unsure_threshold_default
+        self.diffs_threshold = self.diffs_threshold_default
+
+        self.epsilon = self.epsilon_default
+        self.gamma = self.gamma_default
+        self.alpha_penal = 0.2
+
+        self.DEBUG = False
+
+        self.sim_table_gesture = self.sim_table_gesture_default
+        self.sim_table_language = self.sim_table_language_default
+
+        self.sim_table_language_objects = self.sim_table_language_objects_default
+        self.sim_table_gesture_objects = self.sim_table_gesture_objects_default
+
+        self.sim_table_language_storages = self.sim_table_gesture_objects_default[0:4,0:4] # TODO
+        self.sim_table_gesture_storages = self.sim_table_gesture_objects_default[0:4,0:4] # TODO
+
+        self.samples = self.samples_default

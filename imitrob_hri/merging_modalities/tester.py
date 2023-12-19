@@ -6,7 +6,7 @@ from configuration import Configuration
 from modality_merger import ProbsVector, SingleTypeModalityMerger, ModalityMerger, MultiProbsVector
 from utils import *
 import sys, os; sys.path.append("..")
-from nlp_new.nlp_utils import make_conjunction, to_default_name
+from imitrob_nlp.nlp_utils import make_conjunction, to_default_name
 
 import numpy as np
 import scipy as sp

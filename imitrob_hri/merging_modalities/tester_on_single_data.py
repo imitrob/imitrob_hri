@@ -2,7 +2,7 @@
 import sys, os; sys.path.append(os.path.dirname(os.path.abspath(__file__))+"/..")
 from modality_merger import ModalityMerger
 from utils import *
-from nlp_new.nlp_utils import make_conjunction
+from imitrob_nlp.nlp_utils import make_conjunction
 import data.datagen_utils as datagen_utils 
 import numpy as np
 from sklearn.metrics import precision_score, recall_score, accuracy_score

@@ -3,7 +3,7 @@ import sys, os; sys.path.append(os.path.dirname(os.path.abspath(__file__))+"/.."
 from merging_modalities.modality_merger import MMSentence, ProbsVector
 import numpy as np
 from data.datagen_utils import *
-from nlp_new.nlp_utils import create_template
+from imitrob_nlp.nlp_utils import create_template
 from merging_modalities.configuration import *
 import merging_modalities.noise_model as nm
 
