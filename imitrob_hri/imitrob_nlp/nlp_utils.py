@@ -244,6 +244,13 @@ def make_conjunction(gesture_templates, language_templates, gesture_likelihoods,
             m = unique_list.index(unique_item)
             language_likelihoods_unified[m] = language_likelihoods[n]
     
+    if keep_only_items_in_c_templates:
+        for tmpl in c_templates:
+            if tmpl not in unique_list:
+                unique_list.append(tmpl)
+                language_likelihoods_unified.append(0.0)
+                gesture_likelihoods_unified.append(0.0)
+    
     #print(f"[conj fun][{len(unique_list)}] final templates: {unique_list}")
     return unique_list, language_likelihoods_unified, gesture_likelihoods_unified
 

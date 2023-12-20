@@ -160,6 +160,24 @@ use_magic: {self.use_magic} \n\
 "
         )
         mms.make_conjunction(self.c)
+        print("=== make_conjunction ===")
+        print(
+            f"L: \n\
+template: {mms.L['template']}, \n\
+selections: {mms.L['selections']}, \n\
+storages: {mms.L['storages']}, \n\
+G: \n\
+template: {mms.G['template']}, \n\
+selections: {mms.G['selections']}, \n\
+storages: {mms.G['storages']}, \n\
+scene: {scene} \n\
+epsilon: {self.c.epsilon} \n\
+gamma: {self.c.gamma} \n\
+alpha_penal: {self.c.alpha_penal} \n\
+model: {self.model} \n\
+use_magic: {self.use_magic} \n\
+"
+        )
         
         M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=self.c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=self.model, use_magic=self.use_magic)
         

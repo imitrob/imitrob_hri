@@ -4,11 +4,11 @@ package_name = 'imitrob_hri'
 
 setup(
     name=package_name,
-    version='0.1.0',
+    version='0.2.0',
     packages=[package_name],
     data_files=[
-        #('share/ament_index/resource_index/packages',
-        #    ['resource/' + package_name]),
+        ('share/ament_index/resource_index/packages',
+            ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
     ],
     install_requires=['setuptools'],
@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            #'talker = my_great_rostwo_package.test:main',
+            "mm_node = imitrob_hri.merging_modalities.modality_merger_node:main",
             #'listener = my_great_rostwo_package.sub:main',
         ],
     },
