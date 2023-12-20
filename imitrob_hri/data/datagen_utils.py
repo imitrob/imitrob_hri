@@ -31,7 +31,7 @@ def get_random_feasible_triplet(scene, template_request=None):
     else:
         assert isinstance(template_request, str)
         template = scene.get_template(template_request)
-    requirements = deepcopy(template.compare_types) # requirements to fill
+    requirements = deepcopy(template.pars_compulsary) # requirements to fill
     
     if 'template' in requirements:
         requirements.remove('template')
@@ -221,11 +221,11 @@ def get_templates_decisive_based_on_arity(names, true_name, min_ch, scene):
     t = create_template(true_name)
     t_cts = {}
     for tt in scene.templates:
-        t_cts[tt.name] = tt.compare_types
+        t_cts[tt.name] = tt.pars_compulsary
     
     chosen_names_subset = []
     for k in t_cts.keys():
-        if t_cts[k] != t.compare_types:
+        if t_cts[k] != t.pars_compulsary:
             chosen_names_subset.append(k)    
     
     if true_name not in chosen_names_subset: chosen_names_subset.append(true_name)

@@ -43,15 +43,15 @@ class Configuration(ABC):
         
     @property
     def templates(self):
-        return self.ct_names['template']
+        return self.pars_names_dict['template']
 
     @property
     def selections(self):
-        return self.ct_names['selections']
+        return self.pars_names_dict['selections']
 
     @property
     def storages(self):
-        return self.ct_names['storages']
+        return self.pars_names_dict['storages']
     
     @property
     def sim_table_gesture_default(self):
@@ -115,7 +115,7 @@ class Configuration(ABC):
     
 class Configuration1(Configuration):
     def __init__(self):
-        self.ct_names = {'template': ['move-up', 'release', 'stop', ],
+        self.pars_names_dict = {'template': ['move-up', 'release', 'stop', ],
             'selections': ['potted meat can', 'tomato soup can', 'bowl', 'box', 'alt box', 'paper', 'wrench'],
             'storages': [],
         }
@@ -150,7 +150,7 @@ class Configuration1(Configuration):
 
 class Configuration2(Configuration):
     def __init__(self):
-        self.ct_names = {'template': ['move-up', 'release', 'stop',
+        self.pars_names_dict = {'template': ['move-up', 'release', 'stop',
                                     'pick', 'push', 'unglue',
             ],
             'selections': ['potted meat can', 'tomato soup can', 'bowl', 'box', 'alt box', 'paper', 'wrench'],
@@ -186,7 +186,7 @@ class Configuration2(Configuration):
 
 class Configuration3(Configuration):
     def __init__(self):
-        self.ct_names = {'template': ['move-up', 'release', 'stop',
+        self.pars_names_dict = {'template': ['move-up', 'release', 'stop',
                                     'pick', 'push', 'unglue',
                                     'pour', 'put-into', 'stack',
                 ],
@@ -227,7 +227,7 @@ class Configuration3(Configuration):
 
 class ConfigurationCrow1(Configuration):
     def __init__(self):
-        self.ct_names = {'template': ['pick', 'point', 'pass-me','release'],
+        self.pars_names_dict = {'template': ['pick', 'point', 'pass-me','release'],
             'selections': [],
             'storages': [],
         }

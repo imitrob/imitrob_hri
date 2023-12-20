@@ -535,30 +535,30 @@ class SelectionTypeModalityMerger(SingleTypeModalityMerger):
 
 class ModalityMerger():
     def __init__(self, c, use_magic):
-        assert len(c.ct_names.keys()) > 0
+        assert len(c.pars_names_dict.keys()) > 0
         self.c = c
         self.mms = {}
-        for ct in c.ct_names.keys():
-            mm = SingleTypeModalityMerger(names=c.ct_names[ct], c=self.c, fun=use_magic)
+        for ct in c.pars_names_dict.keys():
+            mm = SingleTypeModalityMerger(names=c.pars_names_dict[ct], c=self.c, fun=use_magic)
             self.mms[ct] = mm
         
-        self.compare_types = c.ct_names.keys()
+        self.pars_compulsary = c.pars_names_dict.keys()
         self.use_magic = use_magic
 
     def get_cts_type_objs(self):
         cts = []
-        for compare_type in self.compare_types:
+        for compare_type in self.pars_compulsary:
             cts.append(getattr(self, compare_type))
         return cts
 
     def __str__(self):
         s = ''
-        for mmn, mm in zip(self.compare_types, self.get_cts_type_objs()):
+        for mmn, mm in zip(self.pars_compulsary, self.get_cts_type_objs()):
             s += mmn.capitalize() + ': ' + str(mm.names) + '\n'
         return f"** Modality merge summary: **\n{s}**"
 
     def get_all_templates(self):
-        return self.c.ct_names['template']
+        return self.c.pars_names_dict['template']
     '''
     def get_names_for_compare_type(self, compare_type):
         return {
@@ -591,14 +591,14 @@ class ModalityMerger():
     def preprocessing(self, ls, gs, epsilon, gamma):
         ''' Data preprocessing '''
         # 1. Add epsilon
-        # for ct in self.c.ct_names.keys():
+        # for ct in self.c.pars_names_dict.keys():
         #     if self.is_zeros(ls[ct].p):
         #         ls[ct].p += epsilon
         #     if self.is_zeros(gs[ct].p):
         #         gs[ct].p += epsilon
 
         # 2. Add gamma, if language includes one value
-        for ct in self.c.ct_names.keys():
+        for ct in self.c.pars_names_dict.keys():
             if self.is_one_only(ls[ct].p):
                 ls[ct].p += gamma
                 ls[ct].p = np.clip(ls[ct].p, 0, 1)
@@ -645,10 +645,10 @@ class ModalityMerger():
         return f'template: {template_po.activated}, What to do: {template_po.conclusion} \n selections:{selection_po.activated}, What to do: {selection_po.conclusion}'
     
     def naive_modality_merge(self, compare_type, lsp, gsp):
-        if compare_type in self.compare_types:
+        if compare_type in self.pars_compulsary:
             mm = self.mms[compare_type]
         else:
-            raise Exception("compare_type not in self.compare_types")
+            raise Exception("compare_type not in self.pars_compulsary")
 
         merged_p = []
         for lp, gp in zip(lsp, gsp):
@@ -658,16 +658,16 @@ class ModalityMerger():
 
     def single_modality_merge(self, compare_type, lsp, gsp):
         # Get single modality merger
-        if compare_type in self.compare_types:
+        if compare_type in self.pars_compulsary:
             mm = self.mms[compare_type] 
-        else: raise Exception("compare_type not in self.compare_types")
+        else: raise Exception("compare_type not in self.pars_compulsary")
         return mm.merge(lsp, gsp)
 
     def entropy_modality_merge(self, compare_type, lsp, gsp):
-        if compare_type in self.compare_types:
+        if compare_type in self.pars_compulsary:
             mm = self.mms[compare_type]
         else:
-            raise Exception("compare_type not in self.compare_types")
+            raise Exception("compare_type not in self.pars_compulsary")
 
         # penalize according to entropy?
         PENALIZE_BY_ENTROPY = True
@@ -696,7 +696,7 @@ class ModalityMerger():
         return EntropyProbsVector(msp, mm.names, mm.c)
 
     def is_ct_visible(self, s_, ct_target, threshold = 0.1):
-        for ct in self.compare_types:
+        for ct in self.pars_compulsary:
             if sum(s_[ct].p) > threshold:
                 if ct == ct_target:
                     return True
@@ -715,7 +715,7 @@ class ModalityMerger():
         # B.) Merging
         # 1. Compare types independently
         S_naive = {}
-        for compare_type in self.compare_types: # storages, distances, ...
+        for compare_type in self.pars_compulsary: # storages, distances, ...
             # single compare-type merger e.g. [box1, cube1, ...] (probs.)
             S_naive[compare_type] = self.single_modality_merge(compare_type, \
                                         ls[compare_type].p,
@@ -736,7 +736,7 @@ class ModalityMerger():
                 alpha = 1.0
                 beta = 1.0
                 beta_real = 1.0
-                for nct, compare_type in enumerate(self.compare_types): # selections, storages, distances, ...
+                for nct, compare_type in enumerate(self.pars_compulsary): # selections, storages, distances, ...
                     # if compare type is missing in sentence or in template -> penalize
                     compare_type_in_sentence = (self.is_ct_visible(ls, compare_type) or self.is_ct_visible(gs, compare_type))
                     compare_type_in_template = template_obj.has_compare_type(compare_type) 
@@ -807,7 +807,7 @@ class ModalityMerger():
         # B.) Merging
         # 1. Compare types independently
         S_naive = {}
-        for compare_type in self.compare_types: # storages, distances, ...
+        for compare_type in self.pars_compulsary: # storages, distances, ...
             
             # single information only?
             if self.is_zeros(ls[compare_type].p):
@@ -840,7 +840,7 @@ class ModalityMerger():
                 alpha = 1.0
                 beta = 1.0
                 beta_real = 1.0
-                for nct, compare_type in enumerate(self.compare_types): # selections, storages, distances, ...
+                for nct, compare_type in enumerate(self.pars_compulsary): # selections, storages, distances, ...
                     # if compare type is missing in sentence or in template -> penalize
                     compare_type_in_sentence = (self.is_ct_visible(ls, compare_type) or self.is_ct_visible(gs, compare_type))
                     compare_type_in_template = template_obj.has_compare_type(compare_type) 
@@ -849,20 +849,20 @@ class ModalityMerger():
                         alpha *= alpha_penal
 
                 if model > 2:
-                    if template_obj.compare_types == ['template', 'selections', 'storages']:
+                    if template_obj.pars_compulsary == ['template', 'selections', 'storages']:
                         beta = 0.0
                         for o in scene.selections:
                             for s in scene.storages:
                                 if template_obj.is_feasible(o, s):
                                     beta = 1.0
-                    elif template_obj.compare_types == ['template', 'selections']:
+                    elif template_obj.pars_compulsary == ['template', 'selections']:
                         beta = 0.0
                         for o in scene.selections:
                             if template_obj.is_feasible(o):
                                 beta = 1.0
-                    elif template_obj.compare_types == ['template']:
+                    elif template_obj.pars_compulsary == ['template']:
                         beta = 1.0
-                    else: raise Exception(f"TODO {template_obj.compare_types}")
+                    else: raise Exception(f"TODO {template_obj.pars_compulsary}")
 
                 template_ct_penalized.p[nt] *= alpha
                 template_ct_penalized.p[nt] *= beta
@@ -922,26 +922,26 @@ class MMSentence():
         Parameters:
             c (Configuration()) (pointer)
         '''
-        for ct in c.ct_names.keys():
-            c.ct_names[ct], self.L[ct].p, self.G[ct].p = make_conjunction( \
+        for ct in c.pars_names_dict.keys():
+            c.pars_names_dict[ct], self.L[ct].p, self.G[ct].p = make_conjunction( \
                                         self.G[ct].names, self.L[ct].names, \
                                         self.G[ct].p, self.L[ct].p, ct=ct,
                                         keep_only_items_in_c_templates=True,
-                                        c_templates=c.ct_names[ct])
-            self.G[ct].names = c.ct_names[ct]
-            self.L[ct].names = c.ct_names[ct]
+                                        c_templates=c.pars_names_dict[ct])
+            self.G[ct].names = c.pars_names_dict[ct]
+            self.L[ct].names = c.pars_names_dict[ct]
         # special case: extend to all loaded templates (from files)
         # for template in ['pick', 'point', 'PutTask']:
-        #     if to_default_name(template) not in c.ct_names['template']:
-        #         c.ct_names['template'] = np.append(c.ct_names['template'], to_default_name(template))
+        #     if to_default_name(template) not in c.pars_names_dict['template']:
+        #         c.pars_names_dict['template'] = np.append(c.pars_names_dict['template'], to_default_name(template))
         #         self.G['template'].p = np.append(self.G['template'].p, 0.0)
         #         self.L['template'].p = np.append(self.L['template'].p, 0.0)
-        #         self.G['template'].names = c.ct_names['template']
-        #         self.L['template'].names = c.ct_names['template']
+        #         self.G['template'].names = c.pars_names_dict['template']
+        #         self.L['template'].names = c.pars_names_dict['template']
 
     def check_merged(self, y, c, printer=True):
         success = True
-        for ct in c.ct_names.keys():
+        for ct in c.pars_names_dict.keys():
             if y[ct] == self.M[ct].activated:
                 if printer:
                     print(f"{cc.H}{y[ct]} == {self.M[ct].activated}{cc.E}", end="; ")
@@ -960,7 +960,7 @@ class MMSentence():
         
         '''
         y_true_cts, y_pred_cts = [], []
-        for ct in c.ct_names.keys():
+        for ct in c.pars_names_dict.keys():
             if max_only:
                 y_true_cts.append(str(y[ct]))
                 y_pred_cts.append(str(self.M[ct].max))

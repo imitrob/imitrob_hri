@@ -118,7 +118,7 @@ def modality_merge_2_tester():
     ls = UnifiedSentence([0.9,0.2,0.1],[[0.9,0.1,0.0]])
     gs = UnifiedSentence([0.9,0.2,0.1],[[0.9,0.1,0.0]])
     
-    mm = ModalityMerger(c.template_names, c.selection_names, c.compare_types)
+    mm = ModalityMerger(c.template_names, c.selection_names, c.pars_compulsary)
     print(mm)
     r = mm.feedforward2(ls, gs)
     print(r)
@@ -127,7 +127,7 @@ def modality_merge_2_tester():
     ls = UnifiedSentence([0.9,0.2,0.1],[[0.0,0.0,0.0]])
     gs = UnifiedSentence([0.9,0.2,0.1],[[0.0,0.0,0.0]])
     
-    mm = ModalityMerger(c.template_names, c.selection_names, c.compare_types)
+    mm = ModalityMerger(c.template_names, c.selection_names, c.pars_compulsary)
     print(mm)
     r = mm.feedforward2(ls, gs)
     print(r)
@@ -136,7 +136,7 @@ def modality_merge_2_tester():
     ls = UnifiedSentence([0.0,1.0,0.0],[[0.0,0.0,0.0]])
     gs = UnifiedSentence([0.0,0.8,0.0],[[0.8,0.0,0.0]])
     
-    mm = ModalityMerger(c.template_names, c.selection_names, c.compare_types)
+    mm = ModalityMerger(c.template_names, c.selection_names, c.pars_compulsary)
     r = mm.feedforward2(ls, gs)
     print(r)
 
