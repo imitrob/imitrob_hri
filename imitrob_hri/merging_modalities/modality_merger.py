@@ -64,7 +64,10 @@ class ProbsVector():
 
         self.p = np.array(p)
         self.template_names = template_names
+        
+        self.p = np.array(self.p, dtype=float) # handle when input self.p is e.g., np.array(["1.0","0.5",...])
         assert isinstance(self.p, np.ndarray) and (len(self.p) == 0 or isinstance(self.p[0], float))
+        
         self.conclusion = None
         assert self.c.match_threshold
         try:
@@ -732,6 +735,7 @@ class ModalityMerger():
 
             for nt, template in enumerate(templates): # e.g. pick, push, put-into
                 template_obj = create_template(template)
+                assert template_obj is not None, f"Template {template} not visible!"
 
                 alpha = 1.0
                 beta = 1.0
@@ -836,6 +840,7 @@ class ModalityMerger():
         if model > 1:
             for nt, template in enumerate(templates): # e.g. pick, push, put=into
                 template_obj = create_template(template)
+                assert template_obj is not None, f"Template {template} not visible!"
 
                 alpha = 1.0
                 beta = 1.0
@@ -849,18 +854,18 @@ class ModalityMerger():
                         alpha *= alpha_penal
 
                 if model > 2:
-                    if template_obj.pars_compulsary == ['template', 'selections', 'storages']:
+                    if template_obj.pars_compulsary == ['target_action', 'target_object', 'target_selection']: #['template', 'selections', 'storages']:
                         beta = 0.0
                         for o in scene.selections:
                             for s in scene.storages:
                                 if template_obj.is_feasible(o, s):
                                     beta = 1.0
-                    elif template_obj.pars_compulsary == ['template', 'selections']:
+                    elif template_obj.pars_compulsary == ['target_action', 'target_object']: #['template', 'selections']:
                         beta = 0.0
                         for o in scene.selections:
                             if template_obj.is_feasible(o):
                                 beta = 1.0
-                    elif template_obj.pars_compulsary == ['template']:
+                    elif template_obj.pars_compulsary == ['target_action']: # ['template']:
                         beta = 1.0
                     else: raise Exception(f"TODO {template_obj.pars_compulsary}")
 

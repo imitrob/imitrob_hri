@@ -15,8 +15,8 @@ from teleop_msgs.msg import HRICommand
 from std_msgs.msg import Bool
 # Something like:
 # from teleop_msgs.srv import MergeModalities
-from modality_merger import ModalityMerger, ProbsVector, MMSentence
-from configuration import ConfigurationCrow1
+from imitrob_hri.merging_modalities.modality_merger import ModalityMerger, ProbsVector, MMSentence
+from imitrob_hri.merging_modalities.configuration import ConfigurationCrow1
 
 from imitrob_hri.data.scene3_def import Scene3, Object3
 
@@ -77,14 +77,14 @@ class MMNode(Node):
         self.receivedHRIcommandG = msg
         
         if self.execution_trigger():
-            self.mm_publisher(self.merge_modalities())
+            self.mm_publisher.publish(self.merge_modalities())
 
     def receiveHRIcommandL(self, msg):
         self.receivedHRIcommandLstamp = time.perf_counter()
         self.receivedHRIcommandL = msg
         
         if self.execution_trigger():
-            self.mm_publisher(self.merge_modalities())
+            self.mm_publisher.publish(self.merge_modalities())
         
     def execution_trigger(self):
         """  Should check ongoing topics
@@ -127,7 +127,11 @@ class MMNode(Node):
         receivedHRIcommandG_parsed['object_classes']
         receivedHRIcommandG_parsed['parameters']
         
-        
+        print("template_probs", template_probs)
+        print("template_names", template_names)
+        print("object_names", object_names)
+        print("object_probs", object_probs)
+
         mms = MMSentence(G = {
             'template': ProbsVector(template_probs, template_names, self.c),
             'selections': ProbsVector(object_probs, object_names, self.c),
@@ -179,9 +183,23 @@ use_magic: {self.use_magic} \n\
 "
         )
         
-        M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=self.c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=self.model, use_magic=self.use_magic)
+        mms.M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=self.c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=self.model, use_magic=self.use_magic)
         
-        return HRICommand(inputs)
+        return HRICommand(data=[f'"target_action": "{mms.M["template"].activated}", \
+                                "target_object": "{mms.M["template"]}", \
+                                "actions": {mms.M["template"].names}, \
+                                "action_probs": {mms.M["template"].p}, \
+                                "objects": {mms.M["selections"].names} ,\
+                                "object_probs": {mms.M["selections"].p} ,\
+                                "object_classes": "TODO", \
+                                "parameters": "TODO", \
+                                "action_timestamp": "TODO", \
+                                "scene": {scene} \
+                                "epsilon": {self.c.epsilon} \
+                                "gamma": {self.c.gamma} \
+                                "alpha_penal": {self.c.alpha_penal} \
+                                "model": {self.model} \
+                                "use_magic": {self.use_magic} '])
     
     def receive_scene(self, scene):
         ''' Node sends crow ontology scene info to ROS topic. Here, the topic msg is received and 

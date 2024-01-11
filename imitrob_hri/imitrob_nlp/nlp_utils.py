@@ -7,9 +7,9 @@
 
 
 template_name_synonyms = {
-    '1': ['pick', 'PICK_TASK', 'PickTask', 'pick up', 'lift', 'use'], #'seber'], # pick an object
+    '1': ['pick', 'PICK_TASK', 'PickTask', 'pick up', 'lift', 'use', 'pick it'], #'seber'], # pick an object
     '2': ['point', 'POINT_TASK', 'PointTask'], #'ukaz', 'ukaž'],
-    '3': ['pass', 'pass me', 'give me', 'bring', 'need'],
+    '3': ['pass', 'pass me', 'give me', 'bring', 'need', 'pass-me'],
     '4': ['release', 'place', 'put down'], # place an object (assuming something is being held)
     
     #'0': ['noop'],
