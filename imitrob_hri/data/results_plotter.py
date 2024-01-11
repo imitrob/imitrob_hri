@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys
 import os
+from pathlib import Path
 from sklearn.metrics import multilabel_confusion_matrix
 from sklearn.metrics import f1_score
 from extraction_funs import *
@@ -54,12 +55,11 @@ def singlehistplot(data, filepartname, plot=False):
 
     plt.legend()
     
-    try:
-        os.mkdir(f"{os.path.dirname(os.path.abspath(__file__))}/pictures/{name}")
-    except OSError as error:
-        print(error)  
-    plt.savefig(f"{os.path.dirname(os.path.abspath(__file__))}/pictures/{name}/{filepartname}.eps", dpi=fig.dpi, bbox_inches='tight')
-    plt.savefig(f"{os.path.dirname(os.path.abspath(__file__))}/pictures/{name}/{filepartname}.png", dpi=fig.dpi, bbox_inches='tight')
+    p = Path(f"{os.path.dirname(os.path.abspath(__file__))}/pictures/{name}")
+    p.mkdir(parents=True, exist_ok=True)
+    
+    plt.savefig(p.joinpath(f"{filepartname}.eps"), dpi=fig.dpi, bbox_inches='tight')
+    plt.savefig(p.joinpath(f"{filepartname}.png"), dpi=fig.dpi, bbox_inches='tight')
     if plot:
         plt.show()
 

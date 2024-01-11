@@ -1,3 +1,4 @@
 *.pyc
 archive/*
 *.npy
+imitrob_hri/data/pictures

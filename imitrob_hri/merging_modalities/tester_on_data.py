@@ -95,7 +95,7 @@ if __name__ == '__main__':
             tester_all(use_magic)
         else:
             print(f"Running on all merge functions!")
-            for mgn,use_magic in enumerate(['mul', 'add_2', 'entropy', 'entropy_add_2']):
+            for mgn,use_magic in enumerate(['baseline', 'mul', 'add_2', 'entropy', 'entropy_add_2']):
                 tester_all(use_magic)
     else:
         model = sys.argv[3] if len(sys.argv) > 3 else 'M3'

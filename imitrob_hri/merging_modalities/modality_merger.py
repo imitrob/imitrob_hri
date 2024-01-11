@@ -16,6 +16,8 @@ from imitrob_hri.imitrob_nlp.nlp_utils import make_conjunction, to_default_name
 from imitrob_templates.small_template_factory import create_template
 from copy import deepcopy
 
+from teleop_msgs.msg import HRICommand
+
 
 """
 class ModalityReceiver():
@@ -61,10 +63,14 @@ class ProbsVector():
         if len(p) > 0:
             for tn in template_names:
                 assert isinstance(tn, str) and tn[0] != '0', f"template name not string: {tn}"
+            
+            for n,p_ in enumerate(p):
+                if type(p_) == str:
+                    p[n] = float(p_)    
 
         self.p = np.array(p)
         self.template_names = template_names
-        assert isinstance(self.p, np.ndarray) and (len(self.p) == 0 or isinstance(self.p[0], float))
+        assert isinstance(self.p, np.ndarray) and (len(self.p) == 0 or isinstance(self.p[0], float)), f"self.p {self.p}, type(self.p) {type(self.p)}, len(self.p) {len(self.p)}"
         self.conclusion = None
         assert self.c.match_threshold
         try:
@@ -269,13 +275,16 @@ class ProbsVector():
 class EntropyProbsVector(ProbsVector):
     # UNIFORM_ENTROPY_TH = 0.85
     UNIFORM_ENTROPY_TH = 0
+    UNIFORM_ENTROPY_TH_LEN_1 = 1.1
     NOISE_TH = 0.05
 
     def __init__(self, p, template_names=[], c=None):
         super().__init__(p, template_names, c)
+        self.recompute_ids()
 
     def recompute_ids(self):
         clear_th = self.UNIFORM_ENTROPY_TH or normalized_entropy(self.p_)  # fixed threshold or entropy
+        if len(self.p_) == 1: clear_th = self.UNIFORM_ENTROPY_TH_LEN_1 # exception for len=1
 
         dcross_ent = np.asarray(diagonal_cross_entropy(self.p_))
         clear_ids = np.where(dcross_ent < clear_th)[0].tolist()
@@ -284,9 +293,9 @@ class EntropyProbsVector(ProbsVector):
         self._set_ids(clear_ids, unsure_ids)
 
     def _set_ids(self, clear_ids, unsure_ids):
-        self._clear_ids = clear_ids
-        self._unsure_ids = unsure_ids
-        self._negative_ids = [i for i in range(len(self.p)) if i not in self._clear_ids + self._unsure_ids]
+        self._clear_ids = deepcopy(clear_ids)
+        self._unsure_ids = deepcopy(unsure_ids)
+        self._negative_ids = deepcopy([i for i in range(len(self.p)) if i not in self._clear_ids + self._unsure_ids])
 
     @property
     def clear_id(self):
@@ -310,6 +319,10 @@ class EntropyProbsVector(ProbsVector):
         assert p_.ndim == 1
         self.p_ = p_
         self.recompute_ids()
+
+# from configuration import Configuration1
+# epv = EntropyProbsVector([1.], template_names=['a'], c=Configuration1())
+# print(f"epv: {epv}")
 
 class NaiveProbsVector(ProbsVector):
     def __init__(self, p, template_names=[], c=None):
@@ -535,30 +548,30 @@ class SelectionTypeModalityMerger(SingleTypeModalityMerger):
 
 class ModalityMerger():
     def __init__(self, c, use_magic):
-        assert len(c.pars_names_dict.keys()) > 0
+        assert len(c.mm_pars_names_dict.keys()) > 0
         self.c = c
         self.mms = {}
-        for ct in c.pars_names_dict.keys():
-            mm = SingleTypeModalityMerger(names=c.pars_names_dict[ct], c=self.c, fun=use_magic)
+        for ct in c.mm_pars_names_dict.keys():
+            mm = SingleTypeModalityMerger(names=c.mm_pars_names_dict[ct], c=self.c, fun=use_magic)
             self.mms[ct] = mm
         
-        self.pars_compulsary = c.pars_names_dict.keys()
+        self.mm_pars_compulsary = c.mm_pars_names_dict.keys()
         self.use_magic = use_magic
 
     def get_cts_type_objs(self):
         cts = []
-        for compare_type in self.pars_compulsary:
+        for compare_type in self.mm_pars_compulsary:
             cts.append(getattr(self, compare_type))
         return cts
 
     def __str__(self):
         s = ''
-        for mmn, mm in zip(self.pars_compulsary, self.get_cts_type_objs()):
+        for mmn, mm in zip(self.mm_pars_compulsary, self.get_cts_type_objs()):
             s += mmn.capitalize() + ': ' + str(mm.names) + '\n'
         return f"** Modality merge summary: **\n{s}**"
 
     def get_all_templates(self):
-        return self.c.pars_names_dict['template']
+        return self.c.mm_pars_names_dict['template']
     '''
     def get_names_for_compare_type(self, compare_type):
         return {
@@ -591,14 +604,14 @@ class ModalityMerger():
     def preprocessing(self, ls, gs, epsilon, gamma):
         ''' Data preprocessing '''
         # 1. Add epsilon
-        # for ct in self.c.pars_names_dict.keys():
+        # for ct in self.c.mm_pars_names_dict.keys():
         #     if self.is_zeros(ls[ct].p):
         #         ls[ct].p += epsilon
         #     if self.is_zeros(gs[ct].p):
         #         gs[ct].p += epsilon
 
         # 2. Add gamma, if language includes one value
-        for ct in self.c.pars_names_dict.keys():
+        for ct in self.c.mm_pars_names_dict.keys():
             if self.is_one_only(ls[ct].p):
                 ls[ct].p += gamma
                 ls[ct].p = np.clip(ls[ct].p, 0, 1)
@@ -645,10 +658,10 @@ class ModalityMerger():
         return f'template: {template_po.activated}, What to do: {template_po.conclusion} \n selections:{selection_po.activated}, What to do: {selection_po.conclusion}'
     
     def naive_modality_merge(self, compare_type, lsp, gsp):
-        if compare_type in self.pars_compulsary:
+        if compare_type in self.mm_pars_compulsary:
             mm = self.mms[compare_type]
         else:
-            raise Exception("compare_type not in self.pars_compulsary")
+            raise Exception("compare_type not in self.mm_pars_compulsary")
 
         merged_p = []
         for lp, gp in zip(lsp, gsp):
@@ -658,16 +671,16 @@ class ModalityMerger():
 
     def single_modality_merge(self, compare_type, lsp, gsp):
         # Get single modality merger
-        if compare_type in self.pars_compulsary:
+        if compare_type in self.mm_pars_compulsary:
             mm = self.mms[compare_type] 
-        else: raise Exception("compare_type not in self.pars_compulsary")
+        else: raise Exception("compare_type not in self.mm_pars_compulsary")
         return mm.merge(lsp, gsp)
 
     def entropy_modality_merge(self, compare_type, lsp, gsp):
-        if compare_type in self.pars_compulsary:
+        if compare_type in self.mm_pars_compulsary:
             mm = self.mms[compare_type]
         else:
-            raise Exception("compare_type not in self.pars_compulsary")
+            raise Exception("compare_type not in self.mm_pars_compulsary")
 
         # penalize according to entropy?
         PENALIZE_BY_ENTROPY = True
@@ -681,8 +694,18 @@ class ModalityMerger():
             msp = lsp
         else:
             if PENALIZE_BY_ENTROPY:
-                lsp /= diagonal_cross_entropy(lsp)
-                gsp /= diagonal_cross_entropy(gsp)
+                # exception for len(1)
+                if len(lsp) == 1:
+                    penalization_by_entropy_l = 1.
+                else:
+                    penalization_by_entropy_l = diagonal_cross_entropy(lsp)
+                if len(gsp) == 1:
+                    penalization_by_entropy_g = 1.
+                else:
+                    penalization_by_entropy_g = diagonal_cross_entropy(gsp)
+                    
+                lsp /= penalization_by_entropy_l
+                gsp /= penalization_by_entropy_g
 
             if self.use_magic == 'entropy':
                 msp = lsp * gsp  # "merge"
@@ -693,10 +716,11 @@ class ModalityMerger():
 
         msp /= np.sum(msp)  # normalize
 
-        return EntropyProbsVector(msp, mm.names, mm.c)
+        epv = EntropyProbsVector(msp, mm.names, mm.c)
+        return epv 
 
     def is_ct_visible(self, s_, ct_target, threshold = 0.1):
-        for ct in self.pars_compulsary:
+        for ct in self.mm_pars_compulsary:
             if sum(s_[ct].p) > threshold:
                 if ct == ct_target:
                     return True
@@ -715,7 +739,7 @@ class ModalityMerger():
         # B.) Merging
         # 1. Compare types independently
         S_naive = {}
-        for compare_type in self.pars_compulsary: # storages, distances, ...
+        for compare_type in self.mm_pars_compulsary: # storages, distances, ...
             # single compare-type merger e.g. [box1, cube1, ...] (probs.)
             S_naive[compare_type] = self.single_modality_merge(compare_type, \
                                         ls[compare_type].p,
@@ -736,7 +760,7 @@ class ModalityMerger():
                 alpha = 1.0
                 beta = 1.0
                 beta_real = 1.0
-                for nct, compare_type in enumerate(self.pars_compulsary): # selections, storages, distances, ...
+                for nct, compare_type in enumerate(self.mm_pars_compulsary): # selections, storages, distances, ...
                     # if compare type is missing in sentence or in template -> penalize
                     compare_type_in_sentence = (self.is_ct_visible(ls, compare_type) or self.is_ct_visible(gs, compare_type))
                     compare_type_in_template = template_obj.has_compare_type(compare_type) 
@@ -804,32 +828,44 @@ class ModalityMerger():
         # A.) Data preprocessing
         ls, gs = self.preprocessing(ls, gs, epsilon, gamma)
 
+
         # B.) Merging
         # 1. Compare types independently
         S_naive = {}
-        for compare_type in self.pars_compulsary: # storages, distances, ...
+        for compare_type in self.mm_pars_compulsary: # storages, distances, ...
             
             # single information only?
             if self.is_zeros(ls[compare_type].p):
-                S_naive[compare_type] = gs[compare_type]
+                S_naive[compare_type] = deepcopy(gs[compare_type])
             elif self.is_zeros(gs[compare_type].p):
-                S_naive[compare_type] = ls[compare_type]
+                S_naive[compare_type] = deepcopy(ls[compare_type])
 
             if use_magic == 'baseline':
                 S_naive[compare_type] = self.naive_modality_merge(compare_type, \
-                            ls[compare_type].p,
-                            gs[compare_type].p)
+                            deepcopy(ls[compare_type].p),
+                            deepcopy(gs[compare_type].p) )
             elif use_magic == 'entropy' or use_magic == 'entropy_add_2':
                 S_naive[compare_type] = self.entropy_modality_merge(compare_type, \
-                                            ls[compare_type].p,
-                                            gs[compare_type].p)
+                                    deepcopy(ls[compare_type].p),
+                                    deepcopy(gs[compare_type].p))
             elif use_magic == 'mul' or use_magic == 'add_2':
                 S_naive[compare_type] = self.single_modality_merge(compare_type, \
-                                            ls[compare_type].p,
-                                            gs[compare_type].p)                
+                                    deepcopy(ls[compare_type].p),
+                                    deepcopy(gs[compare_type].p))                
             else: raise Exception("Wrong")
+            
+        # print(f"{cc.H}============================={cc.E}")
+        # print(f"{cc.H}==== AFTER Compare types independently ========{cc.E}")
+        # print(f"{cc.H}============================={cc.E}")
+        # print(f"{ls['template']}\n{ls['selections']}")
+        # print(f"{cc.H}============================={cc.E}")
+        # print(f"{gs['template']}\n{gs['selections']}")
+        # print(f"{cc.H}============================={cc.E}")
+
+        
         # 2. Penalize likelihood for every template
         templates = self.get_all_templates()
+        # print("final templates: ", templates)
         template_ct_penalized = deepcopy(S_naive['template']) # 1D (templates)
         template_ct_penalized_real = deepcopy(S_naive['template']) # 1D (templates)
         
@@ -840,7 +876,7 @@ class ModalityMerger():
                 alpha = 1.0
                 beta = 1.0
                 beta_real = 1.0
-                for nct, compare_type in enumerate(self.pars_compulsary): # selections, storages, distances, ...
+                for nct, compare_type in enumerate(self.mm_pars_compulsary): # selections, storages, distances, ...
                     # if compare type is missing in sentence or in template -> penalize
                     compare_type_in_sentence = (self.is_ct_visible(ls, compare_type) or self.is_ct_visible(gs, compare_type))
                     compare_type_in_template = template_obj.has_compare_type(compare_type) 
@@ -849,20 +885,20 @@ class ModalityMerger():
                         alpha *= alpha_penal
 
                 if model > 2:
-                    if template_obj.pars_compulsary == ['template', 'selections', 'storages']:
+                    if template_obj.mm_pars_compulsary == ['template', 'selections', 'storages']:
                         beta = 0.0
                         for o in scene.selections:
                             for s in scene.storages:
                                 if template_obj.is_feasible(o, s):
                                     beta = 1.0
-                    elif template_obj.pars_compulsary == ['template', 'selections']:
+                    elif template_obj.mm_pars_compulsary == ['template', 'selections']:
                         beta = 0.0
                         for o in scene.selections:
                             if template_obj.is_feasible(o):
                                 beta = 1.0
-                    elif template_obj.pars_compulsary == ['template']:
+                    elif template_obj.mm_pars_compulsary == ['template']:
                         beta = 1.0
-                    else: raise Exception(f"TODO {template_obj.pars_compulsary}")
+                    else: raise Exception(f"TODO {template_obj.mm_pars_compulsary}")
 
                 template_ct_penalized.p[nt] *= alpha
                 template_ct_penalized.p[nt] *= beta
@@ -891,9 +927,9 @@ def penalize_properties(template_obj, property_name, compare_type, S_naive_c, c,
     ret_real = np.ones((len(S_naive_c.p)))
     #print(f"[penalize properties] len items p: {len(S_naive_c.p)}")
     if compare_type == 'selections':
-        task_property_penalization = template_obj.task_property_penalization_selections(property_name)
+        task_property_penalization = template_obj.task_property_penalization_target_objects(property_name)
     elif compare_type == 'storages':
-        task_property_penalization = template_obj.task_property_penalization_storages(property_name)
+        task_property_penalization = template_obj.task_property_penalization_target_storages(property_name)
     else: raise Exception()
 
     #if not (len(S_naive_c.p) == 0):
@@ -922,26 +958,26 @@ class MMSentence():
         Parameters:
             c (Configuration()) (pointer)
         '''
-        for ct in c.pars_names_dict.keys():
-            c.pars_names_dict[ct], self.L[ct].p, self.G[ct].p = make_conjunction( \
+        for ct in c.mm_pars_names_dict.keys():
+            c.mm_pars_names_dict[ct], self.L[ct].p, self.G[ct].p = make_conjunction( \
                                         self.G[ct].names, self.L[ct].names, \
                                         self.G[ct].p, self.L[ct].p, ct=ct,
                                         keep_only_items_in_c_templates=True,
-                                        c_templates=c.pars_names_dict[ct])
-            self.G[ct].names = c.pars_names_dict[ct]
-            self.L[ct].names = c.pars_names_dict[ct]
+                                        c_templates=c.mm_pars_names_dict[ct])
+            self.G[ct].names = c.mm_pars_names_dict[ct]
+            self.L[ct].names = c.mm_pars_names_dict[ct]
         # special case: extend to all loaded templates (from files)
         # for template in ['pick', 'point', 'PutTask']:
-        #     if to_default_name(template) not in c.pars_names_dict['template']:
-        #         c.pars_names_dict['template'] = np.append(c.pars_names_dict['template'], to_default_name(template))
+        #     if to_default_name(template) not in c.mm_pars_names_dict['template']:
+        #         c.mm_pars_names_dict['template'] = np.append(c.mm_pars_names_dict['template'], to_default_name(template))
         #         self.G['template'].p = np.append(self.G['template'].p, 0.0)
         #         self.L['template'].p = np.append(self.L['template'].p, 0.0)
-        #         self.G['template'].names = c.pars_names_dict['template']
-        #         self.L['template'].names = c.pars_names_dict['template']
+        #         self.G['template'].names = c.mm_pars_names_dict['template']
+        #         self.L['template'].names = c.mm_pars_names_dict['template']
 
     def check_merged(self, y, c, printer=True):
         success = True
-        for ct in c.pars_names_dict.keys():
+        for ct in c.mm_pars_names_dict.keys():
             if y[ct] == self.M[ct].activated:
                 if printer:
                     print(f"{cc.H}{y[ct]} == {self.M[ct].activated}{cc.E}", end="; ")
@@ -960,7 +996,7 @@ class MMSentence():
         
         '''
         y_true_cts, y_pred_cts = [], []
-        for ct in c.pars_names_dict.keys():
+        for ct in c.mm_pars_names_dict.keys():
             if max_only:
                 y_true_cts.append(str(y[ct]))
                 y_pred_cts.append(str(self.M[ct].max))
@@ -973,3 +1009,61 @@ class MMSentence():
 
     def __str__(self):
         return f"L:\n{self.L['template']}\n{self.L['selections']}\n{self.L['storages']}, G:\n{self.G['template']}\n{self.G['selections']}\n{self.G['storages']}"
+
+    def merged_part_to_HRICommand(self):
+        return self.to_HRICommand(self.M)
+    
+    @staticmethod
+    def to_HRICommand(M):
+        ''' From M generates HRICommand
+            There is a better way how to do this
+            1. create dict
+            2. change keys
+            3. assign values from M
+        '''
+        
+        # d =  {"target_action": M["template"].activated, "target_object": M["selections"].activated, "target_storage": M["selections"].activated, 
+        #       "actions": ["pick", "release", "pass", "point"], "action_probs": ["1.0", "0.05", "0.1", "0.15"], "action_timestamp": 0.0, "objects": ["cube_holes_od_0", "wheel", "sphere"], "object_probs": [1.0, 0.1, 0.15], "object_classes": ["object"], "parameters": ""}'
+        
+        s  = '{'
+        s += f'"target_action": "{M["template"].activated}", '
+        s += f'"target_object": "{M["selections"].activated}", '
+        s += f'"target_storage": "{M["storages"].activated}", '
+        
+        s_1 = []
+        for nm in M["template"].names:
+            s_1.append(f'"{nm}"')
+        s_1s = ', '.join(s_1) 
+        if len(s_1s) > 0: s += f'"actions": [{s_1s}], '
+        s_2 = []
+        for nm in M["template"].p:
+            s_2.append(f'"{nm}"')
+        s_2s = ', '.join(s_2) 
+        if len(s_2s) > 0: s += f'"action_probs": [{s_2s}], '
+
+        s_3 = []
+        for nm in M["selections"].names:
+            s_3.append(f'"{nm}"')
+        s_3s = ', '.join(s_3) 
+        if len(s_3s) > 0: s += f'"objects": [{s_3s}], '
+        s_4 = []
+        for nm in M["selections"].p:
+            s_4.append(f'"{nm}"')
+        s_4s = ', '.join(s_4) 
+        if len(s_4s) > 0: s += f'"object_probs": [{s_4s}], '
+
+        s_5 = []
+        for nm in M["storages"].names:
+            s_5.append(f'"{nm}"')
+        s_5s = ', '.join(s_5) 
+        
+        if len(s_5s) > 0: s += f'"storages": [{s_5s}], '
+        s_6 = []
+        for nm in M["storages"].p:
+            s_6.append(f'"{nm}"')
+        s_6s = ', '.join(s_6) 
+        if len(s_6s) > 0: s += f'"storage_probs": {s_6s},'
+
+        s += ' "parameters": "" }'
+        
+        return HRICommand(data=[s])

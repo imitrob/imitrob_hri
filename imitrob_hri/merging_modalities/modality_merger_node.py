@@ -22,8 +22,13 @@ from imitrob_hri.data.scene3_def import Scene3, Object3
 
 from imitrob_templates.small_ontology_scene_reader import SceneOntologyClient
 
+# optional - for checking all configuration templates exists
+from imitrob_templates.small_template_factory import create_template
+
+from imitrob_hri.imitrob_nlp.nlp_utils import cc
+
 class MMNode(Node):
-    def __init__(self, max_time_delay = 5., model = 3, use_magic = 'entropy', c=ConfigurationCrow1()):
+    def __init__(self, max_time_delay = 5., model = 1, use_magic = 'entropy', c=ConfigurationCrow1()):
         """Standard ROS Node
 
         Args:
@@ -63,6 +68,9 @@ class MMNode(Node):
         self.soc.add_dummy_cube()
         print(self.soc.get_scene3())
         
+        for template in self.c.mm_pars_names_dict['template']:
+            assert create_template(template) is not None, f"Template {template} not exists!"
+        
         print("Initialized")
         
     def ongoingG(self):
@@ -77,14 +85,14 @@ class MMNode(Node):
         self.receivedHRIcommandG = msg
         
         if self.execution_trigger():
-            self.mm_publisher(self.merge_modalities())
+            self.mm_publisher.publish(self.merge_modalities())
 
     def receiveHRIcommandL(self, msg):
         self.receivedHRIcommandLstamp = time.perf_counter()
         self.receivedHRIcommandL = msg
         
         if self.execution_trigger():
-            self.mm_publisher(self.merge_modalities())
+            self.mm_publisher.publish(self.merge_modalities())
         
     def execution_trigger(self):
         """  Should check ongoing topics
@@ -142,46 +150,77 @@ class MMNode(Node):
         scene = self.soc.get_scene3()
         
         mm = ModalityMerger(self.c, self.use_magic)
-        print(
-            f"L: \n\
-template: {mms.L['template']}, \n\
-selections: {mms.L['selections']}, \n\
-storages: {mms.L['storages']}, \n\
-G: \n\
-template: {mms.G['template']}, \n\
-selections: {mms.G['selections']}, \n\
-storages: {mms.G['storages']}, \n\
-scene: {scene} \n\
-epsilon: {self.c.epsilon} \n\
-gamma: {self.c.gamma} \n\
-alpha_penal: {self.c.alpha_penal} \n\
-model: {self.model} \n\
-use_magic: {self.use_magic} \n\
-"
-        )
+        # print(
+        #     f" I dont understand {self.c.mm_pars_names_dict} \n\
+        #     L: \n\
+        #     template: {mms.L['template']}, \n\
+        #     selections: {mms.L['selections']}, \n\
+        #     storages: {mms.L['storages']}, \n\
+        #     G: \n\
+        #     template: {mms.G['template']}, \n\
+        #     selections: {mms.G['selections']}, \n\
+        #     storages: {mms.G['storages']}, \n\
+        #     scene: {scene} \n\
+        #     epsilon: {self.c.epsilon} \n\
+        #     gamma: {self.c.gamma} \n\
+        #     alpha_penal: {self.c.alpha_penal} \n\
+        #     model: {self.model} \n\
+        #     use_magic: {self.use_magic} \n\
+        #     "
+        # )
+        # print("=== make_conjunction ===")
+
+        print(f"{cc.H}============================={cc.E}")
+        print(f"{mms.L['template']}\n{mms.L['selections']}")
+        print(f"{cc.H}============================={cc.E}")
+        print(f"{mms.G['template']}\n{mms.G['selections']}")
+        print(f"{cc.H}============================={cc.E}")
+
+        print(f"{cc.H}============================={cc.E}")
+        print(f"{cc.H}====== MAKE CONJUNCTION ====={cc.E}")
+        print(f"{cc.H}============================={cc.E}")
+
+
         mms.make_conjunction(self.c)
-        print("=== make_conjunction ===")
-        print(
-            f"L: \n\
-template: {mms.L['template']}, \n\
-selections: {mms.L['selections']}, \n\
-storages: {mms.L['storages']}, \n\
-G: \n\
-template: {mms.G['template']}, \n\
-selections: {mms.G['selections']}, \n\
-storages: {mms.G['storages']}, \n\
-scene: {scene} \n\
-epsilon: {self.c.epsilon} \n\
-gamma: {self.c.gamma} \n\
-alpha_penal: {self.c.alpha_penal} \n\
-model: {self.model} \n\
-use_magic: {self.use_magic} \n\
-"
-        )
+        #         print(
+        #             f"L: \n\
+        # template: {mms.L['template']}, \n\
+        # selections: {mms.L['selections']}, \n\
+        # G: \n\
+        # template: {mms.G['template']}, \n\
+        # selections: {mms.G['selections']}, \n\
+        # scene: {scene} \n\
+        # epsilon: {self.c.epsilon} \n\
+        # gamma: {self.c.gamma} \n\
+        # alpha_penal: {self.c.alpha_penal} \n\
+        # model: {self.model} \n\
+        # use_magic: {self.use_magic} \n\
+        # "
+        #         )
+        # storages: {mms.L['storages']}, \n\
+        # storages: {mms.G['storages']}, \n\
+        print(f"{cc.H}============================={cc.E}")
+        print(f"{mms.L['template']}\n{mms.L['selections']}")
+        print(f"{cc.H}============================={cc.E}")
+        print(f"{mms.G['template']}\n{mms.G['selections']}")
+        print(f"{cc.H}============================={cc.E}")
+
         
-        M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=self.c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=self.model, use_magic=self.use_magic)
+        mms.M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=self.c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=self.model, use_magic=self.use_magic)
         
-        return HRICommand(inputs)
+        print(f"{cc.H}============================={cc.E}")
+        print(f"{cc.H}==== final Merged values ===={cc.E}")
+        print(f"{cc.H}============================={cc.E}")
+        print(f"{mms.L['template']}\n{mms.L['selections']}")
+        print(f"{cc.H}============================={cc.E}")
+        print(f"{mms.G['template']}\n{mms.G['selections']}")
+        print(f"{cc.H}============================={cc.E}")
+        print(f"{mms.M['template']}\n{mms.M['selections']}")
+
+        
+        return mms.merged_part_to_HRICommand()
+    
+    
     
     def receive_scene(self, scene):
         ''' Node sends crow ontology scene info to ROS topic. Here, the topic msg is received and 

@@ -1,9 +1,10 @@
 
-import sys, os; sys.path.append(os.path.dirname(os.path.abspath(__file__))+"/..")
-from merging_modalities.modality_merger import MMSentence, ProbsVector
+# import sys, os; sys.path.append(os.path.dirname(os.path.abspath(__file__))+"/..")
+from imitrob_hri.merging_modalities.modality_merger import MMSentence, ProbsVector
 import numpy as np
-from data.datagen_utils import *
-from imitrob_nlp.nlp_utils import create_template
+from imitrob_hri.data.datagen_utils import *
+from imitrob_hri.data.scene3_def import *
+from imitrob_templates.small_template_factory import create_template
 from merging_modalities.configuration import *
 import merging_modalities.noise_model as nm
 

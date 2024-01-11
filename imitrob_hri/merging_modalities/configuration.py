@@ -43,15 +43,15 @@ class Configuration(ABC):
         
     @property
     def templates(self):
-        return self.pars_names_dict['template']
+        return self.mm_pars_names_dict['template']
 
     @property
     def selections(self):
-        return self.pars_names_dict['selections']
+        return self.mm_pars_names_dict['selections']
 
     @property
     def storages(self):
-        return self.pars_names_dict['storages']
+        return self.mm_pars_names_dict['storages']
     
     @property
     def sim_table_gesture_default(self):
@@ -84,7 +84,7 @@ class Configuration(ABC):
 
     @property
     def sim_table_language_objects_default(self):
-        #['potted meat can', 'tomato soup can', 'bowl', 'box', 'big box', 'paper', 'wrench']
+        #['potted meat can', 'tomato soup can', 'bowl', 'box', 'alt box', 'paper', 'wrench']
         return np.array([
             [1.  , 0.71, 0.22, 0.4 , 0.33, 0.2 , 0.2 ],
             [0.71, 1.  , 0.22, 0.4 , 0.33, 0.2 , 0.2 ],
@@ -97,7 +97,7 @@ class Configuration(ABC):
 
     @property
     def sim_table_gesture_objects_default(self):
-        #['potted meat can', 'tomato soup can', 'bowl', 'box', 'big box', 'paper', 'wrench']
+        #['potted meat can', 'tomato soup can', 'bowl', 'box', 'alt box', 'paper', 'wrench']
         # TODO
         return np.array([
             [1.  , 0.22, 0.22, 0.22, 0.22, 0.22, 0.22],
@@ -115,7 +115,7 @@ class Configuration(ABC):
     
 class Configuration1(Configuration):
     def __init__(self):
-        self.pars_names_dict = {'template': ['move-up', 'release', 'stop', ],
+        self.mm_pars_names_dict = {'template': ['move-up', 'release', 'stop', ],
             'selections': ['potted meat can', 'tomato soup can', 'bowl', 'box', 'alt box', 'paper', 'wrench'],
             'storages': [],
         }
@@ -150,7 +150,7 @@ class Configuration1(Configuration):
 
 class Configuration2(Configuration):
     def __init__(self):
-        self.pars_names_dict = {'template': ['move-up', 'release', 'stop',
+        self.mm_pars_names_dict = {'template': ['move-up', 'release', 'stop',
                                     'pick', 'push', 'unglue',
             ],
             'selections': ['potted meat can', 'tomato soup can', 'bowl', 'box', 'alt box', 'paper', 'wrench'],
@@ -186,7 +186,7 @@ class Configuration2(Configuration):
 
 class Configuration3(Configuration):
     def __init__(self):
-        self.pars_names_dict = {'template': ['move-up', 'release', 'stop',
+        self.mm_pars_names_dict = {'template': ['move-up', 'release', 'stop',
                                     'pick', 'push', 'unglue',
                                     'pour', 'put-into', 'stack',
                 ],
@@ -227,8 +227,9 @@ class Configuration3(Configuration):
 
 class ConfigurationCrow1(Configuration):
     def __init__(self):
-        self.pars_names_dict = {'template': ['pick', 'point', 'pass-me','release'],
-            'selections': [],
+        # need to be the default names
+        self.mm_pars_names_dict = {'template': ['pick', 'point', 'pass','release'],
+            'selections': ['cube holes'],
             'storages': [],
         }
         self.scene_gen_config = {

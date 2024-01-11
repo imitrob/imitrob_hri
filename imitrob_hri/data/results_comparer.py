@@ -13,123 +13,265 @@ from extraction_funs import *
 from copy import deepcopy
 from merging_modalities.utils import singlehistplot_customized
 
-def _1_ablation_study():
-    c = 2
-    n = 2
-    baseline = results_all[0,1,c,n,[0,1,2,4],0]
-    other =    results_all[3,1,c,n,[0,1,2,4],0:3]
+class Results6DComparer():
+    def __init__(self):
+        # 1. Load results data into 6D table
+        # (merge function) x (metric) x (config) x (noise) x (dataset) x (model)
 
-    print(baseline.shape)
-    print(other.shape)
+        results_all = []
 
-    data = 100 * np.hstack((baseline.reshape(4,1), other))
+        for name in ['baseline', 'mul', 'add_2', 'entropy', 'entropy_add_2']:
+            accs = np.load(f"{os.path.dirname(os.path.abspath(__file__))}/results/accs_{name}.npy", allow_pickle=True)
 
-    print( pd.DataFrame(100*data, columns=['baseline', 'm1', 'm2', 'm3'], index=['D1', 'D2', 'D3', 'D4']))
+            results = np.load(f"{os.path.dirname(os.path.abspath(__file__))}/results/results_{name}.npy", allow_pickle=True)
+            
+            results_6D = []
+            results_6D.append(np.array(accs))
+            results_6D.append(np.array(get_from_results('template', 'accuracy', results))) # template_accuracy
+            results_6D.append(np.array(get_from_results('template', 'precision', results))) # template_precision
+            results_6D.append(np.array(get_from_results('template', 'recall', results))) # template_recall
+            results_6D.append(np.array(get_specificity('template', results))) # template_specificity
+            results_6D.append(np.array(get_f1('template', results))) # template_f1
 
-    singlehistplot_customized(data, 'exp_ablation', labels=['baseline','M1', 'M2', 'M3'], xticks=['$D1$','$D2$','$D3$','$D4$'], xlbl='Dataset generation policy', ylbl='Accuracy [%]', plot=True)
+            results_all.append(deepcopy(results_6D))
 
-def _2_noise_influence():
-    m = 0
-    noise_levels = results_all[3,1,0,0:3,0:3,m]
-    
-    noise_levels = np.swapaxes(noise_levels,1,2)
-    noise_levels = noise_levels.reshape(6,3)
-    print(noise_levels)
-    print( pd.DataFrame(100*noise_levels, columns=['n1', 'n2', 'n3'], index=['c2,D1', 'c2,D2', 'c2,D3', 'c3,D1', 'c3,D2', 'c3,D3']))
+        results_all = np.asarray(results_all)
 
-    singlehistplot_customized(100*noise_levels, 'exp_noise', labels=['$n_1$','$n_2$', '$n_3$'], xticks=['$c_2,D1$', '$c_2,D2$'] , xlbl='', ylbl='Accuracy [%]',bottom=80, plot=True)
-    #'$c_2,D3$', '$c_3,D1$', '$c_3,D2$', '$c_3,D3$']
+        print(results_all.shape)
+        
+        
+        self.data = results_all
+        
+        ''' Merge function index'''
+        self.baseline = 0, 
+        self.mul = 1
+        self.add_2 = 2 
+        self.entropy = 3
+        self.entropy_add_2 = 4
+        
+        ''' Metric name index '''
+        self.acc_o = 0
+        self.acc = 1
+        self.prc = 2
+        self.rcl = 3
+        self.spc = 4
+        self.f1  = 5
+        
+        self.C1 = 0
+        ''' Configuration1()'s index '''
+        self.C2 = 1
+        ''' Configuration2()'s index '''
+        self.C3 = 2
+        ''' Configuration3()'s index '''
+        
+        self.n1 = 0
+        ''' Noise level 1 refers to id=0 index '''
+        self.n2 = 1
+        ''' Noise level 2 refers to id=1 index '''        
+        self.n3 = 2
+        ''' Noise level 3 refers to id=2 index '''
+        self.n4 = 3
+        ''' Noise level 4 refers to id=3 index '''
 
-def _3_types_merging():
-    c = 2
-    n = 2
-    m = 2
+        
+        self.ns = slice(None,None,None) #[self.n1, self.n2, self.n3]
+        ''' All Noise levels '''
+        
+        self.D1 = 0
+        ''' Trivial '''
+        self.D2 = 1
+        ''' Decisible based on action properties (M2 solves that) '''
+        self.D3 = 2
+        ''' Decisible based on object properties (M3 solves that) '''
+        self.D4 = 3
+        ''' Undecisible '''
+        self.D5 = 4
+        ''' Only single modality information activated '''
+        self.Ds = [self.D1, self.D2, self.D3, self.D4, self.D5]
+        ''' All datasets '''
+        self.Ds_des = [self.D1, self.D2, self.D3, self.D5]
+        ''' Only decisible '''
+        
+        self.M1 = 0
+        self.M2 = 1
+        self.M3 = 2
+        ''' All models '''
+        self.Ms = slice(None,None,None) #[self.M1, self.M2, self.M3]
 
-    data1 = results_all[1:3,1,c,n,[0,1,2,4],m]
-    print("Accuracy:")
-    print( pd.DataFrame(100*data1, columns=['D1', 'D2', 'D3', 'D4'], index=['mul', 'add']))
 
-    data2 = results_all[1:3,2,c,n,[0,1,2,4],m]
-    print("Precision:")
-    print( pd.DataFrame(100*data2, columns=['D1', 'D2', 'D3', 'D4'], index=['mul', 'add']))
+    def _1_ablation_study(self):
+        ''' Here we compare Models '''
+        cols = ['baseline','M1', 'M2', 'M3']
+        ''' with Generated Datasets '''
+        indx = ['$D1$','$D2$','$D3$','$D4$']
+        
+        ''' baseline model is special case where:
+            1. Merge function is argmax (self.baseline=0)
+            2. Model is always the M1 (self.M1=0)
+        '''
+        baseline = self.data[self.baseline,self.acc,self.C3,self.n3,self.Ds_des,self.M1]
+        other =    self.data[self.entropy,self.acc,self.C3,self.n3,self.Ds_des,self.Ms]
 
-    data3 = results_all[1:3,3,c,n,[0,1,2,4],m]
-    print("Recall:")
-    print( pd.DataFrame(100*data3, columns=['D1', 'D2', 'D3', 'D4'], index=['mul', 'add']))
+        print(baseline.shape)
+        print(other.shape)
 
-    data4 = results_all[1:3,4,c,n,[0,1,2,4],m]
-    print("Specificity:")
-    print( pd.DataFrame(100*data4, columns=['D1', 'D2', 'D3', 'D4'], index=['mul', 'add']))
+        ''' to percentage '''
+        data = 100 * np.hstack((baseline.reshape(4,1), other))
 
-    data5 = results_all[1:3,5,c,n,[0,1,2,4],m]
-    print("F1:")
-    print( pd.DataFrame(100*data5, columns=['D1', 'D2', 'D3', 'D4'], index=['mul', 'add']))
+        print(pd.DataFrame(data, columns=cols, index=indx))
 
-    data = np.vstack((data1,data2,data3,data4,data5))
+        singlehistplot_customized(data, 'exp_ablation', labels=cols, xticks=indx, xlbl='Dataset generation policy', ylbl='Accuracy [%]', plot=True)
 
-    singlehistplot_customized(100*data, 'exp_merge_methods', labels=['D1', 'D2', 'D3', 'D4'], xticks=['$mul_{accuracy}$', '$add_{accuracy}$', '$mul_{precision}$', '$add_{precision}$', '$mul_{recall}$', '$add_{recall}$','$mul_{specificity}$', '$add_{specificity}$','$mul_{f1}$', '$add_{f1}$'], xlbl='Metrics', ylbl='Accuracy [%]', plot=True)
 
-def _4_thresholding():
+    def _2_noise_influence(self):
+        ''' Here we compare Models '''
+        cols = ['$n_1$','$n_2$', '$n_3$']
+        ''' with Generated Datasets '''
+        indx = ['$c_2,D1$', '$c_2,D2$', '$c_2,D3$', '$c_3,D1$', '$c_3,D2$', '$c_3,D3$']
+        
+        noise_levels = self.data[self.entropy,self.acc,[self.C2,self.C3],self.ns,[self.D1,self.D2,self.D3],self.M3]
+        print(noise_levels)
+        
+        noise_levels = np.swapaxes(noise_levels,1,2)
+        noise_levels = noise_levels.reshape(6,3)
+        print(noise_levels)
+        print( pd.DataFrame(100*noise_levels, columns=cols, index=indx))
 
-    c = 2
-    n = 2
-    m = 2
-
-    data = np.vstack((results_all[0,1,c,n,[0,1,2,4],0], results_all[1:4,1,c,n,[0,1,2,4],m]))
-    print( pd.DataFrame(100*data, columns=['D1', 'D2', 'D3', 'D4'], index=['baseline','$mul_{TH}$','$add_{TH}$', '$mul_{entropy}$']))
-
-    singlehistplot_customized(100*data.T, 'exp_thresholding', labels=['$baseline$','$mul_{fixed}$','$add_{fixed}$', '$mul_{entropy}$'], xticks=['$D1$', '$D2$', '$D3$', '$D4$'], xlbl='Generation Policies', ylbl='Accuracy [%]', plot=True)
-
-def _5_noise_levels_compared_to_models():
-    data_accumulated = np.zeros((3,3))
-    for d in [0,1,2,4]:
-        mergefun = 1
-        c = 2
-        n = range(0,2)
-        #d = 0 # 
-        m = range(0,3)
-
-        data = results_all[mergefun,1,c,:,d,:]
-        index = ['n1','n2', 'n3']
-        columns = ['M1','M2','M3']
-
-        #singlehistplot_customized(100*data.T, 'exp_thresholding', labels=index, xticks=columns, ylbl='Accuracy [%]', plot=True)
+        singlehistplot_customized(100*noise_levels, 'exp_noise', labels=cols, xticks=indx, xlbl='', ylbl='Accuracy [%]',bottom=0, plot=True)
         
 
-        data_accumulated += data
-        print( pd.DataFrame(100*data, columns=columns, index=index) )
+    def _3_types_merging(self):
+        ''' Here we compare generated datasets '''
+        cols = ['D1', 'D2', 'D3', 'D4']
+        ''' with merge fun (mul,add) and different metrics 
+        (accuracy, precision,recall,specificity,f1) '''
+        indx = ['$mul_{accuracy}$', '$add_{accuracy}$', '$mul_{precision}$', '$add_{precision}$', '$mul_{recall}$', '$add_{recall}$','$mul_{specificity}$', '$add_{specificity}$','$mul_{f1}$', '$add_{f1}$']
 
-    print( pd.DataFrame(100*data_accumulated, columns=columns, index=index) )
-    print( data_accumulated[0] )
+        data1 = self.data[[self.mul,self.add_2],self.acc,self.C3,self.n3,self.Ds_des,self.M3]
+        print("Accuracy:")
+        print( pd.DataFrame(100*data1, columns=cols, index=['mul', 'add']))
+
+        data2 = self.data[[self.mul,self.add_2],self.prc,self.C3,self.n3,self.Ds_des,self.M3]
+        print("Precision:")
+        print( pd.DataFrame(100*data2, columns=cols, index=['mul', 'add']))
+
+        data3 = self.data[[self.mul,self.add_2],self.rcl,self.C3,self.n3,self.Ds_des,self.M3]
+        print("Recall:")
+        print( pd.DataFrame(100*data3, columns=cols, index=['mul', 'add']))
+
+        data4 = self.data[[self.mul,self.add_2],self.spc,self.C3,self.n3,self.Ds_des,self.M3]
+        print("Specificity:")
+        print( pd.DataFrame(100*data4, columns=cols, index=['mul', 'add']))
+
+        data5 = self.data[[self.mul,self.add_2],self.f1,self.C3,self.n3,self.Ds_des,self.M3]
+        print("F1:")
+        print( pd.DataFrame(100*data5, columns=cols, index=['mul', 'add']))
+
+        data = np.vstack((data1,data2,data3,data4,data5))
+
+        singlehistplot_customized(100*data, 'exp_merge_methods', labels=cols, xticks=indx, xlbl='Metrics', ylbl='Accuracy [%]', plot=True)
+
+    def _4_thresholding(self):
+        ''' Here we compare Datasets '''
+        cols = ['$D1$', '$D2$', '$D3$', '$D4$']
+        ''' with merge functions '''
+        indx = ['$baseline$','$mul_{fixed}$','$add_{fixed}$', '$mul_{entropy}$', '$add_{entropy}$']
+
+        data = np.vstack((
+            self.data[self.baseline,self.acc,self.C3,self.n3,self.Ds_des,self.M1], 
+            self.data[1:,self.acc,self.C3,self.n3,self.Ds_des,self.M3]
+        ))
+        print( pd.DataFrame(100*data, columns=cols, index=indx))
+
+        singlehistplot_customized(100*data.T, 'exp_thresholding', labels=indx, xticks=cols, xlbl='Generation Policies', ylbl='Accuracy [%]', plot=True)
+
+    def _5_noise_levels_compared_to_models(self):
+        ''' Here we compare Models '''
+        cols = ['M_1', 'M_2', 'M_3']
+        ''' with Noises '''
+        indx = ['n_1', 'n_2', 'n_3']
+
+        data_accumulated = np.zeros((3,3))
+        for d in self.Ds_des:
+            data = self.data[self.mul,self.acc,self.C3,self.ns,d,self.Ms]
+            #singlehistplot_customized(100*data.T, 'exp_thresholding', labels=index, xticks=columns, ylbl='Accuracy [%]', plot=True)
+            
+            data_accumulated += data
+            print( pd.DataFrame(100*data, columns=cols, index=indx) )
+
+        print( pd.DataFrame(100*data_accumulated, columns=cols, index=indx) )
+        print( data_accumulated[0] )
 
 
-    singlehistplot_customized((100/4)*data_accumulated.T - (100/4)*data_accumulated[0:1].T, 'exp_thresholding', labels=index, xticks=columns, ylbl='Accuracy [%]', plot=True)
+        singlehistplot_customized((100/4)*data_accumulated.T - (100/4)*data_accumulated[0:1].T, 'exp_thresholdin_comparison', labels=indx, xticks=cols, ylbl='Accuracy [%]', plot=True)
+
+    def _6_some_custom_plot(self):
+        ''' Here we compare Models '''
+        cols = ['baseline','M1', 'M2', 'M3']
+        ''' with Generated Datasets '''
+        indx = ['$D1$','$D2$','$D3$','$D4$']
+        
+        ''' baseline model is special case where:
+            1. Merge function is argmax (self.baseline=0)
+            2. Model is always the M1 (self.M1=0)
+        '''
+        baseline = self.data[self.baseline,self.acc,self.C3,self.n4,self.Ds_des,self.M1]
+        other =    self.data[self.entropy,self.acc,self.C3,self.n4,self.Ds_des,self.Ms]
+
+        print(baseline.shape)
+        print(other.shape)
+
+        ''' to percentage '''
+        data = 100 * np.hstack((baseline.reshape(4,1), other))
+
+        print(pd.DataFrame(data, columns=cols, index=indx))
+
+        singlehistplot_customized(data, 'exp_ablation_2', labels=cols, xticks=indx, xlbl='Dataset generation policy', ylbl='Accuracy [%]', plot=True)
+
+    def _7_some_custom_plot2(self):
+        ''' Here we compare generated datasets '''
+        cols = ['D1', 'D2', 'D3', 'D4']
+        ''' with merge fun (mul,add) and different metrics 
+        (accuracy, precision,recall,specificity,f1) '''
+        indx = ['$mul_{accuracy}$', '$add_{accuracy}$', '$mul_{precision}$', '$add_{precision}$', '$mul_{recall}$', '$add_{recall}$','$mul_{specificity}$', '$add_{specificity}$','$mul_{f1}$', '$add_{f1}$']
+
+        data1 = self.data[[self.mul,self.add_2],self.acc,self.C3,self.n3,self.Ds_des,self.M3]
+        print("Accuracy:")
+        print( pd.DataFrame(100*data1, columns=cols, index=['mul', 'add']))
+
+        data2 = self.data[[self.mul,self.add_2],self.prc,self.C3,self.n3,self.Ds_des,self.M3]
+        print("Precision:")
+        print( pd.DataFrame(100*data2, columns=cols, index=['mul', 'add']))
+
+        data3 = self.data[[self.mul,self.add_2],self.rcl,self.C3,self.n3,self.Ds_des,self.M3]
+        print("Recall:")
+        print( pd.DataFrame(100*data3, columns=cols, index=['mul', 'add']))
+
+        data4 = self.data[[self.mul,self.add_2],self.spc,self.C3,self.n3,self.Ds_des,self.M3]
+        print("Specificity:")
+        print( pd.DataFrame(100*data4, columns=cols, index=['mul', 'add']))
+
+        data5 = self.data[[self.mul,self.add_2],self.f1,self.C3,self.n3,self.Ds_des,self.M3]
+        print("F1:")
+        print( pd.DataFrame(100*data5, columns=cols, index=['mul', 'add']))
+
+        data = np.vstack((data1,data2,data3,data4,data5))
+
+        singlehistplot_customized(100*data, 'exp_merge_methods', labels=cols, xticks=indx, xlbl='Metrics', ylbl='Accuracy [%]', plot=True)
+
 
 if __name__ == '__main__':
-    # 1. Load results data into 6D table
-    # (merge function) x (metric) x (config) x (noise) x (dataset) x (model)
+    # Results6DComparer()._6_some_custom_plot()
 
-    results_all = []
+    # _1_ablation_study()
+    # _2_noise_influence()
+    # _3_types_merging()
+    Results6DComparer()._4_thresholding()
 
-    for name in ['baseline', 'mul', 'add_2', 'entropy', 'entropy_add_2']:
-        accs = np.load(f"{os.path.dirname(os.path.abspath(__file__))}/results/accs_{name}.npy", allow_pickle=True)
-
-        results = np.load(f"{os.path.dirname(os.path.abspath(__file__))}/results/results_{name}.npy", allow_pickle=True)
-        
-        results_6D = []
-        results_6D.append(np.array(accs))
-        results_6D.append(np.array(get_from_results('template', 'accuracy', results))) # template_accuracy
-        results_6D.append(np.array(get_from_results('template', 'precision', results))) # template_precision
-        results_6D.append(np.array(get_from_results('template', 'recall', results))) # template_recall
-        results_6D.append(np.array(get_specificity('template', results))) # template_specificity
-        results_6D.append(np.array(get_f1('template', results))) # template_f1
-
-        results_all.append(deepcopy(results_6D))
-
-    results_all = np.asarray(results_all)
-
-    print(results_all.shape)
-
+    # _5_noise_levels_compared_to_models()
+    
+    
+def old():
     def make_table(c, n, m, d):
         print(f"Configuration id: {c}, Noise level id: {n}, Method id: {m}, Dataset policy: {d}")
         print( pd.DataFrame(100*results_all[:,1:,c,n,d,m], columns=['accuracy', 'precision', 'recall', 'specificity', 'f1'], index=['baseline', 'mul', 'add_2', 'entropy', 'entropy_add_2']))
@@ -208,10 +350,3 @@ if __name__ == '__main__':
     # data5 = results_all[1:3,5,c,n,0:4,m]
     # print("F1:")
     # print( pd.DataFrame(100*data5, columns=['p1', 'p2', 'p3', 'p4'], index=['mul', 'add']))
-
-    # _1_ablation_study()
-    # _2_noise_influence()
-    # _3_types_merging()
-    # _4_thresholding()
-
-    _5_noise_levels_compared_to_models()
