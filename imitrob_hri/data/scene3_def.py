@@ -143,6 +143,8 @@ class Scene3():
 
 
 def get_random_scene(c, object_name_list=['potted meat can', 'tomato soup can', 'bowl', 'box', 'big box', 'paper', 'wrench', 'glued wrench'], storage_name_list=['paper box', 'abstract marked zone', 'out of table', 'on the table']):
+    object_name_list = c.mm_pars_names_dict['selections']
+    storage_name_list = c.mm_pars_names_dict['storages']
 
     # Based on configuration, choose how many objects and storages to generate in the scene
     if c.scene_gen_config['selections_n'][0] == 'uniform':

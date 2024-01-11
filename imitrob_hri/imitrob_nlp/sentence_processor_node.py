@@ -232,7 +232,7 @@ class SentenceProcessor(Node):
     # def mm_run(self, mm_info):
     #     templates, selections = mm_info[0]
     #     gs, ls = mm_info[1]
-    #     mm = ModalityMerger(templates, selections, pars_compulsary=['template', 'selections'])
+    #     mm = ModalityMerger(templates, selections, mm_pars_compulsary=['template', 'selections'])
     #     print("[Modality merger] Here comes the magic:")
     #     todo = mm.feedforward2(ls, gs)
     #     print("=====================================")

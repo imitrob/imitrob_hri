@@ -7,34 +7,36 @@
 
 
 template_name_synonyms = {
-    '1': ['pick', 'PICK_TASK', 'PickTask', 'pick up', 'lift', 'use', 'pick it'], #'seber'], # pick an object
+    '-1': ['noop'],
+    '0': ['stop'],  # stop the robot arm(s)
+    
+    '1': ['pick', 'PICK_TASK', 'PickTask', 'pick up', 'lift', 'use', 'pick-up'], #'seber'], # pick an object
     '2': ['point', 'POINT_TASK', 'PointTask'], #'ukaz', 'ukaž'],
     '3': ['pass', 'pass me', 'give me', 'bring', 'need', 'pass-me'],
     '4': ['release', 'place', 'put down'], # place an object (assuming something is being held)
-    
-    #'0': ['noop'],
-    #'16': ['grip'],
-    '32': ['open', "pustit"],
-    # point towards a location
-    #'208': ['pnp'], # pick n place
-    #'209': ['store'], # pick an object an place it into a storage
-    #'210': ['stash'], # pick an object an place it into the robot storage (backstage)
-    #'212': ['fetch'], # take object from backstage and put it near the user
-    #'213': ['fetch_to'], # take object from backstage and put it into a storage
-    #'214': ['TIDY', 'TIDY_TASK', 'ukliď'], # take all objects from the front and put them into a storage
-    '256': ['stop'],  # stop the robot arm(s)
-    '1000': ['put-into', 'put', 'PutTask', 'put into'], #, 'polož'],
-    '1001': ['push'],
-    '1003': ['pour', 'pour into'], # 'nalij', 'nalit'],
-    '1004': ['unglue'],
-    '1005': ['stack'],
+    '5': ['push'],
+    '6': ['put-into', 'put', 'PutTask', 'put into'], #, 'polož'],
     
     '11': ['move-up', 'move up', 'up', 'move away', 'move up'], # 'nahoru'],
     '12': ['move-down', 'move down', 'down', 'move closer', 'move table'],
     '13': ['move-left', 'move left', 'left'],
     '14': ['move-right', 'move right', 'right'],
     
+    '20': ['pour', 'pour into'], # 'nalij', 'nalit'],
+    '21': ['stack'],
+    
     '30': ['replace', 'swap', 'change'],
+    
+    '40': ['unglue'],
+    '41': ['grip', 'close'],
+    '42': ['open', "pustit"],
+    
+    #'208': ['pnp'], # pick n place
+    #'209': ['store'], # pick an object an place it into a storage
+    #'210': ['stash'], # pick an object an place it into the robot storage (backstage)
+    #'212': ['fetch'], # take object from backstage and put it near the user
+    #'213': ['fetch_to'], # take object from backstage and put it into a storage
+    #'214': ['TIDY', 'TIDY_TASK', 'ukliď'], # take all objects from the front and put them into a storage
     
     
     #'512': ['retract'],  # retract to starting position
@@ -49,12 +51,11 @@ template_name_synonyms = {
 
     #'1111111111': ['product_remove', "remove_product", "Odeber výrobek"],
 
-    
 }
 
 selections_name_synonyms = {
     '0': ['box'],
-    '1': ['big box'],
+    '1': ['alt box'],
     '2': ['table'],
     '3': ['aruco box'],
 
@@ -200,23 +201,25 @@ def make_conjunction(gesture_templates, language_templates, gesture_likelihoods,
     if keep_only_items_in_c_templates:
         assert c_templates is not None
         
-        print("c_templates", c_templates)        
+        # print(f"c_{ct}", c_templates)        
         discards_g = []
         for n,gt in enumerate(gesture_templates):
             if gt not in c_templates:
+                print(f"WARNING! {gt} was discarded!")
                 discards_g.append(n)
         discards_g.reverse()
-        print("discards_g", discards_g)
-        print("gesture_templates", gesture_templates)
+        # print("discards_g", discards_g)
+        # print(f"gesture_{ct}", gesture_templates)
         for i in discards_g:
             gesture_templates.pop(i)
             gesture_likelihoods.pop(i)
         
         discards_l = []        
-        print("discards_l", discards_l)
-        print("language_templates", language_templates)
+        # print("discards_l", discards_l)
+        # print(f"language_{ct}", language_templates)
         for n,lt in enumerate(language_templates):
             if lt not in c_templates:
+                print(f"WARNING! {gt} was discarded!")
                 discards_l.append(n)
         discards_l.reverse()
         for i in discards_l:
@@ -247,6 +250,7 @@ def make_conjunction(gesture_templates, language_templates, gesture_likelihoods,
     if keep_only_items_in_c_templates:
         for tmpl in c_templates:
             if tmpl not in unique_list:
+                # print(f"WARNING! {tmpl} was added with 0.0 prob!")
                 unique_list.append(tmpl)
                 language_likelihoods_unified.append(0.0)
                 gesture_likelihoods_unified.append(0.0)

@@ -15,9 +15,9 @@ def check_single(dataset_name, all=True):
         slctns.append( sample['y']['selections'] )
         strgs.append( sample['y']['storages'] )
 
-    print(f"Templates: {dict(Counter(tmplts))}")
-    print(f"Selections: {dict(Counter(slctns))}")
-    print(f"Storages: {dict(Counter(strgs))}")
+    print(f"Target actions: {dict(Counter(tmplts))}")
+    print(f"Target objects: {dict(Counter(slctns))}")
+    print(f"Target storages: {dict(Counter(strgs))}")
 
     print("--- Property True/False occurances ---")
 
@@ -53,7 +53,7 @@ def check_single(dataset_name, all=True):
             print(f"x {sample['x_scene']}")
             print(f"x {sample['x_sentence']}")
 
-            print("template probs")
+            print("target_action probs")
             print(sample['x_sentence'].L['template'].max)
 
             input("next sample?")
@@ -69,7 +69,7 @@ def check_all():
 
 if __name__ == '__main__':
     ''' Loads the dataset and prints some info:
-    1. Which templates, object selections, storages are there?
+    1. Which target_actions, object selections, storages are there?
     2. Properties on/off
     '''
     if len(sys.argv[1]) > 1:

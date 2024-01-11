@@ -211,6 +211,7 @@ def safe_entropy(v):
     return entropy(v)
 
 def normalized_entropy(v):
+    if len(v) == 1: return v[0]
     return safe_entropy(v) / np.log2(len(v))
 
 def cross_entropy(v, q):
@@ -229,12 +230,12 @@ def normalized_cross_entropy(v, q):
     return safe_cross_entropy(v, q) / np.log2(len(v))
 
 def  diagonal_cross_entropy(v):
+    if len(v) == 1: return v[0]
     return [normalized_cross_entropy(np.eye(len(v))[i], v) for i in range(len(v))]
 
 
-
 def singlehistplot_customized(data, filename, labels=['baseline','M1', 'M2', 'M3'],
-                              xticks=['D1','D2','D3','D4','D5'], ylbl='Accuracy [%]', 
+                              xticks=['D1','D2','D3','D4','D5'], xlbl='', ylbl='Accuracy [%]',
                               bottom=0, plot=False, savefig=True, figsize=(6,3)):
     ''' Plot histogram plot: Used at MM paper results
     Parameters:
@@ -276,7 +277,8 @@ def singlehistplot_customized(data, filename, labels=['baseline','M1', 'M2', 'M3
     plt.rcParams['pdf.fonttype'] = 42
     plt.rcParams['ps.fonttype'] = 42
 
-    #plt.xlabel(xlbl, fontsize = 15)
+    if xlbl != '':
+        plt.xlabel(xlbl, fontsize = 15)
     plt.ylabel(ylbl, fontsize = 15)
     plt.xticks([r + barWidth for r in range(xl)],
             xticks)
@@ -285,7 +287,7 @@ def singlehistplot_customized(data, filename, labels=['baseline','M1', 'M2', 'M3
     plt.legend(loc='lower left')
     
     if savefig:
-        plt.savefig(f"os.path.expanduser(f'{os.path.dirname(os.path.abspath(__file__))}/../data/pictures/{filename}.eps", dpi=fig.dpi, bbox_inches='tight')
-        plt.savefig(f"os.path.expanduser(f'{os.path.dirname(os.path.abspath(__file__))}/../data/pictures/{filename}.png", dpi=fig.dpi, bbox_inches='tight')
+        plt.savefig(f"{os.path.expanduser(os.path.dirname(os.path.abspath(__file__)))}/../data/pictures/{filename}.eps", dpi=fig.dpi, bbox_inches='tight')
+        plt.savefig(f"{os.path.expanduser(os.path.dirname(os.path.abspath(__file__)))}/../data/pictures/{filename}.png", dpi=fig.dpi, bbox_inches='tight')
     if plot:
         plt.show()

@@ -4,6 +4,7 @@ from merging_modalities.utils import cc
 from imitrob_templates.small_template_factory import create_template
 from copy import deepcopy
 from merging_modalities import noise_model
+from imitrob_hri.data.scene3_def import add_if_not_there
 
 def get_random_feasible_triplet(scene, template_request=None):
     ''' approach 1
@@ -31,7 +32,7 @@ def get_random_feasible_triplet(scene, template_request=None):
     else:
         assert isinstance(template_request, str)
         template = scene.get_template(template_request)
-    requirements = deepcopy(template.pars_compulsary) # requirements to fill
+    requirements = deepcopy(template.mm_pars_compulsary) # requirements to fill
     
     if 'template' in requirements:
         requirements.remove('template')
@@ -221,11 +222,11 @@ def get_templates_decisive_based_on_arity(names, true_name, min_ch, scene):
     t = create_template(true_name)
     t_cts = {}
     for tt in scene.templates:
-        t_cts[tt.name] = tt.pars_compulsary
+        t_cts[tt.name] = tt.mm_pars_compulsary
     
     chosen_names_subset = []
     for k in t_cts.keys():
-        if t_cts[k] != t.pars_compulsary:
+        if t_cts[k] != t.mm_pars_compulsary:
             chosen_names_subset.append(k)    
     
     if true_name not in chosen_names_subset: chosen_names_subset.append(true_name)
