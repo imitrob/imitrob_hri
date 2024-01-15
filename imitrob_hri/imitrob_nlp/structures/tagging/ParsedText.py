@@ -55,11 +55,6 @@ class ParseTreeNode():
         tagged_text = TaggedText(language = self.lang, tokens = [], tags = [])
 
         for subnode in self.subnodes:
-            print("============================")
-            print(type(subnode))
-            print(TaggedToken)
-            print(type(subnode) is TaggedToken)
-            print("============================")
             if type(subnode) is TaggedToken:
                 tagged_text.add_tagged_token(token=subnode.token, tag=subnode.tag)
             else:

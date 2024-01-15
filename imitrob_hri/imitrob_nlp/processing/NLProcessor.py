@@ -52,8 +52,6 @@ class NLProcessor():
         """
         parsed_text = self.gp.parse(sentence)
         root = parsed_text.parse_tree
-        print('root')
-        print(root)
         # db_api = DatabaseAPI()
         #state = db_api.get_state()
 
@@ -76,15 +74,12 @@ class NLProcessor():
     def process_node(self, subnode : ParseTreeNode) -> RobotProgramOperand:
         node = RobotProgramOperand()
         node.parsed_text = subnode
-        print('llll')
-        print(node.parsed_text)
         # working with flat tagged text (without any tree structure)
         tagged_text = subnode.flatten()
 
         # using TemplateDetector to get a list of templates sorted by probability
         template_types = self.td.detect_templates(tagged_text)
 
-        print("template_types", template_types)
         self.logger.debug(f"Templates detected for \"{tagged_text.get_text()}\": {[t.name for t in template_types]}")
 
         # try to sequentially match each template
@@ -100,25 +95,14 @@ class NLProcessor():
             # get an object representing the template
             template = self.tf.get_template(template_type) # type: Template
 
-            print("Assigingin template after get temaplte ")
-            print(template, " template ")
-
             # try to match all the template parameters
             template.match_tagged_text(tagged_text, language = self.lang, client = self.crowracle)
             template.ground(client = self.crowracle)
-            print('----------')
-            print(template)
             # check if the template is matched successfully
-            print("is fille ? ", )
-            print(template.get_inputs())
             if template.is_filled():
                 break
         else:
-            print("is it here ?  : ", template)
-
             template = None
-
-        print("template after : ", template)
 
         # save the filled template in the program node
         node.template = template

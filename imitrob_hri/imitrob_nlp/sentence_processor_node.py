@@ -189,8 +189,6 @@ class SentenceProcessor(Node):
                 print(program_template_speech)
                 
                 hricommand = self.template_to_hricommand(program_template_speech.root.children[0].template)
-                print('====================')
-                print(hricommand)
                 while True:
                     self.sentence_publisher_hri_command.publish(hricommand)
                     time.sleep(1)
