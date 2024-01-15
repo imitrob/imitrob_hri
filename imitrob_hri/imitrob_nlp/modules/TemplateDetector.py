@@ -15,12 +15,12 @@ from typing import List
 from pkg_resources import resource_filename
 
 #from crow_nlp.nlp_crow.database.DatabaseAPI import DatabaseAPI
-from crow_nlp.nlp_crow.modules.CrowModule import CrowModule
+from imitrob_hri.imitrob_nlp.modules.CrowModule import CrowModule
 #from crow_nlp.nlp_crow.structures.tagging.MorphCategory import POS
 #from crow_nlp.nlp_crow.structures.tagging.ParsedText import TaggedText
 #from crow_nlp.nlp_crow.structures.tagging.Tag import Tag
 from imitrob_hri.imitrob_nlp.TemplateFactory import TemplateType as tt
-from crow_nlp.nlp_crow.modules.UserInputManager import UserInputManager
+from imitrob_hri.imitrob_nlp.modules.UserInputManager import UserInputManager
 import logging
 import rclpy
 

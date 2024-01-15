@@ -11,14 +11,14 @@ LICENSE file in the root directory of this source tree.
 
 #from nlp_crow.database.Database import Database, State
 #from nlp_crow.database.DatabaseAPI import DatabaseAPI
-from crow_nlp.nlp_crow.database.Ontology import RobotProgram, RobotProgramOperator, RobotProgramOperand, RobotCustomProgram, Template
-from crow_nlp.nlp_crow.modules.GrammarParser import GrammarParser
-from imitrob_hri.imitrob_nlp.TemplateDetector import TemplateDetector
-from crow_nlp.nlp_crow.structures.tagging.ParsedText import ParseTreeNode
+from imitrob_hri.imitrob_nlp.database.Ontology import RobotProgram, RobotProgramOperator, RobotProgramOperand, RobotCustomProgram, Template
+from imitrob_hri.imitrob_nlp.modules.GrammarParser import GrammarParser
+from imitrob_hri.imitrob_nlp.modules.TemplateDetector import TemplateDetector
+from imitrob_hri.imitrob_nlp.structures.tagging.ParsedText import ParseTreeNode
 from imitrob_hri.imitrob_nlp.TemplateFactory import TemplateFactory, TemplateType
 
 import logging
-from crow_nlp.nlp_crow.modules.UserInputManager import UserInputManager
+from imitrob_hri.imitrob_nlp.modules.UserInputManager import UserInputManager
 
 class NLProcessor():
     def __init__(self,language="en", client = None):
@@ -52,8 +52,9 @@ class NLProcessor():
         """
         parsed_text = self.gp.parse(sentence)
         root = parsed_text.parse_tree
-
-       # db_api = DatabaseAPI()
+        print('root')
+        print(root)
+        # db_api = DatabaseAPI()
         #state = db_api.get_state()
 
         # if state == State.LEARN_FROM_INSTRUCTIONS:
@@ -64,7 +65,6 @@ class NLProcessor():
         # hardcoded program structure: all subprograms are located directly under the root node "AND"
         program = RobotProgram()
         program.root = RobotProgramOperator(operator_type="AND")
-
         for subnode in root.subnodes:
             if type(subnode) is ParseTreeNode:
                 # create a single robot instructon
@@ -76,13 +76,15 @@ class NLProcessor():
     def process_node(self, subnode : ParseTreeNode) -> RobotProgramOperand:
         node = RobotProgramOperand()
         node.parsed_text = subnode
-
+        print('llll')
+        print(node.parsed_text)
         # working with flat tagged text (without any tree structure)
         tagged_text = subnode.flatten()
 
         # using TemplateDetector to get a list of templates sorted by probability
         template_types = self.td.detect_templates(tagged_text)
 
+        print("template_types", template_types)
         self.logger.debug(f"Templates detected for \"{tagged_text.get_text()}\": {[t.name for t in template_types]}")
 
         # try to sequentially match each template
@@ -98,16 +100,26 @@ class NLProcessor():
             # get an object representing the template
             template = self.tf.get_template(template_type) # type: Template
 
-            # try to match all the template parameters
-            template.match(tagged_text, language = self.lang, client = self.crowracle)
+            print("Assigingin template after get temaplte ")
+            print(template, " template ")
 
+            # try to match all the template parameters
+            template.match_tagged_text(tagged_text, language = self.lang, client = self.crowracle)
+            template.ground(client = self.crowracle)
+            print('----------')
+            print(template)
             # check if the template is matched successfully
+            print("is fille ? ", )
+            print(template.get_inputs())
             if template.is_filled():
                 break
         else:
+            print("is it here ?  : ", template)
+
             template = None
+
+        print("template after : ", template)
 
         # save the filled template in the program node
         node.template = template
-
         return node

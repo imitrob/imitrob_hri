@@ -12,8 +12,8 @@ LICENSE file in the root directory of this source tree.
 # from nlp_crow.database.Database import Database
 # from nlp_crow.database.DatabaseAPI import DatabaseAPI
 # from crow_nlp.nlp_crow.modules.LocationGrounder2 import LocationGrounder
-from crow_nlp.nlp_crow.modules.ObjectGrounder import ObjectGrounder
-from crow_nlp.nlp_crow.database.Ontology import RobotProgram, RobotProgramOperator, RobotProgramOperand, RobotCustomProgram, Template
+from imitrob_hri.imitrob_nlp.modules.ObjectGrounder import ObjectGrounder
+from imitrob_hri.imitrob_nlp.database.Ontology import RobotProgram, RobotProgramOperator, RobotProgramOperand, RobotCustomProgram, Template
 
 import owlready2 as ow
 import logging

@@ -1,0 +1,16 @@
+{
+"en": {"cube": "cube",
+  "hammer": "hammer",
+  "wheel": "wheel",
+  "sphere": "sphere",
+  "wafer": "wafer",
+  "it": "it"
+},
+"cs": { "cube": "kostka",
+  "hammer": "kladivo",
+  "wheel": "kolo",
+  "sphere": "koule",
+  "wafer": "destička",
+  "it": "to"
+}
+      }

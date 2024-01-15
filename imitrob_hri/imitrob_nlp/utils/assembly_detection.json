@@ -1,0 +1,12 @@
+{
+"en": {"snake": "snake",
+       "car": "car",
+  "tower": "tower",
+  "dog": "dog"
+      },
+"cs": {"snake": "had",
+  "car": "auto",
+"tower": "věž",
+"dog": "pes"
+}
+      }

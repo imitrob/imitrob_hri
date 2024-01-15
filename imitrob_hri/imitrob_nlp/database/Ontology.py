@@ -52,7 +52,11 @@ class Template():
         """
         Returns `True` if all template parameters have a value set, `False` otherwise.
         """
-        return all(self.get_inputs().values())
+        for key in self.get_inputs().keys():
+            if self.get_inputs()[key] is None:
+                return False
+        return True
+        #return all(self.get_inputs().values())
 
     def register_parameter(self, name : str, value : ClassVar) -> None:
         """
@@ -207,12 +211,11 @@ class Object():
 # class Placeholder():
 #    namespace = db.onto
 
-class ObjectK(object):
+class ObjectsMentioned(object):
     def __init__(self):
-        self.is_a = []
-        self.color = []
-        self.location = []
-        self.id = []
+        self.objs_mentioned_cls = []
+        self.objs_mentioned_cls_probs = []
+        self.objs_properties = {}
         self.flags = []
 
 class ObjectPlaceholder(object):
