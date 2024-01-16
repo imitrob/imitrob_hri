@@ -8,10 +8,10 @@ import numpy as np
 from sklearn.metrics import precision_score, recall_score, accuracy_score
 
 def tester_all(use_magic):
-    accs = np.zeros((3,3,5,3))
-    results_save = np.zeros((3,3,5,3), dtype=object)
+    accs = np.zeros((3,4,5,3))
+    results_save = np.zeros((3,4,5,3), dtype=object)
     for cn,c in enumerate(['c1', 'c2', 'c3']):
-        for nn,n in enumerate(['n1', 'n2', 'n3']):
+        for nn,n in enumerate(['n1', 'n2', 'n3', 'n4']):
             for pn,d in enumerate(['D1','D2','D3','D4','D5']):
                 for mn,m in enumerate(['M1','M2','M3']):
                     dataset = np.load(os.path.expanduser(f'{os.path.dirname(os.path.abspath(__file__))}/../data/saves/artificial_dataset_{c}_{n}_{d}.npy'), allow_pickle=True)

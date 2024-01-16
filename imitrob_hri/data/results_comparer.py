@@ -125,15 +125,18 @@ class Results6DComparer():
 
     def _2_noise_influence(self):
         ''' Here we compare Models '''
-        cols = ['$n_1$','$n_2$', '$n_3$']
+        cols = ['$n_1$','$n_2$', '$n_3$', '$n_4$']
         ''' with Generated Datasets '''
-        indx = ['$c_2,D1$', '$c_2,D2$', '$c_2,D3$', '$c_3,D1$', '$c_3,D2$', '$c_3,D3$']
+        indx = ['$c_2,D2$', '$c_2,D3$', '$c_2,D4$', '$c_3,D2$', '$c_3,D3$', '$c_3,D4$']
         
-        noise_levels = self.data[self.entropy,self.acc,[self.C2,self.C3],self.ns,[self.D1,self.D2,self.D3],self.M3]
+        
+        
+        #noise_levels = self.data[self.entropy,self.acc,[self.C2,self.C3],self.ns,[self.D1,self.D2,self.D3],self.M3]
+        noise_levels = self.data[self.entropy,self.acc,1:3,self.ns,[self.D2,self.D3,self.D5],self.M3]
         print(noise_levels)
         
         noise_levels = np.swapaxes(noise_levels,1,2)
-        noise_levels = noise_levels.reshape(6,3)
+        noise_levels = noise_levels.reshape(6,4)
         print(noise_levels)
         print( pd.DataFrame(100*noise_levels, columns=cols, index=indx))
 
@@ -264,9 +267,9 @@ if __name__ == '__main__':
     # Results6DComparer()._6_some_custom_plot()
 
     # _1_ablation_study()
-    # _2_noise_influence()
+    Results6DComparer()._2_noise_influence()
     # _3_types_merging()
-    Results6DComparer()._4_thresholding()
+    # Results6DComparer()._4_thresholding()
 
     # _5_noise_levels_compared_to_models()
     
