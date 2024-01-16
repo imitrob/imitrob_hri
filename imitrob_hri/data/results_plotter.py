@@ -43,7 +43,7 @@ def singlehistplot(data, filepartname, plot=False):
 
     gen_x_axis_list = []
     for c in ['c1', 'c2', 'c3']:
-        for n in ['n1', 'n2', 'n3']:
+        for n in ['n1', 'n2', 'n3', 'n4']:
             for p in ['D1','D2','D3','D4','D5']:
                 gen_x_axis_list.append(f"{c},{n},{p}")
 
