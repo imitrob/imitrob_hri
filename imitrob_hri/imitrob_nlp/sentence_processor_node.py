@@ -9,14 +9,6 @@ LICENSE file in the root directory of this source tree.
 @author: Karla Štěpánová, Megi Mejdrechová
 @mail:  karla.stepanova@cvut.cz
 """
-# if __name__ == '__main__':
-#     import sys
-#     sys.path.append("/home/petr/crow-base/src/crow_nlp/crow_nlp")
-#     sys.path.append("/home/petr/crow-base/src/crow_ontology")
-#     sys.path.append("/home/petr/crow-base/src/crow_utils")
-#     sys.path.append("/home/petr/crow-base/src/crow_params")
-
-
 import json
 import re
 
@@ -46,15 +38,10 @@ NOT_PROFILING = True
 if not NOT_PROFILING:
     from crow_control.utils.profiling import StatTimer
 
-import sys; sys.path.append("..")
-import nlp_utils as nlp_utils
-from imitrob_hri.merging_modalities.modality_merger import ModalityMerger
-from imitrob_hri.merging_modalities.utils import cc
-
 from teleop_msgs.msg import HRICommand
 
-def distance(entry):
-    return entry[-1]
+# def distance(entry):
+#     return entry[-1]
 
 
 class SentenceProcessor(Node):
@@ -74,7 +61,7 @@ class SentenceProcessor(Node):
         self.guidance_file = self.ui.load_file('guidance_dialogue.json')
         self.templ_det = self.ui.load_file('templates_detection.json')
         self.synonyms_file = self.ui.load_file('synonyms.json')
-
+        
         self.pclient = ParamClient()
         self.pclient.define("processor_busy_flag", False) # State of the sentence processor
         self.pclient.define("halt_nlp", False) # If true, NLP input should be halted
@@ -104,6 +91,7 @@ class SentenceProcessor(Node):
             StatTimer.init()
 
         self.sentence_publisher_hri_command = self.create_publisher(HRICommand, "/nlp/hri_command", qos)
+        print("[NLP] Ready")
 
     def keep_alive(self):
         self.pclient.nlp_alive = time.time()
@@ -115,49 +103,8 @@ class SentenceProcessor(Node):
         self.pclient.det_obj_in_ws = found_in_ws # change to string 'ano', 'ne'?, see visualizator
         self.pclient.status = status
 
-    def make_one_hot_vector(self, template_names, activated_template_name):
-        ''' For Language likelihoods vector construction
-        '''
-        a = np.zeros(len(template_names))
-        n = template_names.index(activated_template_name)
-        a[n] = 1.
-        return a
-    
-    def get_language_templates(self):
-        return self.nl_processor.tf.get_all_template_names()
-    
-    def get_language_detected_selection(self, program_template):
-        template = program_template.root.children[0].template
-        if template is None:
-            raise AttributeError("Unknown command: {}".format(program_template))
-        if not template.is_filled():
-            # self.wait_then_talk()
-            # print(f"Delay at the end: {time.time() - start_attempt_time}")
-            return
-
-        dict1 = template.get_inputs()
-        template_type = dict1.get('action_type', '-')
-
-        target_obj = dict1.get('target')
-        if target_obj is not None:
-            if hasattr(target_obj, "flags") and 'last_mentioned' in target_obj.flags:
-            #TODO add last mentioned correferenced object and then delete this and adjust in ObjectGrounder
-                target_obj = None
-                dict1['target']=None
-        if target_obj is not None:
-            if len(target_obj.is_a) > 1:
-                    # self.wait_then_talk()
-                    print('TODO ask for specification which object to choose')
-                #@TODO: ask for specification, which target_obj to choose
-            target_obj = target_obj.is_a[0].n3()
-
-            # Select only the name
-            # '<http://imitrob.ciirc.cvut.cz/ontologies/crow#Cube>' -> 'Cube'
-            return target_obj[1:-1].split("#")[-1]            
-        else:
-            return None
-
-    def process_sentence_callback(self, nlInputMsg):
+    def process_sentence_callback(self, nlInputMsg, out=False):
+        ''' Main function '''
         print("process_sentence_callback")
         if not NOT_PROFILING:
             StatTimer.enter("semantic text processing")
@@ -189,40 +136,12 @@ class SentenceProcessor(Node):
                 print(program_template_speech)
                 
                 hricommand = self.template_to_hricommand(program_template_speech.root.children[0].template)
-                while True:
-                    self.sentence_publisher_hri_command.publish(hricommand)
-                    time.sleep(1)
-                return
-
-
-    
-
-    def wait_for_can_start_talking(self):
-        if self.pclient.silent_mode is None:
-            self.pclient.define("silent_mode", 1)
-        if self.pclient.silent_mode > 1:
-            while self.pclient.can_start_talking == False:
-                time.sleep(0.2)
-            self.pclient.can_start_talking = False
-
-    def wait_then_talk(self):
-        if self.pclient.silent_mode is None:
-            self.pclient.define("silent_mode", 1) # Set by the user (level of the talking - 1 Silence, 2 - Standard speech, 3 - Debug mode/Full speech)
-        if self.pclient.silent_mode > 1:
-            while self.pclient.can_start_talking == False:
-                time.sleep(0.2)
-            self.pclient.can_start_talking = False
-        self.ui.buffered_say(flush=True, level=self.pclient.silent_mode)
-        self.pclient.can_start_talking = True
-
-    def run_program(self, program_template):
-        program_runner = ProgramRunner(language = self.LANG, client = self.crowracle)
-        robot_program = program_runner.evaluate(program_template)
-        print()
-        print("Grounded Program")
-        print("--------")
-        print(robot_program)
-        return robot_program
+                
+                self.sentence_publisher_hri_command.publish(hricommand)
+                if out:
+                    return hricommand
+                else:
+                    return
 
     def replace_synonyms(self, command):
         """place words in command with synonyms defined in synonym_file"""
@@ -248,15 +167,92 @@ class SentenceProcessor(Node):
 
     def template_to_hricommand(self, template):
         
-        # "target_storage": {template.target_storage}, \
-        s = f'"target_action": {template.target_action}, "target_object": {template.target_object}, \
-        "target_object_probs": {template.target_object_probs}, \
-        "actions": [{template.target_action}], "action_probs": [1.0], \
-        "action_timestamp": 0.0,  \
-        "objects": [{template.target_object}], "object_probs": {template.target_object_probs}, "object_classes": ["object"], "parameters": "", \
-        "objs_mentioned_cls": {template.objs_mentioned_cls}, "objs_mentioned_cls_probs": {template.objs_mentioned_cls_probs}, \
-        "objs_mentioned_properties": {template.objs_properties}'
-        return HRICommand(data=[s])
+        d = {}
+        d['target_action'] = template.target_action
+        d['target_object'] = template.target_object 
+        d['target_object_probs'] = list(template.target_object_probs)
+        d['actions'] = [template.target_action]
+        d['action_probs'] = [1.0]
+        d['action_timestamp'] = 0.0
+        d['objects'] = template.target_object
+        d['object_probs'] = list(template.target_object_probs)
+        d['object_classes'] = ['object']
+        d['parameters'] = ""        
+        
+        d["objs_mentioned_cls"] = template.objs_mentioned_cls
+        d["objs_mentioned_cls_probs"] = list(template.objs_mentioned_cls_probs)
+        d["objs_mentioned_properties"] = template.objs_properties
+        
+        return HRICommand(data=[str(d)]) 
+        
+    # def make_one_hot_vector(self, template_names, activated_template_name):
+    #     ''' For Language likelihoods vector construction
+    #     '''
+    #     a = np.zeros(len(template_names))
+    #     n = template_names.index(activated_template_name)
+    #     a[n] = 1.
+    #     return a
+    
+    # def get_language_templates(self):
+    #     return self.nl_processor.tf.get_all_template_names()
+    
+    # def get_language_detected_selection(self, program_template):
+    #     template = program_template.root.children[0].template
+    #     if template is None:
+    #         raise AttributeError("Unknown command: {}".format(program_template))
+    #     if not template.is_filled():
+    #         # self.wait_then_talk()
+    #         # print(f"Delay at the end: {time.time() - start_attempt_time}")
+    #         return
+
+    #     dict1 = template.get_inputs()
+    #     template_type = dict1.get('action_type', '-')
+
+    #     target_obj = dict1.get('target')
+    #     if target_obj is not None:
+    #         if hasattr(target_obj, "flags") and 'last_mentioned' in target_obj.flags:
+    #         #TODO add last mentioned correferenced object and then delete this and adjust in ObjectGrounder
+    #             target_obj = None
+    #             dict1['target']=None
+    #     if target_obj is not None:
+    #         if len(target_obj.is_a) > 1:
+    #                 # self.wait_then_talk()
+    #                 print('TODO ask for specification which object to choose')
+    #             #@TODO: ask for specification, which target_obj to choose
+    #         target_obj = target_obj.is_a[0].n3()
+
+    #         # Select only the name
+    #         # '<http://imitrob.ciirc.cvut.cz/ontologies/crow#Cube>' -> 'Cube'
+    #         return target_obj[1:-1].split("#")[-1]            
+    #     else:
+    #         return None
+
+    # def wait_for_can_start_talking(self):
+    #     if self.pclient.silent_mode is None:
+    #         self.pclient.define("silent_mode", 1)
+    #     if self.pclient.silent_mode > 1:
+    #         while self.pclient.can_start_talking == False:
+    #             time.sleep(0.2)
+    #         self.pclient.can_start_talking = False
+
+    # def wait_then_talk(self):
+    #     if self.pclient.silent_mode is None:
+    #         self.pclient.define("silent_mode", 1) # Set by the user (level of the talking - 1 Silence, 2 - Standard speech, 3 - Debug mode/Full speech)
+    #     if self.pclient.silent_mode > 1:
+    #         while self.pclient.can_start_talking == False:
+    #             time.sleep(0.2)
+    #         self.pclient.can_start_talking = False
+    #     self.ui.buffered_say(flush=True, level=self.pclient.silent_mode)
+    #     self.pclient.can_start_talking = True
+
+    # def run_program(self, program_template):
+    #     program_runner = ProgramRunner(language = self.LANG, client = self.crowracle)
+    #     robot_program = program_runner.evaluate(program_template)
+    #     print()
+    #     print("Grounded Program")
+    #     print("--------")
+    #     print(robot_program)
+    #     return robot_program
 
 
 def main():
