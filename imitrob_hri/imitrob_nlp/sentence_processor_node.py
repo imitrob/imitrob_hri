@@ -169,12 +169,12 @@ class SentenceProcessor(Node):
         
         d = {}
         d['target_action'] = template.target_action
-        d['target_object'] = template.target_object 
+        d['target_object'] = str(template.target_object[0]) 
         d['target_object_probs'] = list(template.target_object_probs)
         d['actions'] = [template.target_action]
         d['action_probs'] = [1.0]
         d['action_timestamp'] = 0.0
-        d['objects'] = template.target_object
+        d['objects'] = str(template.target_object)
         d['object_probs'] = list(template.target_object_probs)
         d['object_classes'] = ['object']
         d['parameters'] = ""        

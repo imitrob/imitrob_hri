@@ -1,5 +1,6 @@
 
 import rclpy, time, ast
+from rdflib.term import URIRef
 import numpy as np
 from numpy import array
 try:
@@ -29,6 +30,8 @@ FAILED tests/test_nlp.py::test_nlp_1 - KeyError: 'processor_busy_flag'
 
 '''
 def test_nlp_1():
+    # particular reason why it is here 
+    from imitrob_hri.imitrob_nlp.sentence_processor_node import SentenceProcessor
     try:
         rclpy.init()
     except RuntimeError:
@@ -36,10 +39,15 @@ def test_nlp_1():
     sp = SentenceProcessor()
     msg = SentenceProgram()
     
+    # semantically must match the wanted object
     example_list = [
-        ["Seber červenou kostku", ('pick', 'cube')],
-        # ["Ukaž na červenou kostku", ('point', 'cube')],
-        # ["Podej mi červenou kostku", ('pass', 'cube')],
+        ["Seber červenou kostku", ('pick', 'cube_holes')],
+        ["Ukaž na červenou kostku", ('point', 'cube_holes')],
+        ["Podej mi červenou kostku", ('pass', 'cube_holes')],
+        #
+        ["Seber červenou kostku", ('pick', 'cube_holes')],
+        # ["Ukaž na červenou kostku", ('point', 'cube_holes')],
+        # ["Podej mi červenou kostku", ('pass', 'cube_holes')],
         #
         # ["Ukaž na modrý kolík", ('point', 'blue peg')],
         # ["Ukaž na zelenou kostku", ('point', 'green cube')],
@@ -55,13 +63,23 @@ def test_nlp_1():
         msg.data = [sentence]
             
         out = sp.process_sentence_callback(msg, out=True)
-        print("PROSTENECO: ", out.data[0])
         t = ast.literal_eval(out.data[0])
+
+        # target_object must match == name must match == (cube_od_1 == cube_od_1)
+        # exact matching: somewhere the we get objects on the scene, we choose some object
+        # and compare this specific object with the object from the sentence
+        # common mapping: we get definition of the properties that must match
+
+        def target_object_struri_to_type(uri):
+            return URIRef(uri).fragment.split("_od_")[0]
+
         assert t['target_action'] == solution[0], f"target_action: {t['target_action']} != {solution[0]}"
-        assert t['target_object'] == solution[1], f"target_object: {t['target_object']} != {solution[1]}"
+        target_object = target_object_struri_to_type(t['target_object'])
+        assert target_object == solution[1], f"target_object: {target_object} != {solution[1]}"
     
     sp.destroy_node()
     rclpy.shutdown()
+    print("Success")
 
 test_nlp_1()
     

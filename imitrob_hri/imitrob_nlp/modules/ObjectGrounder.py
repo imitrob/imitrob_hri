@@ -48,9 +48,20 @@ class ObjectGrounder:
         self.guidance_file = self.ar.load_file('guidance_dialogue.json')
 
     def ground_object(self, obj_placeholder, flags=()) -> Any:
+        """Returns real grounded object, real object from the scene
+
+        Args:
+            obj_placeholder (ObjectDetectedData): Result of Match/ObjectDetector, 
+            it returns semantic information about possible objects
+            flags (tuple, optional): _description_. Defaults to ().
+
+        Returns:
+            ObjectsGroundedData(): _description_
+        """        
+
         # try to find out the class of the object
-        # the 0th item of an is_a list should be always ObjectPlaceholder
-        # if the item is bound to a real class, the class will be the 1st item
+        # DEL: the 0th item of an is_a list should be always ObjectPlaceholder
+        # DEL: if the item is bound to a real class, the class will be the 1st item
         if obj_placeholder is None:
             # self.ar.buffered_say(self.guidance_file[self.lang]["nonsense_ground_object_none"])
             return
@@ -114,7 +125,13 @@ class ObjectGrounder:
             # self.logger.debug(f"Object found for {obj_placeholder}: {obj[0]}")
             #self.ar.say(self.guidance_file[self.lang]["object_found"],f"{obj_placeholder}")
 #        is_a, col, loc = self.get_obj_placeholder_attr(obj_placeholder)
+        ''' TODO: 
+        objects_grounded_data = ObjectsGroundedData(objects_detected_data=obj_placeholder)
+        objects_grounded_data.objLC = objLC
+        objects_grounded_data.objLC_probs = objLC_probs
+        '''
         return objLC, objLC_probs, obj_placeholder.objs_mentioned_cls, obj_placeholder.objs_mentioned_cls_probs, obj_placeholder.objs_properties
+        return objects_grounded_data
 
     # def get_obj_placeholder_attr(self, obj_ph):
     #     if len(obj_ph.is_a) > 0:

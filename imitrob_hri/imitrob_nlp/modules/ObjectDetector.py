@@ -15,7 +15,7 @@ import numpy as np
 
 from imitrob_hri.imitrob_nlp.modules.CrowModule import CrowModule
 import imitrob_hri.imitrob_nlp.modules.ColorDetector as ColorDetector
-from imitrob_hri.imitrob_nlp.database.Ontology import ObjectsMentioned
+from imitrob_hri.imitrob_nlp.database.Ontology import ObjectsDetectedData
 import imitrob_hri.imitrob_nlp.modules.LocationDetector as LocationDetector
 from imitrob_hri.imitrob_nlp.structures.tagging.TaggedText import TaggedText
 from imitrob_hri.imitrob_nlp.modules.UserInputManager import UserInputManager
@@ -116,7 +116,7 @@ class ObjectDetector(CrowModule):
         Detect an object which is mentioned explicitly.
         """
         cls = self.class_map[obj_str]
-        obj = ObjectsMentioned()
+        obj = ObjectsDetectedData()
         # obj.is_a.append(cls)
         obj_str_lang = self.obj_det_file[self.lang][obj_str]
 
@@ -184,7 +184,7 @@ class ObjectDetector(CrowModule):
         Detect that the text is referencing an object mentioned earlier.
         """
 
-        obj = ObjectsMentioned()
+        obj = ObjectsDetectedData()
         obj.flags.append("last_mentioned")
 
         return obj

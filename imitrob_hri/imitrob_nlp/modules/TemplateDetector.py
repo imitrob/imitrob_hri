@@ -58,7 +58,8 @@ class TemplateDetector(CrowModule):
         """
         templates = []
         detect_fns = [self.detect_pick,
-                      self.detect_point
+                      self.detect_point,
+                      self.detect_pass_me
                         # self.detect_define_storage,
                         # self.detect_define_position,
                         # self.detect_remove_command_x,
@@ -147,6 +148,14 @@ class TemplateDetector(CrowModule):
         if tagged_text.contains_text(self.templ_det[self.lang]['point']):
             self.ui.buffered_say(self.guidance_file[self.lang]["template_match"]+ self.templ_det[self.lang]['point'])
             return [tt.POINT_TASK]
+        
+    def detect_pass_me(self, tagged_text) -> List[tt]:
+        """
+        Detector for PassMe or Fetch
+        """
+        if tagged_text.contains_text(self.templ_det[self.lang]['give']):
+            self.ui.buffered_say(self.guidance_file[self.lang]["template_match"] + self.templ_det[self.lang]['give'])
+            return [tt.PASSME_TASK]
 
 
     # def detect_apply_glue(self, tagged_text) -> List[tt]:
@@ -242,13 +251,7 @@ class TemplateDetector(CrowModule):
     #         self.ui.buffered_say(self.guidance_file[self.lang]["template_match"] + self.templ_det[self.lang]['remove_command'])
     #         return [tt.REMOVE_COMMAND_X]
 
-    # def detect_fetch(self, tagged_text) -> List[tt]:
-    #     """
-    #     Detector for Fetch
-    #     """
-    #     if tagged_text.contains_text(self.templ_det[self.lang]['give']):
-    #         self.ui.buffered_say(self.guidance_file[self.lang]["template_match"] + self.templ_det[self.lang]['give'])
-    #         return [tt.FETCH]
+
 
     # def detect_fetch_to(self, tagged_text) -> List[tt]:
     #     """
