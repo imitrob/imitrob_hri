@@ -259,3 +259,5 @@ class ConfigurationCrow1(Configuration):
         self.sim_table_gesture_storages = self.sim_table_gesture_objects_default[0:4,0:4] # TODO
 
         self.samples = self.samples_default
+
+ConfigurationDefault = ConfigurationCrow1

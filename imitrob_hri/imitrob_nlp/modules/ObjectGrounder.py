@@ -12,12 +12,15 @@ LICENSE file in the root directory of this source tree.
 from enum import Enum
 from typing import ClassVar, Any
 
+
 # from crow_nlp.nlp_crow.database.Database import Database
 # from crow_nlp.nlp_crow.database.DatabaseAPI import DatabaseAPI
 from imitrob_hri.imitrob_nlp.modules.UserInputManager import UserInputManager
 from imitrob_hri.imitrob_nlp.modules.ColorDetector import ColorDetector
 # from crow_ontology.crowracle_client import CrowtologyClient
 # from rdflib.namespace import Namespace, RDF, RDFS, OWL, FOAF, XSD
+
+from imitrob_hri.merging_modalities.probs_vector import ProbsVector
 
 
 # ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
@@ -26,13 +29,24 @@ from imitrob_hri.imitrob_nlp.modules.ColorDetector import ColorDetector
 import logging
 import owlready2 as ow
 
-# db = Database()
 
-# with db.onto as onto:
+class ObjectsGroundedData(object):
+    ''' Real Grounded probability data
+      + has some data from ObjectDetectedData
+    '''
+    def __init__(self): #, objects_detected_data):
+        self.to = ProbsVector(c='default')
+        ''' Real objects on the scene - names probably or URIs '''
+        
+        # self.objs_mentioned_cls = deepcopy(objects_detected_data.objs_mentioned_cls)
+        # self.objs_properties = objects_detected_data.objs_properties
+
 class ObjectGrounder:
     # namespace = db.onto
     #class Flags(Enum):
     #     CAN_BE_PICKED = 1
+    PROPERTY_MATCH_PROB = 1.
+    PROPERTY_NOT_MATCH_PROB = 0.5
 
     def __init__(self, language = 'en', client = None):
         self.lang = language
@@ -79,23 +93,29 @@ class ObjectGrounder:
         objLC = []
         objLC_probs = []
 
-        for objI in objs:
-            # TODO now checking only the first class from the mentioned ones, but later we want to check all the classes that were mentioned
-            if self.crowracle.get_nlp_from_uri(objI)[0]== obj_placeholder.objs_mentioned_cls:
-                objL.append(objI)
-                print('this is color of the object')
-                print(obj_placeholder.objs_properties['color'])
-                if len(obj_placeholder.objs_properties['color'].keys()) != 0:
-                    if list(obj_placeholder.objs_properties['color'].keys())[0] == self.crowracle.get_nlp_from_uri(self.crowracle.get_color_of_obj(objI))[0]:
-                        objLC.append(objI)
-                        objLC_probs.append(1)
-                    else: # TODO if not matching color, we still save the target object as detected, but add it smaller prob - can be changed
-                        objLC.append(objI)
-                        objLC_probs.append(0.5)
-                else:
-                    print('no color of object specified')
-                    objLC.append(objI)
-                    objLC_probs.append(1)
+        for obj_i in objs:
+            # Cross check between mentioned classes and all nlp names generated from URI
+            for obj_i_name_j in self.crowracle.get_nlp_from_uri(obj_i): 
+                if obj_i_name_j in obj_placeholder.objs_mentioned_cls.names:
+                    objL.append(obj_i)
+                    
+                    
+                    print('this is color of the object')
+                    print(obj_placeholder.objs_properties['color'])
+                    if not obj_placeholder.objs_properties['color'].empty:
+                        if obj_placeholder.objs_properties['color'].names[0] == self.crowracle.get_nlp_from_uri(self.crowracle.get_color_of_obj(obj_i))[0]:
+                            objLC.append(obj_i)
+                            objLC_probs.append(self.PROPERTY_MATCH_PROB)
+                            break
+                        else: # TODO if not matching color, we still save the target object as detected, but add it smaller prob - can be changed
+                            objLC.append(obj_i)
+                            objLC_probs.append(self.PROPERTY_NOT_MATCH_PROB)
+                            break
+                    else:
+                        print('no color of object specified')
+                        objLC.append(obj_i)
+                        objLC_probs.append(self.PROPERTY_MATCH_PROB)
+                        break
         #if len(objLC) != 0:
         #    obj = objLC # return all found, not the first one - ask for specification or choose randomly in logic node
             # TODO user feedback should be moved after modality merger
@@ -125,13 +145,13 @@ class ObjectGrounder:
             # self.logger.debug(f"Object found for {obj_placeholder}: {obj[0]}")
             #self.ar.say(self.guidance_file[self.lang]["object_found"],f"{obj_placeholder}")
 #        is_a, col, loc = self.get_obj_placeholder_attr(obj_placeholder)
-        ''' TODO: 
-        objects_grounded_data = ObjectsGroundedData(objects_detected_data=obj_placeholder)
-        objects_grounded_data.objLC = objLC
-        objects_grounded_data.objLC_probs = objLC_probs
-        '''
-        return objLC, objLC_probs, obj_placeholder.objs_mentioned_cls, obj_placeholder.objs_mentioned_cls_probs, obj_placeholder.objs_properties
+        objects_grounded_data = ObjectsGroundedData()#objects_detected_data=obj_placeholder)
+        objects_grounded_data.to.names = objLC
+        objects_grounded_data.to.p = objLC_probs
+
+        print(f"--- [ObjectGrounder] ended with: ---\n{objects_grounded_data.to}\n------------------------------------")
         return objects_grounded_data
+        #return objLC, objLC_probs, obj_placeholder.objs_mentioned_cls, obj_placeholder.objs_mentioned_cls_probs, obj_placeholder.objs_properties
 
     # def get_obj_placeholder_attr(self, obj_ph):
     #     if len(obj_ph.is_a) > 0:

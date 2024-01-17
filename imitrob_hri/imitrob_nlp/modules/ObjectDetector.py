@@ -15,11 +15,27 @@ import numpy as np
 
 from imitrob_hri.imitrob_nlp.modules.CrowModule import CrowModule
 import imitrob_hri.imitrob_nlp.modules.ColorDetector as ColorDetector
-from imitrob_hri.imitrob_nlp.database.Ontology import ObjectsDetectedData
 import imitrob_hri.imitrob_nlp.modules.LocationDetector as LocationDetector
 from imitrob_hri.imitrob_nlp.structures.tagging.TaggedText import TaggedText
 from imitrob_hri.imitrob_nlp.modules.UserInputManager import UserInputManager
 
+from imitrob_hri.merging_modalities.probs_vector import ProbsVector
+
+class ObjectsDetectedData(object):
+    ''' Object Detector result,
+        Input for Object Grounder
+    '''
+    def __init__(self):
+        self.objs_mentioned_cls = ProbsVector(c='default')
+        self.objs_properties = {'color': ProbsVector(c='default')}
+        self.flags = []
+
+    @property
+    def empty(self):
+        if len(self.objs_mentioned_cls.names) == 0:
+            return True
+        else:
+            return False
 
 
 # ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
@@ -60,63 +76,90 @@ class ObjectDetector(CrowModule):
         self.synonyms_file = self.ui.load_file('synonyms.json')
 
     def detect_object(self, tagged_text : TaggedText, silent_fail=False):
-        """
-        Detects an object mentioned in the input text, extracts its properties and saves it
+        """Detects an object mentioned in the input text, extracts its properties and saves it
         in the object placeholder.
 
-        Parameters
-        ----------
-        tagged_text  an input text
+        Args:
+            tagged_text (TaggedText): An input text
+            silent_fail (bool, optional): _description_. Defaults to False.
 
-        Returns
-        -------
-        an object placeholder to be grounded later
+        Returns:
+            ObjectsDetectedData(): An object placeholder to be grounded later
+        OR  None: No Object detected
+
+        Current running pipeline:        
+        process_sentence_callback()
+        └── process_text()
+            └── process_node()
+                └── nlp_match()
+                    └── detect_object()
+                └── nlp_ground()
         """
-        obj = None
+        obj = ObjectsDetectedData()
         text = tagged_text.get_text()
 
         # try to detect one of the known objects in text
         for obj_str in self.class_map.keys():
+            # try:
+            # TODO we would like not to break after the first detection but detect even if more objects were mentioned
+            #TODO should be only NN, but we have a problem that kostka is detected as VB/VBD
             try:
-                # TODO we would like not to break after the first detection but detect even if more objects were mentioned
-                #TODO should be only NN, but we have a problem that kostka is detected as VB/VBD
                 obj_str_lang = self.obj_det_file[self.lang][obj_str]
-                # if tagged_text.contains_pos_token(obj_str_lang, "NN") or tagged_text.contains_pos_token(
-                #         obj_str_lang, "VBD") or tagged_text.contains_pos_token(obj_str_lang,
-                #                                                                    "VB") or tagged_text.contains_pos_token(
-                #         obj_str_lang, "NNS"):
-                if tagged_text.contains_text(obj_str_lang):
-                    self.logger.debug(f"Object detected for \"{text}\": {obj}")
-                    self.ui.buffered_say(self.guidance_file[self.lang]["object_matched"] + text)
-                    obj = self.detect_explicit_object(tagged_text, obj_str)
+            except KeyError:
+                continue
+            # if tagged_text.contains_pos_token(obj_str_lang, "NN") or tagged_text.contains_pos_token(
+            #         obj_str_lang, "VBD") or tagged_text.contains_pos_token(obj_str_lang,
+            #                                                                    "VB") or tagged_text.contains_pos_token(
+            #         obj_str_lang, "NNS"):
+            if tagged_text.contains_text(obj_str_lang):
+                self.logger.debug(f"Object detected for \"{text}\": {obj}")
+                self.ui.buffered_say(self.guidance_file[self.lang]["object_matched"] + text)
+                obj_pv, objs_properties = self.detect_semantically_explicit_object(tagged_text, obj_str)
+                obj.objs_mentioned_cls.add(obj_pv)
+                obj.objs_properties['color'].add(objs_properties['color'])
+                break
+            #try:
+            for obj_str_lang_syn in self.synonyms_file[self.lang][obj_str_lang]:
+                if tagged_text.contains_text(obj_str_lang_syn):
+                # if tagged_text.contains_pos_token(obj_str_lang_syn, "NN") or tagged_text.contains_pos_token(obj_str_lang_syn, "VBD") or tagged_text.contains_pos_token(obj_str_lang_syn, "VB") or tagged_text.contains_pos_token(obj_str_lang_syn, "NNS") :
+                    obj_pv, objs_properties = self.detect_semantically_explicit_object(tagged_text, obj_str)
+                    obj.objs_mentioned_cls.add(obj_pv)
+                    obj.objs_properties['color'].add(objs_properties['color'])
                     break
-                try:
-                    for obj_str_lang_syn in self.synonyms_file[self.lang][obj_str_lang]:
-                        if tagged_text.contains_text(obj_str_lang_syn):
-                        # if tagged_text.contains_pos_token(obj_str_lang_syn, "NN") or tagged_text.contains_pos_token(obj_str_lang_syn, "VBD") or tagged_text.contains_pos_token(obj_str_lang_syn, "VB") or tagged_text.contains_pos_token(obj_str_lang_syn, "NNS") :
-                            obj = self.detect_explicit_object(tagged_text, obj_str)
-                            break
-                except:
-                    pass
-            except:
-                pass
+            # except:
+            #     pass
+            # except:
+            #     pass
+                
+        # Handle cases like "it"
         # try to detect a coreference to an object
-        if obj is None:
+        if obj.empty:
             if tagged_text.contains_text(self.obj_det_file[self.lang]["it"]):
                 obj = self.detect_coreferenced_object()
             else:
                 if not silent_fail:
                     self.ui.buffered_say(self.guidance_file[self.lang]["object_not_matched"] + " " + text , say = 2)
                     self.ui.buffered_say(self.guidance_file[self.lang]["object_not_matched_repeat"], say = 3)
+        
+        print(f" ** [Object Detector] ended with: **\n{obj.objs_mentioned_cls}\n************************************")
 
+        if obj.empty: return None
         return obj
 
-    def detect_explicit_object(self, tagged_text, obj_str):
-        """
-        Detect an object which is mentioned explicitly.
+    def detect_semantically_explicit_object(self, tagged_text, obj_str):
+        """Detect an object which is mentioned explicitly.
+
+        Current running pipeline:        
+        process_sentence_callback()
+        └── process_text()
+            └── process_node()
+                └── nlp_match()
+                    └── detect_object()
+                        └── detect_semantically_explicit_object()
+                └── nlp_ground()
         """
         cls = self.class_map[obj_str]
-        obj = ObjectsDetectedData()
+        
         # obj.is_a.append(cls)
         obj_str_lang = self.obj_det_file[self.lang][obj_str]
 
@@ -132,23 +175,29 @@ class ObjectDetector(CrowModule):
         #     except:
         #         pass
 
-        # object_names = obj_str_lang
-        obj.objs_mentioned_cls = obj_str
-        obj.objs_mentioned_cls_probs = np.zeros((len(obj.objs_mentioned_cls)))
+        obj_pv = ProbsVector(c='default')
 
-        object_properties = {}
+        assert isinstance(tagged_text.tokens, list), tagged_text.tokens
+        obj_pv.add(name=obj_str, p=0.0)
+        print(obj_pv.names, obj_pv.p)
+        # obj.objs_mentioned_cls.names = [obj_str_lang]
+        # obj.objs_mentioned_cls.p = np.zeros((len(obj.objs_mentioned_cls.names)))
 
         if tagged_text.contains_text(obj_str_lang):
             idx = tagged_text.indices_of(obj_str_lang)
-            obj.objs_mentioned_cls_probs[idx] = 1.0
+            # idx = obj.objs_mentioned_cls.names.index(obj_str_lang)
+            # obj.objs_mentioned_cls.p[idx] = 1.0
+            obj_pv.p = [1.0]
         else:
-            try:
-                for obj_str_lang_syn in self.synonyms_file[self.lang][obj_str_lang]:
-                    if tagged_text.contains_text(obj_str_lang_syn):
-                        idx = tagged_text.indices_of(obj_str_lang_syn)
-                        obj.objs_mentioned_cls_probs[idx] = 0.99
-            except:
-                pass
+            #try:
+            for obj_str_lang_syn in self.synonyms_file[self.lang][obj_str_lang]:
+                if tagged_text.contains_text(obj_str_lang_syn):
+                    idx = tagged_text.indices_of(obj_str_lang_syn)
+                    # idx = obj.objs_mentioned_cls.names.index(obj_str_lang_syn)
+                    # obj.objs_mentioned_cls.p[idx] = 0.99
+                    obj_pv.p = [0.99]
+            # except:
+            #     pass
         # print(idx)
         # print(tagged_text)
         # print(tagged_text[0:idx])
@@ -158,13 +207,17 @@ class ObjectDetector(CrowModule):
         # TODO: Check for how we want it
         tagged_text_color = tagged_text.cut(0,idx[0])
         colors = self.detect_object_color(tagged_text_color)
+        colors = list(set(colors))
         #self.detect_object_id(obj, tagged_text)
         #self.detect_object_location(obj, obj_str, tagged_text)
 
+        objs_properties = {}
+        objs_properties['color'] = ProbsVector(c='default')
         if len(colors) > 0:
-            obj.objs_properties['color'] = {color: 1.0 for color in colors}
+            objs_properties['color'] = ProbsVector(template_names=colors, p=np.ones((len(colors))), c='default')
+            
 
-        return obj
+        return obj_pv, objs_properties
 
     # def detect_known_object(self, tagged_text, obj_str):
     #     cls = self.class_map[obj_str]

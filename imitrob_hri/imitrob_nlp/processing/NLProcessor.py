@@ -34,22 +34,22 @@ class NLProcessor():
 
 
     def process_text(self, sentence : str):
-        """
-        Turns an input text into a program template which can be used for creating instructions for the robot
+        """Turns an input text into a program template which can be used for creating instructions for the robot
         (after grounding).
-
         The program template is dependent only on the content of the sentence and not
         on the current state of the workspace.
 
-        Parameters
-        ----------
-        sentence  an input sentence as string
+        Args:
+            sentence (str): an input sentence
 
-        Returns
-        -------
-        a program template - formalized instructions for the robot with placeholders for real objects and locations
+        Returns:
+            RobotProgram():  - formalized instructions for the robot with placeholders for real objects and locations
         (right now, the behavior is undefined in case the sentence does not allow creating a valid program)
-        """
+
+        Current running pipeline:        
+        process_sentence_callback()
+        └── process_text()
+        """        
         parsed_text = self.gp.parse(sentence)
         root = parsed_text.parse_tree
         # db_api = DatabaseAPI()
@@ -72,6 +72,19 @@ class NLProcessor():
         return program
 
     def process_node(self, subnode : ParseTreeNode) -> RobotProgramOperand:
+        """Process subnodes, individual sentences
+
+        Args:
+            subnode (ParseTreeNode): _description_
+
+        Returns:
+            RobotProgramOperand: _description_
+        
+        Current running pipeline:        
+        process_sentence_callback()
+        └── process_text()
+            └── process_node()
+        """        
         node = RobotProgramOperand()
         node.parsed_text = subnode
         # working with flat tagged text (without any tree structure)
@@ -95,11 +108,12 @@ class NLProcessor():
             # get an object representing the template
             template = self.tf.get_template(template_type) # type: Template
 
+            template.nlp_all_detected_templates = template_types
             # try to match all the template parameters
-            template.match_tagged_text(tagged_text, language = self.lang, client = self.crowracle)
-            template.ground(client = self.crowracle)
+            template.nlp_match(tagged_text, language = self.lang, client = self.crowracle)
+            template.nlp_ground(client = self.crowracle)
             # check if the template is matched successfully
-            if template.is_filled():
+            if template.grounded_data_filled():
                 break
         else:
             template = None

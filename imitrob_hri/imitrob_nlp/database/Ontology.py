@@ -211,28 +211,8 @@ class Object():
 # class Placeholder():
 #    namespace = db.onto
 
-class ObjectsDetectedData(object):
-    ''' Object Detector result,
-        Input for Object Grounder
-    '''
-    def __init__(self):
-        self.objs_mentioned_cls = []
-        self.objs_mentioned_cls_probs = []
-        self.objs_properties = {}
-        self.flags = []
 
-class ObjectsGroundedData(object):
-    ''' Real Grounded probability data
-      + has some data from ObjectDetectedData
-    '''
-    def __init__(self, objects_detected_data):
-        self.objLC = []
-        ''' Real objects on the scene - names probably or URIs '''
-        self.objLC_probs = []
-        ''' Probabilities for self.objLC '''
-        self.objs_mentioned_cls = objects_detected_data.objs_mentioned_cls
-        self.objs_mentioned_cls_probs = objects_detected_data.objs_mentioned_cls_probs
-        self.objs_properties = objects_detected_data.objs_properties
+
 
 class ObjectPlaceholder(object):
     # namespace = db.onto

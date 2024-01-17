@@ -8,6 +8,7 @@ LICENSE file in the root directory of this source tree.
 
 @author: Karla Štěpánová, Megi Mejdrechová
 @mail:  karla.stepanova@cvut.cz
+@edited: January 2024
 """
 import json
 import re
@@ -40,13 +41,22 @@ if not NOT_PROFILING:
 
 from teleop_msgs.msg import HRICommand
 
-# def distance(entry):
+# DEL: def distance(entry):
 #     return entry[-1]
 
 
 class SentenceProcessor(Node):
-    #CLIENT = None
-    MAX_OBJ_REQUEST_TIME = 2.5
+    """When sentence processor is running it processes the NLP sentences 
+    and processes them to the HRICommand
+
+    Args:
+        Node (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """    
+    NL_INPUT_TOPIC = "/nl_input"
+    NL_OUTPUT_TOPIC = "/nlp/hri_command"
 
     def __init__(self, node_name="sentence_processor"):
         super().__init__(node_name)
@@ -62,6 +72,7 @@ class SentenceProcessor(Node):
         self.templ_det = self.ui.load_file('templates_detection.json')
         self.synonyms_file = self.ui.load_file('synonyms.json')
         
+        print("[ParamClient] might get stuck here, waiting to connect the param. server")
         self.pclient = ParamClient()
         self.pclient.define("processor_busy_flag", False) # State of the sentence processor
         self.pclient.define("halt_nlp", False) # If true, NLP input should be halted
@@ -75,47 +86,53 @@ class SentenceProcessor(Node):
         self.pclient.define("det_obj_in_ws", "-")
         self.pclient.define("status", "-")
         self.pclient.define("nlp_alive", True)
+        print("[ParamClient] ready!")
 
         #create listeners (synchronized)
-        self.nlTopic = "/nl_input"
         qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
         listener = self.create_subscription(msg_type=SentenceProgram,
-                                          topic=self.nlTopic,
+                                          topic=self.NL_INPUT_TOPIC,
                                           callback=self.process_sentence_callback,qos_profile=qos) #the listener QoS has to be =1, "keep last only".
         self.sentence_publisher = self.create_publisher(StampedString, "/nlp/command", qos)
         self.create_timer(0.3, self.keep_alive)
 
         self.nl_processor = NLProcessor(language = self.LANG, client = self.crowracle)
-        self.get_logger().info('Input listener created on topic: "%s"' % self.nlTopic)
+        self.get_logger().info('Input listener created on topic: "%s"' % self.NL_INPUT_TOPIC)
         if not NOT_PROFILING:
             StatTimer.init()
 
-        self.sentence_publisher_hri_command = self.create_publisher(HRICommand, "/nlp/hri_command", qos)
+        self.sentence_publisher_hri_command = self.create_publisher(HRICommand, self.NL_OUTPUT_TOPIC, qos)
         print("[NLP] Ready")
 
     def keep_alive(self):
         self.pclient.nlp_alive = time.time()
 
-    def send_status(self, status="zadejte pozadavek", template_type="-", object_detected="-", found_in_ws=False):
-        self.pclient.det_obj = object_detected
-        self.pclient.det_command = template_type
-        #self.pclient.det_obj_name = ??? # use crowtology client function, see visualizator
-        self.pclient.det_obj_in_ws = found_in_ws # change to string 'ano', 'ne'?, see visualizator
-        self.pclient.status = status
+    # def send_status(self, status="zadejte pozadavek", template_type="-", object_detected="-", found_in_ws=False):
+    #     self.pclient.det_obj = object_detected
+    #     self.pclient.det_command = template_type
+    #     #self.pclient.det_obj_name = ??? # use crowtology client function, see visualizator
+    #     self.pclient.det_obj_in_ws = found_in_ws # change to string 'ano', 'ne'?, see visualizator
+    #     self.pclient.status = status
 
     def process_sentence_callback(self, nlInputMsg, out=False):
-        ''' Main function '''
-        print("process_sentence_callback")
+        """Main function of sentence_processor_node
+
+        Args:
+            nlInputMsg (_type_): _description_
+            out (bool, optional): Only when direct testing comparison of result the HRICommand. Defaults to False.
+
+        Returns:
+            None or HRICommand: For testing
+            * The result is published to sentence_publisher_hri_command
+        """
+        print("[NLP] process_sentence_callback started")
+        print(nlInputMsg)
         if not NOT_PROFILING:
             StatTimer.enter("semantic text processing")
         self.pclient.processor_busy_flag = True
         self.pclient.nlp_ongoing = True
 
-        print(nlInputMsg)
         input_sentences = nlInputMsg.data
-        print('I got sentence')
-
-        data = []
         
         assert len(input_sentences) == 1, "TODO: len(input_sentences) > 1"
         for input_sentence in input_sentences:
@@ -123,25 +140,23 @@ class SentenceProcessor(Node):
             input_sentence = self.replace_synonyms(input_sentence)
             input_sentence = input_sentence.lower()
 
-            if True:
-                goto_next_command = False
-                found_in_ws = False
-                success = False
+            # goto_next_command = False
+            # found_in_ws = False
+            # success = False
 
-                #process input sentence
-                program_template_speech = self.nl_processor.process_text(input_sentence)
-                # get current database state for writing an ungrounded and currently grounded program to be executed
-                print("--------")
-                print("Program Template:")
-                print(program_template_speech)
-                
-                hricommand = self.template_to_hricommand(program_template_speech.root.children[0].template)
-                
-                self.sentence_publisher_hri_command.publish(hricommand)
-                if out:
-                    return hricommand
-                else:
-                    return
+            template_speech_sorted = self.nl_processor.process_text(input_sentence)
+            # get current database state for writing an ungrounded and currently grounded program to be executed
+            print("--------")
+            print("Program Template:")
+            print(template_speech_sorted)
+            
+            hricommand = self.template_to_hricommand(template_speech_sorted.root.children[0].template)
+            
+            self.sentence_publisher_hri_command.publish(hricommand)
+            if out:
+                return hricommand
+            else:
+                return
 
     def replace_synonyms(self, command):
         """place words in command with synonyms defined in synonym_file"""
@@ -166,22 +181,28 @@ class SentenceProcessor(Node):
         return stripped_text
 
     def template_to_hricommand(self, template):
-        
         d = {}
-        d['target_action'] = template.target_action
-        d['target_object'] = str(template.target_object[0]) 
-        d['target_object_probs'] = list(template.target_object_probs)
-        d['actions'] = [template.target_action]
-        d['action_probs'] = [1.0]
-        d['action_timestamp'] = 0.0
-        d['objects'] = str(template.target_object)
-        d['object_probs'] = list(template.target_object_probs)
-        d['object_classes'] = ['object']
-        d['parameters'] = ""        
         
-        d["objs_mentioned_cls"] = template.objs_mentioned_cls
-        d["objs_mentioned_cls_probs"] = list(template.objs_mentioned_cls_probs)
-        d["objs_mentioned_properties"] = template.objs_properties
+        if template is None:
+            d['target_action'] = 'Noop' # No operation
+            d['target_object'] = '' 
+            return HRICommand(data=[str(d)]) 
+
+        d['target_action'] = str(template.target_action)
+        d['target_object'] = str(template.target_object)
+        
+        # d['target_object_probs'] = list(template.target_object_probs)
+        d['actions'] = list(template.nlp_all_detected_templates)
+        d['action_probs'] = [1.0] * len(template.nlp_all_detected_templates)
+        # d['action_timestamp'] = 0.0
+        d['objects'] = list(template._1_detected_data[0].objs_mentioned_cls.names)
+        d['object_probs'] = list(template._1_detected_data[0].objs_mentioned_cls.p)
+        # d['object_classes'] = ['object']
+        # d['parameters'] = ""        
+        
+        # d["objs_mentioned_cls"] = template.objs_mentioned_cls
+        # d["objs_mentioned_cls_probs"] = list(template.objs_mentioned_cls_probs)
+        # d["objs_mentioned_properties"] = template.objs_properties
         
         return HRICommand(data=[str(d)]) 
         

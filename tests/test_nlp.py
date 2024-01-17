@@ -27,7 +27,7 @@ def test_import():
 ''' Notes:
 FAILED tests/test_nlp.py::test_nlp_1 - KeyError: 'processor_busy_flag'
 
-
+Object specified MUST be visible in Ontology
 '''
 def test_nlp_1():
     # particular reason why it is here 
@@ -41,13 +41,41 @@ def test_nlp_1():
     
     # semantically must match the wanted object
     example_list = [
+        # Success (cube_holes visible)
         ["Seber červenou kostku", ('pick', 'cube_holes')],
         ["Ukaž na červenou kostku", ('point', 'cube_holes')],
         ["Podej mi červenou kostku", ('pass', 'cube_holes')],
-        #
-        ["Seber červenou kostku", ('pick', 'cube_holes')],
-        # ["Ukaž na červenou kostku", ('point', 'cube_holes')],
-        # ["Podej mi červenou kostku", ('pass', 'cube_holes')],
+        # Success (cube_holes visible)
+        # ["Seber kostku", ('pick', 'cube_holes')],
+        # ["Ukaž na kostku", ('point', 'cube_holes')],
+        # ["Podej mi kostku", ('pass', 'cube_holes')],
+        # Success (wheel visible)
+        # ["Seber kolo", ('pick', 'wheel')],
+        # ["Ukaž na kolo", ('point', 'wheel')],
+        # ["Podej mi kolo", ('pass', 'wheel')],
+        # Success (wafer visible)
+        # ["Seber destičku", ('pick', 'wafer')],
+        # ["Ukaž na destičku", ('point', 'wafer')],
+        # ["Podej mi destičku", ('pass', 'wafer')],
+        # Success (hammer NOT visible)
+        # ["Seber kladivo", ('Noop', '')],
+        # ["Ukaž na kladivo", ('Noop', '')],
+        # ["Podej mi kladivo", ('Noop', '')],
+        # Testing some synonyms
+        # ["Zvedni kostku", ('pick', 'cube_holes')],
+        # ["Získej kostku", ('pick', 'cube_holes')],
+        # ["Dej mi kostku", ('pass', 'cube_holes')],
+        # ["Dej mi krychli", ('pass', 'cube_holes')],
+        # Shuffled
+        # ["Dej mi krychli s dírama.", ('pass', 'cube_holes')],
+        # ["Kostku mi dej.", ('pass', 'cube_holes')],
+        # ["dej kostku", ('pass', 'cube_holes')],
+        # Program template has two actions 
+        # ["Kostku mi dej. A pak ukaž na kostku.", ('pass', 'cube_holes')],
+        # TODO: Barvy, cannot assign the color to object in order to test this
+        ["Podej mi zelenou kostku.", ('pass', 'cube_holes')],
+        ["Podej mi červenou kostku.", ('pass', 'cube_holes')],
+        # ["Podej mi kladivo", ('Noop', '')],
         #
         # ["Ukaž na modrý kolík", ('point', 'blue peg')],
         # ["Ukaž na zelenou kostku", ('point', 'green cube')],
