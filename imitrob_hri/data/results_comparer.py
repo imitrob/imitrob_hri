@@ -13,6 +13,7 @@ from extraction_funs import *
 from copy import deepcopy
 from merging_modalities.utils import singlehistplot_customized
 
+
 class Results6DComparer():
     def __init__(self):
         # 1. Load results data into 6D table
@@ -44,6 +45,10 @@ class Results6DComparer():
         
         ''' Merge function index'''
         self.baseline = 0, 
+        ''' baseline model is special case where:
+            1. Merge function is argmax (self.baseline=0)
+            2. Model is always the M1 (self.M1=0)
+        '''
         self.mul = 1
         self.add_2 = 2 
         self.entropy = 3
@@ -109,9 +114,9 @@ class Results6DComparer():
             1. Merge function is argmax (self.baseline=0)
             2. Model is always the M1 (self.M1=0)
         '''
-        baseline = self.data[self.baseline,self.acc,self.C3,self.n3,self.Ds_des,self.M1]
-        other =    self.data[self.entropy,self.acc,self.C3,self.n3,self.Ds_des,self.Ms]
-
+        baseline = self.extract_data(indices=[self.baseline,self.acc,self.C3,self.n3,self.Ds_des,self.M1])
+        other = self.extract_data(indices=[self.entropy,self.acc,self.C3,self.n3,self.Ds_des,self.Ms])
+        
         print(baseline.shape)
         print(other.shape)
 
@@ -122,25 +127,52 @@ class Results6DComparer():
 
         singlehistplot_customized(data, 'exp_ablation', labels=cols, xticks=indx, xlbl='Dataset generation policy', ylbl='Accuracy [%]', plot=True)
 
+    def extract_data(self, indices):
+        ''' My supercool function to extract not only slices but different point from n dim array which is impossible to do with self.data[[1,2], [1,2,3], ...], etc.
+        '''
+        subdata = deepcopy(self.data)
+        
+        for dim in range(6):
+            print("subdata.shape: ", subdata.shape)
+            indices_placeholder = [slice(None,None,None)] * 6
+            if isinstance(indices[dim], int):
+                indices[dim] = slice(indices[dim], indices[dim]+1)
+            
+            indices_placeholder[dim] = indices[dim]
+            print("indices_placeholder: ", indices_placeholder)
+            subdata = deepcopy(subdata[indices_placeholder])
+        
+        shp = np.array(list(subdata.shape))
+        final_shape = shp[shp != 1]    
+        
+        print("before reshape: ", subdata.shape)
+        subdata = subdata.reshape(final_shape)
+        print("after reshape: ", subdata.shape)
+        
+        return subdata
 
-    def _2_noise_influence(self):
+    def _2_noise_influence(self, magic=None):
         ''' Here we compare Models '''
         cols = ['$n_1$','$n_2$', '$n_3$', '$n_4$']
         ''' with Generated Datasets '''
-        indx = ['$c_2,D2$', '$c_2,D3$', '$c_2,D4$', '$c_3,D2$', '$c_3,D3$', '$c_3,D4$']
+        indx = ['$c_2,D1$','$c_2,D2$', '$c_2,D3$', '$c_2,D4$', '$c_2,D5$'] #, '$c_3,D2$', '$c_3,D3$', '$c_3,D4$']
         
-        
-        
-        #noise_levels = self.data[self.entropy,self.acc,[self.C2,self.C3],self.ns,[self.D1,self.D2,self.D3],self.M3]
-        noise_levels = self.data[self.entropy,self.acc,1:3,self.ns,[self.D2,self.D3,self.D5],self.M3]
-        print(noise_levels)
-        
-        noise_levels = np.swapaxes(noise_levels,1,2)
-        noise_levels = noise_levels.reshape(6,4)
-        print(noise_levels)
+        noise_levels=self.extract_data(indices=[magic,self.acc,self.C2,self.ns,[self.D1, self.D2,self.D3,self.D4,self.D5],self.M3])
+        noise_levels = noise_levels.T
         print( pd.DataFrame(100*noise_levels, columns=cols, index=indx))
 
-        singlehistplot_customized(100*noise_levels, 'exp_noise', labels=cols, xticks=indx, xlbl='', ylbl='Accuracy [%]',bottom=0, plot=True)
+        singlehistplot_customized(100*noise_levels, f'exp_noise_c2_{magic}', labels=cols, xticks=indx, xlbl='', ylbl='Accuracy [%]',bottom=0, plot=True)
+        
+        ''' Here we compare Models '''
+        cols = ['$n_1$','$n_2$', '$n_3$', '$n_4$']
+        ''' with Generated Datasets '''
+        indx = ['$c_3,D1$','$c_3,D2$', '$c_3,D3$', '$c_3,D4$', '$c_3,D5$']
+        
+        noise_levels=self.extract_data(indices=[magic,self.acc,self.C3,self.ns,[self.D1, self.D2,self.D3,self.D4,self.D5],self.M3])
+        noise_levels = noise_levels.T
+        print( pd.DataFrame(100*noise_levels, columns=cols, index=indx))
+
+        singlehistplot_customized(100*noise_levels, f'exp_noise_c3_{magic}', labels=cols, xticks=indx, xlbl='', ylbl='Accuracy [%]',bottom=0, plot=True)
         
 
     def _3_types_merging(self):
@@ -150,23 +182,23 @@ class Results6DComparer():
         (accuracy, precision,recall,specificity,f1) '''
         indx = ['$mul_{accuracy}$', '$add_{accuracy}$', '$mul_{precision}$', '$add_{precision}$', '$mul_{recall}$', '$add_{recall}$','$mul_{specificity}$', '$add_{specificity}$','$mul_{f1}$', '$add_{f1}$']
 
-        data1 = self.data[[self.mul,self.add_2],self.acc,self.C3,self.n3,self.Ds_des,self.M3]
+        data1=self.extract_data(indices=[[self.mul, self.add_2],self.acc,self.C3,self.n3,self.Ds_des,self.M3])
         print("Accuracy:")
         print( pd.DataFrame(100*data1, columns=cols, index=['mul', 'add']))
 
-        data2 = self.data[[self.mul,self.add_2],self.prc,self.C3,self.n3,self.Ds_des,self.M3]
+        data2=self.extract_data(indices=[[self.mul, self.add_2],self.prc,self.C3,self.n3,self.Ds_des,self.M3])
         print("Precision:")
         print( pd.DataFrame(100*data2, columns=cols, index=['mul', 'add']))
 
-        data3 = self.data[[self.mul,self.add_2],self.rcl,self.C3,self.n3,self.Ds_des,self.M3]
+        data3=self.extract_data(indices=[[self.mul, self.add_2],self.rcl,self.C3,self.n3,self.Ds_des,self.M3])
         print("Recall:")
         print( pd.DataFrame(100*data3, columns=cols, index=['mul', 'add']))
 
-        data4 = self.data[[self.mul,self.add_2],self.spc,self.C3,self.n3,self.Ds_des,self.M3]
+        data4=self.extract_data(indices=[[self.mul, self.add_2],self.spc,self.C3,self.n3,self.Ds_des,self.M3])
         print("Specificity:")
         print( pd.DataFrame(100*data4, columns=cols, index=['mul', 'add']))
 
-        data5 = self.data[[self.mul,self.add_2],self.f1,self.C3,self.n3,self.Ds_des,self.M3]
+        data5=self.extract_data(indices=[[self.mul, self.add_2],self.f1,self.C3,self.n3,self.Ds_des,self.M3])
         print("F1:")
         print( pd.DataFrame(100*data5, columns=cols, index=['mul', 'add']))
 
@@ -181,9 +213,10 @@ class Results6DComparer():
         indx = ['$baseline$','$mul_{fixed}$','$add_{fixed}$', '$mul_{entropy}$', '$add_{entropy}$']
 
         data = np.vstack((
-            self.data[self.baseline,self.acc,self.C3,self.n3,self.Ds_des,self.M1], 
-            self.data[1:,self.acc,self.C3,self.n3,self.Ds_des,self.M3]
+        self.extract_data(indices=[self.baseline,self.acc,self.C3,self.n3,self.Ds_des,self.M1]),
+        self.extract_data(indices=[[self.mul,self.add_2,self.entropy,self.entropy_add_2],self.acc,self.C3,self.n3,self.Ds_des,self.M3])
         ))
+
         print( pd.DataFrame(100*data, columns=cols, index=indx))
 
         singlehistplot_customized(100*data.T, 'exp_thresholding', labels=indx, xticks=cols, xlbl='Generation Policies', ylbl='Accuracy [%]', plot=True)
@@ -208,28 +241,17 @@ class Results6DComparer():
 
         singlehistplot_customized((100/4)*data_accumulated.T - (100/4)*data_accumulated[0:1].T, 'exp_thresholdin_comparison', labels=indx, xticks=cols, ylbl='Accuracy [%]', plot=True)
 
-    def _6_some_custom_plot(self):
+    def _6_baseline_examination(self):
         ''' Here we compare Models '''
-        cols = ['baseline','M1', 'M2', 'M3']
+        cols = ['C1', 'C2', 'C3']
         ''' with Generated Datasets '''
-        indx = ['$D1$','$D2$','$D3$','$D4$']
+        indx = ['$D1$','$D2$','$D3$','$D4$','$D5$']
         
-        ''' baseline model is special case where:
-            1. Merge function is argmax (self.baseline=0)
-            2. Model is always the M1 (self.M1=0)
-        '''
-        baseline = self.data[self.baseline,self.acc,self.C3,self.n4,self.Ds_des,self.M1]
-        other =    self.data[self.entropy,self.acc,self.C3,self.n4,self.Ds_des,self.Ms]
+        
+        data = self.extract_data(indices=[self.baseline,self.acc,[self.C1,self.C2,self.C3],self.n4,self.Ds,self.M1]).T
 
-        print(baseline.shape)
-        print(other.shape)
-
-        ''' to percentage '''
-        data = 100 * np.hstack((baseline.reshape(4,1), other))
-
-        print(pd.DataFrame(data, columns=cols, index=indx))
-
-        singlehistplot_customized(data, 'exp_ablation_2', labels=cols, xticks=indx, xlbl='Dataset generation policy', ylbl='Accuracy [%]', plot=True)
+        print(pd.DataFrame(100*data, columns=cols, index=indx))
+        singlehistplot_customized(100*data, 'baseline_examination', labels=cols, xticks=indx, xlbl='Baseline examination', ylbl='Accuracy [%]', plot=True)
 
     def _7_some_custom_plot2(self):
         ''' Here we compare generated datasets '''
@@ -238,23 +260,23 @@ class Results6DComparer():
         (accuracy, precision,recall,specificity,f1) '''
         indx = ['$mul_{accuracy}$', '$add_{accuracy}$', '$mul_{precision}$', '$add_{precision}$', '$mul_{recall}$', '$add_{recall}$','$mul_{specificity}$', '$add_{specificity}$','$mul_{f1}$', '$add_{f1}$']
 
-        data1 = self.data[[self.mul,self.add_2],self.acc,self.C3,self.n3,self.Ds_des,self.M3]
+        data1 = self.data[1:3,self.acc,self.C3,self.n3,self.Ds_des,self.M3]
         print("Accuracy:")
         print( pd.DataFrame(100*data1, columns=cols, index=['mul', 'add']))
 
-        data2 = self.data[[self.mul,self.add_2],self.prc,self.C3,self.n3,self.Ds_des,self.M3]
+        data2 = self.data[1:3,self.prc,self.C3,self.n3,self.Ds_des,self.M3]
         print("Precision:")
         print( pd.DataFrame(100*data2, columns=cols, index=['mul', 'add']))
 
-        data3 = self.data[[self.mul,self.add_2],self.rcl,self.C3,self.n3,self.Ds_des,self.M3]
+        data3 = self.data[1:3,self.rcl,self.C3,self.n3,self.Ds_des,self.M3]
         print("Recall:")
         print( pd.DataFrame(100*data3, columns=cols, index=['mul', 'add']))
 
-        data4 = self.data[[self.mul,self.add_2],self.spc,self.C3,self.n3,self.Ds_des,self.M3]
+        data4 = self.data[1:3,self.spc,self.C3,self.n3,self.Ds_des,self.M3]
         print("Specificity:")
         print( pd.DataFrame(100*data4, columns=cols, index=['mul', 'add']))
 
-        data5 = self.data[[self.mul,self.add_2],self.f1,self.C3,self.n3,self.Ds_des,self.M3]
+        data5 = self.data[1:3,self.f1,self.C3,self.n3,self.Ds_des,self.M3]
         print("F1:")
         print( pd.DataFrame(100*data5, columns=cols, index=['mul', 'add']))
 
@@ -264,14 +286,19 @@ class Results6DComparer():
 
 
 if __name__ == '__main__':
+    rc = Results6DComparer()
     # Results6DComparer()._6_some_custom_plot()
 
-    # _1_ablation_study()
-    Results6DComparer()._2_noise_influence()
-    # _3_types_merging()
+    # rc._1_ablation_study()
+    # rc._2_noise_influence(magic=rc.entropy)
+    # rc._2_noise_influence(magic=rc.add_2)
+    rc._2_noise_influence(magic=rc.entropy_add_2)
+    # rc._2_noise_influence(magic=rc.mul)
+    
+    # Results6DComparer()._3_types_merging()
     # Results6DComparer()._4_thresholding()
-
     # _5_noise_levels_compared_to_models()
+    rc._6_baseline_examination()
     
     
 def old():

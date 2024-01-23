@@ -72,7 +72,7 @@ if __name__ == '__main__':
     1. Which target_actions, object selections, storages are there?
     2. Properties on/off
     '''
-    if len(sys.argv[1]) > 1:
+    if len(sys.argv) > 1:
         dataset_name = sys.argv[1]
     else:
         dataset_name = input("Enter dataset name as: cX_nX_DX, e.g. 'c1_n1_D1': ")

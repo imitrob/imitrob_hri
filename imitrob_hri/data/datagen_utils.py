@@ -8,13 +8,19 @@ from imitrob_hri.data.scene3_def import add_if_not_there
 
 def get_random_feasible_triplet(scene, template_request=None):
     ''' approach 1
+        1. Pick random template which is considered as true
+        2. Picked tempalte has some requirements which are filled up ->
+            pick scene objects (selections) and storages for the template
+        
     Returns:
         None if no triplet found
+        (template, selection, storage) (Str, Str, Str): True meants triplet by the user
     '''
     object = None
     storage = None
 
-    requirements = ['do']
+    requirements = ['do'] # this is overwritten
+    # Pick random template
     if template_request is None:
         
         template = None
@@ -32,6 +38,7 @@ def get_random_feasible_triplet(scene, template_request=None):
     else:
         assert isinstance(template_request, str)
         template = scene.get_template(template_request)
+    
     requirements = deepcopy(template.mm_pars_compulsary) # requirements to fill
     
     if 'template' in requirements:
@@ -102,7 +109,7 @@ def generate_probs(names, true_name, det_fun, min_ch, sim_table, scene, regulati
     chosen_names_subset = add_if_not_there(chosen_names_subset, true_name)
     # 3. Give all likelihoods ones [1.0, 1.0, 1.0], [pick, pour, stack]
     P = [1.0] * len(chosen_names_subset)
-    # 4. Give the true value the activated prob -> [1.0, 1.0, 1.0], [pick, pour, stack]
+    # 4. Give the true value the activated prob
     id_activated = np.where(chosen_names_subset == true_name)[0][0]
     activated_normal = det_fun()
     # 5.1. Prepare sim_table_subset
@@ -130,6 +137,7 @@ def generate_probs(names, true_name, det_fun, min_ch, sim_table, scene, regulati
     #print("P", P)
     #input()
 
+    # D2
     if regulation_policy == 'fake_arity_decidable_wrt_true': # All templates which can be recognized has activate type
         chosen_names_subset_ = get_templates_decisive_based_on_arity(names, true_name, min_ch, scene)
         
@@ -141,6 +149,7 @@ def generate_probs(names, true_name, det_fun, min_ch, sim_table, scene, regulati
                 id = list(chosen_names_subset).index(chosen_name_subset_)
                 P[id] = np.clip(activated_normal + added_noise_regulation_policy, 0,1)
 
+    # D4
     elif regulation_policy == 'undecidable_wrt_true':
         # 1. choose random subset 
         
@@ -158,6 +167,7 @@ def generate_probs(names, true_name, det_fun, min_ch, sim_table, scene, regulati
                 id = list(chosen_names_subset).index(chosen_name_subset_)
                 P[id] = np.clip(activated_normal + added_noise_regulation_policy,0,1)
 
+    # D3
     if regulation_policy == 'fake_properties_decidable_wrt_true':
         chosen_names_subset_ = get_templates_decisive_based_on_properties(names, true_name, 
         min_ch, scene)
@@ -170,6 +180,7 @@ def generate_probs(names, true_name, det_fun, min_ch, sim_table, scene, regulati
                 id = list(chosen_names_subset).index(chosen_name_subset_)
                 P[id] = np.clip(activated_normal + added_noise_regulation_policy,0,1)
 
+    # D5
     if regulation_policy == 'one_bigger':
 
         chosen_names_subset_1 = get_templates_decisive_based_on_arity(names, true_name, min_ch, scene)
@@ -220,6 +231,7 @@ def generate_probs_old(names, true_name, gen_params, min_ch):
 def get_templates_decisive_based_on_arity(names, true_name, min_ch, scene):
     # 1. set of item include true_name + other templates which we can distinguish
     t = create_template(true_name)
+    # Get template compulsory parameters
     t_cts = {}
     for tt in scene.templates:
         t_cts[tt.name] = tt.mm_pars_compulsary
