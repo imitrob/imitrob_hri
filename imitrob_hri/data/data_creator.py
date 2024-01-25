@@ -22,10 +22,13 @@ def generate_dataset(gen_params):
                 iteration += 1
                 if iteration > 100000: raise Exception(f"Didn't found any configuration! debug: {scene} {get_random_feasible_triplet(scene)} {get_templates_decisive_based_on_properties(names=c.templates, true_name=y_template, min_ch=1, scene=scene)}")
 
+                # 1: true scene
                 scene = get_random_scene(c)
+                # 2: true random triplet (str, str, str)
                 y_template, y_selection, y_storages = get_random_feasible_triplet(scene)
 
-                # check that any decidable
+                # 2.1: check that any decidable (previous fails it tried until finds feasible),
+                #      only for D3
                 if rp == 'fake_properties_decidable_wrt_true' and len(c.templates)>3:
                     tdp = get_templates_decisive_based_on_properties(names=c.templates, true_name=y_template, min_ch=1, scene=scene)
                     if len(tdp) == 0:
@@ -35,29 +38,81 @@ def generate_dataset(gen_params):
             det_fun = gen_params['det_fun']
             noise_fun = gen_params['noise_fun']
             
-            if rp == 'one_bigger':
+            # I needed to add this workaround argument for  for D5
+            if rp == 'one_bigger': # D5
                 rp_M_C = (('one_bigger', '-', '-'), ('-', '-', '-'))
             else:
                 rp_M_C = ((rp, '-', '-'), (rp, '-', '-'))
             
+            # 3. Generate probs
             G = {
-                'template': ProbsVector(*generate_probs(names=c.templates,           true_name=y_template, det_fun=det_fun, min_ch=1, sim_table=c.sim_table_gesture, scene=scene, regulation_policy=rp_M_C[0][0], noise_fun=noise_fun), c),
-                'selections': ProbsVector(*generate_probs(names=scene.selection_names, true_name=y_selection, det_fun=det_fun, min_ch=0, sim_table=c.sim_table_gesture_objects, scene=scene, regulation_policy=rp_M_C[0][1], noise_fun=noise_fun), c),
-                'storages': ProbsVector(*generate_probs(names=scene.storage_names,   true_name=y_storages, det_fun=det_fun, min_ch=0, sim_table=c.sim_table_gesture_storages, scene=scene, regulation_policy=rp_M_C[0][2], noise_fun=noise_fun), c),
+                'template': ProbsVector(*generate_probs(
+                    names=c.templates,
+                    true_name=y_template,
+                    det_fun=det_fun,
+                    min_ch=1,
+                    sim_table=c.sim_table_gesture,
+                    scene=scene,
+                    regulation_policy=rp_M_C[0][0],
+                    noise_fun=noise_fun), c),
+                'selections': ProbsVector(*generate_probs(
+                    names=scene.selection_names,
+                    true_name=y_selection,
+                    det_fun=det_fun,
+                    min_ch=0,
+                    sim_table=c.sim_table_gesture_objects,
+                    scene=scene,
+                    regulation_policy=rp_M_C[0][1],
+                    noise_fun=noise_fun), c),
+                'storages': ProbsVector(*generate_probs(
+                    names=scene.storage_names,
+                    true_name=y_storages,
+                    det_fun=det_fun,
+                    min_ch=0,
+                    sim_table=c.sim_table_gesture_storages,
+                    scene=scene,
+                    regulation_policy=rp_M_C[0][2],
+                    noise_fun=noise_fun), c),
             }
             L = {
-                'template': ProbsVector(*generate_probs(names=c.templates,           true_name=y_template, det_fun=det_fun, min_ch=1, sim_table=c.sim_table_language, scene=scene, regulation_policy=rp_M_C[1][0], noise_fun=noise_fun), c),
-                'selections':ProbsVector(*generate_probs(names=scene.selection_names, true_name=y_selection, det_fun=det_fun, min_ch=0, sim_table=c.sim_table_language_objects, scene=scene, regulation_policy=rp_M_C[1][1], noise_fun=noise_fun), c),
-                'storages':ProbsVector(*generate_probs(names=scene.storage_names,   true_name=y_storages, det_fun=det_fun, min_ch=0, sim_table=c.sim_table_language_storages, scene=scene, regulation_policy=rp_M_C[1][2], noise_fun=noise_fun), c),
+                'template': ProbsVector(*generate_probs(
+                    names=c.templates,
+                    true_name=y_template,
+                    det_fun=det_fun,
+                    min_ch=1,
+                    sim_table=c.sim_table_language,
+                    scene=scene,
+                    regulation_policy=rp_M_C[1][0],
+                    noise_fun=noise_fun), c),
+                'selections':ProbsVector(*generate_probs(
+                    names=scene.selection_names,
+                    true_name=y_selection,
+                    det_fun=det_fun,
+                    min_ch=0,
+                    sim_table=c.sim_table_language_objects,
+                    scene=scene,
+                    regulation_policy=rp_M_C[1][1],
+                    noise_fun=noise_fun), c),
+                'storages':ProbsVector(*generate_probs(
+                    names=scene.storage_names,
+                    true_name=y_storages,
+                    det_fun=det_fun,
+                    min_ch=0,
+                    sim_table=c.sim_table_language_storages,
+                    scene=scene,
+                    regulation_policy=rp_M_C[1][2],
+                    noise_fun=noise_fun), c),
             }
 
+            # I don't use this for now
             if gen_params['complementary']:
                 for k in G.keys():
                     if bool(np.random.randint(0,2)):
                         L[k] = ProbsVector(np.array([]), np.array([]), c)
                     else:
                         G[k] = ProbsVector(np.array([]), np.array([]), c)
-                    
+            
+            
             s = MMSentence(L, G)
 
             sample = {
