@@ -46,30 +46,30 @@ def test_nlp_1():
         ["Ukaž na červenou kostku", ('point', 'cube_holes')],
         ["Podej mi červenou kostku", ('pass', 'cube_holes')],
         # Success (cube_holes visible)
-        # ["Seber kostku", ('pick', 'cube_holes')],
-        # ["Ukaž na kostku", ('point', 'cube_holes')],
-        # ["Podej mi kostku", ('pass', 'cube_holes')],
+        ["Seber kostku", ('pick', 'cube_holes')],
+        ["Ukaž na kostku", ('point', 'cube_holes')],
+        ["Podej mi kostku", ('pass', 'cube_holes')],
         # Success (wheel visible)
-        # ["Seber kolo", ('pick', 'wheel')],
-        # ["Ukaž na kolo", ('point', 'wheel')],
-        # ["Podej mi kolo", ('pass', 'wheel')],
+        ["Seber kolo", ('pick', 'wheel')],
+        ["Ukaž na kolo", ('point', 'wheel')],
+        ["Podej mi kolo", ('pass', 'wheel')],
         # Success (wafer visible)
-        # ["Seber destičku", ('pick', 'wafer')],
-        # ["Ukaž na destičku", ('point', 'wafer')],
-        # ["Podej mi destičku", ('pass', 'wafer')],
+        ["Seber destičku", ('pick', 'wafer')],
+        ["Ukaž na destičku", ('point', 'wafer')],
+        ["Podej mi destičku", ('pass', 'wafer')],
         # Success (hammer NOT visible)
-        # ["Seber kladivo", ('Noop', '')],
-        # ["Ukaž na kladivo", ('Noop', '')],
-        # ["Podej mi kladivo", ('Noop', '')],
+        ["Seber kladivo", ('Noop', '')],
+        ["Ukaž na kladivo", ('Noop', '')],
+        ["Podej mi kladivo", ('Noop', '')],
         # Testing some synonyms
-        # ["Zvedni kostku", ('pick', 'cube_holes')],
-        # ["Získej kostku", ('pick', 'cube_holes')],
-        # ["Dej mi kostku", ('pass', 'cube_holes')],
-        # ["Dej mi krychli", ('pass', 'cube_holes')],
+        ["Zvedni kostku", ('pick', 'cube_holes')],
+        ["Získej kostku", ('pick', 'cube_holes')],
+        ["Dej mi kostku", ('pass', 'cube_holes')],
+        ["Dej mi krychli", ('pass', 'cube_holes')],
         # Shuffled
-        # ["Dej mi krychli s dírama.", ('pass', 'cube_holes')],
-        # ["Kostku mi dej.", ('pass', 'cube_holes')],
-        # ["dej kostku", ('pass', 'cube_holes')],
+        ["Dej mi krychli s dírama.", ('pass', 'cube_holes')],
+        ["Kostku mi dej.", ('pass', 'cube_holes')],
+        ["dej kostku", ('pass', 'cube_holes')],
         # Program template has two actions 
         # ["Kostku mi dej. A pak ukaž na kostku.", ('pass', 'cube_holes')],
         # TODO: Barvy, cannot assign the color to object in order to test this
@@ -84,6 +84,11 @@ def test_nlp_1():
         # ["Definuj modrou pozici", ('', '')],
         # ["Pick a red cube", ('', '')],
         # ["Seber kostku", ('', '')],
+        
+        ["Dej zelenou kostku do červený krabice", ('place', 'cube_holes', 'paper box')],
+        # FUTURE?
+        # ["Vezmi jablko a hrušku a dej je do krabice", (..)]
+        ["Dej zelenou kostku na červenou kostku"]
     ]
     
     for sentence, solution in example_list:
