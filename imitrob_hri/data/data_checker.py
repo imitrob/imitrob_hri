@@ -2,9 +2,11 @@ import sys, os; sys.path.append(os.path.dirname(os.path.abspath(__file__))+"/.."
 import numpy as np
 from collections import Counter
 
+DATASET_PREFIX = '2' # '' for original dataset
+
 def check_single(dataset_name, all=True):
 
-    dataset = np.load(os.path.expanduser(f'{os.path.dirname(os.path.abspath(__file__))}/saves/artificial_dataset_{dataset_name}.npy'), allow_pickle=True)
+    dataset = np.load(os.path.expanduser(f'{os.path.dirname(os.path.abspath(__file__))}/saves/artificial_dataset{DATASET_PREFIX}_{dataset_name}.npy'), allow_pickle=True)
     print(f"Dataset: {dataset_name}")
 
     tmplts = []

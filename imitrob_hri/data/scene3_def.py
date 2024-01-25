@@ -103,6 +103,9 @@ class Object3():
     
 class Scene3():
     def __init__(self, selections, storages, template_names):
+        '''
+        Created templates are all templates from set, used only as info about classes
+        '''
         self.templates = []
         for template_name in template_names:
             self.templates.append( create_template(template_name) )
@@ -141,6 +144,21 @@ class Scene3():
 
         return f"{cc.H}Selections{cc.E}:\n{s}{cc.H}Storages{cc.E}:\n{s2}"
 
+
+def get_n_objects(c):
+    # Based on configuration, choose how many objects and storages to generate in the scene
+    if c.scene_gen_config['selections_n'][0] == 'uniform':
+        low, high = c.scene_gen_config['selections_n'][1:3]
+        return np.random.randint(low, high)
+    else: raise Exception("TODO ADD OTHER THAN UNIFORM PROB DISTR.")
+    
+def get_n_storages(c):
+    # Based on configuration, choose how many objects and storages to generate in the scene
+    if c.scene_gen_config['storages_n'][0] == 'uniform':
+        low, high = c.scene_gen_config['storages_n'][1:3]
+        return np.random.randint(low, high)
+    else: raise Exception("TODO ADD OTHER THAN UNIFORM PROB DISTR.")
+  
 
 def get_random_scene(c, object_name_list=['potted meat can', 'tomato soup can', 'bowl', 'box', 'big box', 'paper', 'wrench', 'glued wrench'], storage_name_list=['paper box', 'abstract marked zone', 'out of table', 'on the table']):
     object_name_list = c.mm_pars_names_dict['selections']

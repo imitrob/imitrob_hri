@@ -73,6 +73,12 @@ gesture_noise_model3 = MixtureModel([
         ('exponnorm', (1.768464920150208, 0.15072610225705982, 0.05762642382325739))
     ], factor=2.0, negative_noise=True)
 
+gesture_noise_model4 = MixtureModel([
+        ('expon', (1.0167785737536344e-08, 0.005827560175383218)),
+        ('exponnorm', (1.768464920150208, 0.15072610225705982, 0.05762642382325739))
+    ], factor=3.0, negative_noise=True)
+
+
 def entropy_tester():
     nm = NormalModel(0.0, 0.05)
     fig = plt.figure(figsize =(4,2))

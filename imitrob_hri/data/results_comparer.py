@@ -287,12 +287,11 @@ class Results6DComparer():
 
 if __name__ == '__main__':
     rc = Results6DComparer()
-    # Results6DComparer()._6_some_custom_plot()
 
     # rc._1_ablation_study()
     # rc._2_noise_influence(magic=rc.entropy)
     # rc._2_noise_influence(magic=rc.add_2)
-    rc._2_noise_influence(magic=rc.entropy_add_2)
+    # rc._2_noise_influence(magic=rc.entropy_add_2)
     # rc._2_noise_influence(magic=rc.mul)
     
     # Results6DComparer()._3_types_merging()
