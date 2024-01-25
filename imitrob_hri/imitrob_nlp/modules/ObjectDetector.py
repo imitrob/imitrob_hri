@@ -36,6 +36,9 @@ class ObjectsDetectedData(object):
             return True
         else:
             return False
+    
+    def __str__(self):
+        return f"Grounded data: objs_mentioned_cls: {self.objs_mentioned_cls}, objs_properties: {self.objs_properties}"
 
 
 # ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"

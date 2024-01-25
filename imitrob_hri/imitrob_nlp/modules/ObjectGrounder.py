@@ -41,6 +41,9 @@ class ObjectsGroundedData(object):
         # self.objs_mentioned_cls = deepcopy(objects_detected_data.objs_mentioned_cls)
         # self.objs_properties = objects_detected_data.objs_properties
 
+    def __str__(self):
+        return f"Grounded data: to: {self.to}"
+
 class ObjectGrounder:
     # namespace = db.onto
     #class Flags(Enum):

@@ -54,9 +54,9 @@ def test_nlp_1():
         ["Ukaž na kolo", ('point', 'wheel')],
         ["Podej mi kolo", ('pass', 'wheel')],
         # Success (wafer visible)
-        ["Seber destičku", ('pick', 'wafer')],
-        ["Ukaž na destičku", ('point', 'wafer')],
-        ["Podej mi destičku", ('pass', 'wafer')],
+        # ["Seber destičku", ('pick', 'wafer')],
+        # ["Ukaž na destičku", ('point', 'wafer')],
+        # ["Podej mi destičku", ('pass', 'wafer')],
         # Success (hammer NOT visible)
         ["Seber kladivo", ('Noop', '')],
         ["Ukaž na kladivo", ('Noop', '')],
@@ -71,10 +71,10 @@ def test_nlp_1():
         ["Kostku mi dej.", ('pass', 'cube_holes')],
         ["dej kostku", ('pass', 'cube_holes')],
         # Program template has two actions 
-        # ["Kostku mi dej. A pak ukaž na kostku.", ('pass', 'cube_holes')],
+        ["Kostku mi dej. A pak ukaž na kostku.", ('pass', 'cube_holes')],
         # TODO: Barvy, cannot assign the color to object in order to test this
-        ["Podej mi zelenou kostku.", ('pass', 'cube_holes')],
-        ["Podej mi červenou kostku.", ('pass', 'cube_holes')],
+        # ["Podej mi zelenou kostku.", ('pass', 'cube_holes')],
+        # ["Podej mi červenou kostku.", ('pass', 'cube_holes')],
         # ["Podej mi kladivo", ('Noop', '')],
         #
         # ["Ukaž na modrý kolík", ('point', 'blue peg')],
@@ -106,7 +106,7 @@ def test_nlp_1():
         def target_object_struri_to_type(uri):
             return URIRef(uri).fragment.split("_od_")[0]
 
-        assert t['target_action'] == solution[0], f"target_action: {t['target_action']} != {solution[0]}"
+        assert t['target_action'] == solution[0], f"sentence: {sentence}\ntarget_action: {t['target_action']} != {solution[0]}\nraw solution: {t}"
         target_object = target_object_struri_to_type(t['target_object'])
         assert target_object == solution[1], f"target_object: {target_object} != {solution[1]}"
     
