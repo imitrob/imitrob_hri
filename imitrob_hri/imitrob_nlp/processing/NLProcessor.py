@@ -107,8 +107,8 @@ class NLProcessor():
 
             # get an object representing the template
             template = self.tf.get_template(template_type) # type: Template
-
-            template.nlp_all_detected_templates = template_types
+            
+            template.nlp_all_detected_templates = [t.name for t in template_types]
             # try to match all the template parameters
             template.nlp_match(tagged_text, language = self.lang, client = self.crowracle)
             template.nlp_ground(client = self.crowracle)
