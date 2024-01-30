@@ -59,7 +59,8 @@ class TemplateDetector(CrowModule):
         templates = []
         detect_fns = [self.detect_pick,
                       self.detect_point,
-                      self.detect_pass_me
+                      self.detect_pass_me,
+                      self.detect_pour,
                         # self.detect_define_storage,
                         # self.detect_define_position,
                         # self.detect_remove_command_x,
@@ -98,7 +99,6 @@ class TemplateDetector(CrowModule):
             self.logger.error("No template match for \"{}\"".format(tagged_text.get_text()))
             self.ui.buffered_say(self.guidance_file[self.lang]["no_template_match"] + tagged_text.get_text(), say = 2)
 
-        # print(templates)
         return templates
 
 
@@ -156,6 +156,11 @@ class TemplateDetector(CrowModule):
         if tagged_text.contains_text(self.templ_det[self.lang]['give']):
             self.ui.buffered_say(self.guidance_file[self.lang]["template_match"] + self.templ_det[self.lang]['give'])
             return [tt.PASSME_TASK]
+
+    def detect_pour(self, tagged_text) -> List[tt]:
+        if tagged_text.contains_text(self.templ_det[self.lang]['pour']):
+            self.ui.buffered_say(self.guidance_file[self.lang]["template_match"] + self.templ_det[self.lang]['pour'])
+            return [tt.POUR_TASK]
 
 
     # def detect_apply_glue(self, tagged_text) -> List[tt]:

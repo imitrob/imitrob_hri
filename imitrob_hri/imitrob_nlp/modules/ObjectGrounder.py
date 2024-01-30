@@ -42,7 +42,7 @@ class ObjectsGroundedData(object):
         # self.objs_properties = objects_detected_data.objs_properties
 
     def __str__(self):
-        return f"Grounded data: to: {self.to}"
+        return f"[_2_ Grounede data] 1) target object:\n{self.to}"
 
 class ObjectGrounder:
     # namespace = db.onto
@@ -75,7 +75,7 @@ class ObjectGrounder:
         Returns:
             ObjectsGroundedData(): _description_
         """        
-
+        
         # try to find out the class of the object
         # DEL: the 0th item of an is_a list should be always ObjectPlaceholder
         # DEL: if the item is bound to a real class, the class will be the 1st item
@@ -102,9 +102,6 @@ class ObjectGrounder:
                 if obj_i_name_j in obj_placeholder.objs_mentioned_cls.names:
                     objL.append(obj_i)
                     
-                    
-                    print('this is color of the object')
-                    print(obj_placeholder.objs_properties['color'])
                     if not obj_placeholder.objs_properties['color'].empty:
                         if obj_placeholder.objs_properties['color'].names[0] == self.crowracle.get_nlp_from_uri(self.crowracle.get_color_of_obj(obj_i))[0]:
                             objLC.append(obj_i)
@@ -115,7 +112,6 @@ class ObjectGrounder:
                             objLC_probs.append(self.PROPERTY_NOT_MATCH_PROB)
                             break
                     else:
-                        print('no color of object specified')
                         objLC.append(obj_i)
                         objLC_probs.append(self.PROPERTY_MATCH_PROB)
                         break

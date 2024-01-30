@@ -1,0 +1,16 @@
+{
+"en": {"to": "to",
+       "on": "on",
+       "inside": "inside",
+       "outside": "outside",
+       "from": "from"
+
+},
+"cs": { "to": "do",
+        "on": "na",
+        "inside": "dovnitř",
+        "outside": "venku",
+        "from": "z"
+
+}
+}

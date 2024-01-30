@@ -190,16 +190,27 @@ class SentenceProcessor(Node):
 
         d['target_action'] = str(template.target_action)
         d['target_object'] = str(template.target_object)
+        d['target_storage'] = str(template.target_storage)
+        d['to_color'] = str(template._1_detected_data['to'].objs_properties['color'].activated)
         
         # d['target_object_probs'] = list(template.target_object_probs)
         d['actions'] = list(template.nlp_all_detected_templates)
         d['action_probs'] = [1.0] * len(template.nlp_all_detected_templates)
         # d['action_timestamp'] = 0.0
-        d['objects'] = list(template._1_detected_data[0].objs_mentioned_cls.names)
-        d['object_probs'] = list(template._1_detected_data[0].objs_mentioned_cls.p)
+        d['objects'] = list(template._1_detected_data['to'].objs_mentioned_cls.names)
+        d['object_probs'] = list(template._1_detected_data['to'].objs_mentioned_cls.p)
         # d['object_classes'] = ['object']
         # d['parameters'] = ""        
         
+        # print("template._1_detected_data")
+        # print(template._1_detected_data['to'])
+        # print("template._2_groundede_data")
+        # print(template._2_grounded_data['to'])
+        # print("target_storage? ", 'ts' in template._1_detected_data)
+        if 'ts' in template._1_detected_data:
+            print(template._1_detected_data['ts'])
+
+
         # d["objs_mentioned_cls"] = template.objs_mentioned_cls
         # d["objs_mentioned_cls_probs"] = list(template.objs_mentioned_cls_probs)
         # d["objs_mentioned_properties"] = template.objs_properties

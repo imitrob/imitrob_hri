@@ -291,6 +291,14 @@ class ProbsVector():
         else: 
             return False
 
+    def pop(self, id):
+        ''' Pops single id '''
+        assert isinstance(self.template_names, list)
+        assert isinstance(self.p, np.ndarray)
+        template = self.template_names.pop(id)
+        p = self.p[id]
+        self.p = np.delete(self.p, id)
+        return template, p
 
 class EntropyProbsVector(ProbsVector):
     # UNIFORM_ENTROPY_TH = 0.85

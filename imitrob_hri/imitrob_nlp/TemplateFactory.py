@@ -18,6 +18,7 @@ from imitrob_templates.templates.PickTask import PickTask
 # from crow_nlp.nlp_crow.templates.tasks.TidyTask import TidyTask
 from imitrob_templates.templates.PointTask import PointTask
 from imitrob_templates.templates.PassTask import PassTask
+from imitrob_templates.templates.PourTask import PourTask
 # from crow_nlp.nlp_crow.templates.tasks.FetchTask import FetchTask
 # from crow_nlp.nlp_crow.templates.tasks.FetchToTask import FetchToTask
 # from crow_nlp.nlp_crow.templates.tasks.ReleaseTask import ReleaseTask
@@ -43,6 +44,7 @@ class TemplateType(Enum):
     # TIDY_TASK = TidyTask
     POINT_TASK = PointTask
     PASSME_TASK = PassTask
+    POUR_TASK = PourTask
     # DEFINE_STORAGE = DefineStorageAction
     # DEFINE_POSITION = DefinePositionAction
     # REMOVE_COMMAND_LAST = RemoveCommandLast

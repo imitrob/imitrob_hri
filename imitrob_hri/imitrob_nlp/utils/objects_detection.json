@@ -4,13 +4,15 @@
   "wheel": "wheel",
   "sphere": "sphere",
   "wafer": "wafer",
-  "it": "it"
+  "it": "it",
+  "box": "box"
 },
 "cs": { "cube": "kostka",
   "hammer": "kladivo",
   "wheel": "kolo",
   "sphere": "koule",
   "wafer": "destička",
-  "it": "to"
+  "it": "to",
+  "box": "krabice"
 }
       }

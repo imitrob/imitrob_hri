@@ -21,6 +21,10 @@ from imitrob_hri.imitrob_nlp.modules.UserInputManager import UserInputManager
 
 from imitrob_hri.merging_modalities.probs_vector import ProbsVector
 
+from operator import not_
+def do_nothing(x):
+    return x
+
 class ObjectsDetectedData(object):
     ''' Object Detector result,
         Input for Object Grounder
@@ -28,7 +32,7 @@ class ObjectsDetectedData(object):
     def __init__(self):
         self.objs_mentioned_cls = ProbsVector(c='default')
         self.objs_properties = {'color': ProbsVector(c='default')}
-        self.flags = []
+        self.objs_flags = {'to': []}
 
     @property
     def empty(self):
@@ -38,7 +42,37 @@ class ObjectsDetectedData(object):
             return False
     
     def __str__(self):
-        return f"Grounded data: objs_mentioned_cls: {self.objs_mentioned_cls}, objs_properties: {self.objs_properties}"
+        prop_str = "\n".join([f"{key}:\n{self.objs_properties[key]}" for key in self.objs_properties.keys()])
+        return f"[_1_ Detected data] 1) objs_mentioned_cls:\n{self.objs_mentioned_cls}\n 2) objs_properties:\n{prop_str}"
+
+    def keep_only_target_objects(self):
+        self.keep_only_type(fun=not_)
+
+    def keep_only_target_storages(self):
+        self.keep_only_type(fun=do_nothing)
+
+    def keep_only_type(self, fun):
+        assert len(self.objs_mentioned_cls.names) == len(self.objs_mentioned_cls.p)
+        # for key in self.objs_properties.keys():
+        #     assert len(self.objs_mentioned_cls.names) == len(self.objs_properties[key].names), f"key: {key}, names: {self.objs_mentioned_cls.names}, property names: {self.objs_properties[key].names}"
+        assert len(self.objs_mentioned_cls.names) == len(self.objs_flags['to'])
+        
+        for n in range(len(self.objs_flags['to'])-1, -1, -1):
+            if fun(self.objs_flags['to'][n]):
+                print(f"DELETING: {self.objs_mentioned_cls.names[n]}")
+                self.objs_mentioned_cls.pop(n)
+                # for key in self.objs_properties.keys():
+                #     self.objs_properties[key].pop(n)
+                for key in self.objs_flags.keys():
+                    self.objs_flags[key].pop(n)
+                
+
+        for i in self.objs_flags['to']:
+            assert fun(i) == False, f"objs flags: {self.objs_flags['to']}, self.objs_mentioned_cls: {self.objs_mentioned_cls}"
+        assert len(self.objs_mentioned_cls.names) == len(self.objs_mentioned_cls.p)
+        # for key in self.objs_properties.keys():
+        #     assert len(self.objs_mentioned_cls.names) == len(self.objs_properties[key].names)
+        assert len(self.objs_mentioned_cls.names) == len(self.objs_flags['to'])
 
 
 # ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
@@ -61,9 +95,7 @@ class ObjectDetector(CrowModule):
         self.class_map = {}
 
         for c in qres:
-           # print(self.crowracle.get_nlp_from_uri(c)[0])
             c_nlp = self.crowracle.get_nlp_from_uri(c)[0]
-           # print(c_nlp)
             self.class_map[c_nlp] = c
         # self.class_map = {
         #     "screwdriver": self.onto.Screwdriver,
@@ -77,6 +109,8 @@ class ObjectDetector(CrowModule):
         self.obj_det_file = self.ui.load_file('objects_detection.json')
         self.guidance_file = self.ui.load_file('guidance_dialogue.json')
         self.synonyms_file = self.ui.load_file('synonyms.json')
+        self.prepositions_file = self.ui.load_file('prepositions.json')
+        self.verbs_file = self.ui.load_file('verbs.json')
 
     def detect_object(self, tagged_text : TaggedText, silent_fail=False):
         """Detects an object mentioned in the input text, extracts its properties and saves it
@@ -101,38 +135,43 @@ class ObjectDetector(CrowModule):
         obj = ObjectsDetectedData()
         text = tagged_text.get_text()
 
+
+
         # try to detect one of the known objects in text
         for obj_str in self.class_map.keys():
-            # try:
-            # TODO we would like not to break after the first detection but detect even if more objects were mentioned
             #TODO should be only NN, but we have a problem that kostka is detected as VB/VBD
             try:
                 obj_str_lang = self.obj_det_file[self.lang][obj_str]
             except KeyError:
                 continue
+                # raise Exception(f"obj_str: {obj_str} not in obj_det_file")
+
+
+
+
             # if tagged_text.contains_pos_token(obj_str_lang, "NN") or tagged_text.contains_pos_token(
             #         obj_str_lang, "VBD") or tagged_text.contains_pos_token(obj_str_lang,
             #                                                                    "VB") or tagged_text.contains_pos_token(
             #         obj_str_lang, "NNS"):
+
             if tagged_text.contains_text(obj_str_lang):
+
                 self.logger.debug(f"Object detected for \"{text}\": {obj}")
                 self.ui.buffered_say(self.guidance_file[self.lang]["object_matched"] + text)
                 obj_pv, objs_properties = self.detect_semantically_explicit_object(tagged_text, obj_str)
-                obj.objs_mentioned_cls.add(obj_pv)
-                obj.objs_properties['color'].add(objs_properties['color'])
-                break
-            #try:
+                if obj_pv.names[0] not in obj.objs_mentioned_cls.names:
+                    obj.objs_mentioned_cls.add(obj_pv)
+                    obj.objs_flags['to'].append(self.is_target_object(obj_str_lang, tagged_text))
+                    obj.objs_properties['color'].add(objs_properties['color'])
+            
             for obj_str_lang_syn in self.synonyms_file[self.lang][obj_str_lang]:
                 if tagged_text.contains_text(obj_str_lang_syn):
                 # if tagged_text.contains_pos_token(obj_str_lang_syn, "NN") or tagged_text.contains_pos_token(obj_str_lang_syn, "VBD") or tagged_text.contains_pos_token(obj_str_lang_syn, "VB") or tagged_text.contains_pos_token(obj_str_lang_syn, "NNS") :
                     obj_pv, objs_properties = self.detect_semantically_explicit_object(tagged_text, obj_str)
-                    obj.objs_mentioned_cls.add(obj_pv)
-                    obj.objs_properties['color'].add(objs_properties['color'])
-                    break
-            # except:
-            #     pass
-            # except:
-            #     pass
+                    if obj_pv.names[0] not in obj.objs_mentioned_cls.names:
+                        obj.objs_mentioned_cls.add(obj_pv)
+                        obj.objs_flags['to'].append(self.is_target_object(obj_str_lang, tagged_text))
+                        obj.objs_properties['color'].add(objs_properties['color'])
                 
         # Handle cases like "it"
         # try to detect a coreference to an object
@@ -144,8 +183,6 @@ class ObjectDetector(CrowModule):
                     self.ui.buffered_say(self.guidance_file[self.lang]["object_not_matched"] + " " + text , say = 2)
                     self.ui.buffered_say(self.guidance_file[self.lang]["object_not_matched_repeat"], say = 3)
         
-        print(f" ** [Object Detector] ended with: **\n{obj.objs_mentioned_cls}\n************************************")
-
         if obj.empty: return None
         return obj
 
@@ -208,7 +245,11 @@ class ObjectDetector(CrowModule):
         # seber cervenou kostku a modrou -> cervena 
         # seber kostku cervenou -> x
         # TODO: Check for how we want it
-        tagged_text_color = tagged_text.cut(0,idx[0])
+        min_idx = 0
+        for idx_ in range(idx[0]):
+            if self.is_VB(tagged_text.tokens[idx_]):
+                min_idx = idx_
+        tagged_text_color = tagged_text.cut(min_idx,idx[0])
         colors = self.detect_object_color(tagged_text_color)
         colors = list(set(colors))
         #self.detect_object_id(obj, tagged_text)
@@ -269,3 +310,47 @@ class ObjectDetector(CrowModule):
     #
     #     if id is not None:
     #         obj.aruco_id = id
+
+    def is_PP(self, tag):
+        ''' Is preposition? 
+            This is temporary function: tagging is not working properly
+        '''
+        # print("4  ", tag,  self.prepositions_file[self.lang].values())
+        # print("5  ", tag in self.prepositions_file[self.lang].values())
+        if tag in self.prepositions_file[self.lang].values():
+            return True
+        else:
+            return False
+
+    def is_VB(self, tag):
+        ''' Is verb? 
+            This is temporary function: tagging is not working properly 
+        '''
+        # print("4  ", tag,  self.verbs_file[self.lang].values())
+        # print("5  ", tag in self.verbs_file[self.lang].values())
+        if tag in self.verbs_file[self.lang].values():
+            return True
+        else:
+            return False
+
+    def is_target_object(self, to, tagged_text):
+        ''' is target_object or target storage (target of manipulation)
+            Checks whether before it is no preposition 
+        '''
+
+        for tag_idx in range(tagged_text.indices_of(to)[0]-1, -1, -1):
+            # print("1  ", tagged_text.indices_of(to))
+            # print("2  ", tagged_text.tokens[tag_idx])
+            # print("3  ", self.is_PP(tagged_text.tokens[tag_idx]))
+            if self.is_PP(tagged_text.tokens[tag_idx]):
+                if tag_idx == 0:
+                    return False
+                if tag_idx-1>=0 and (not self.is_VB(tagged_text.tokens[tag_idx-1])):
+                    return False
+            if self.is_VB(tagged_text.tokens[tag_idx]):
+                return True
+        return True
+
+
+
+

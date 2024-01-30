@@ -44,6 +44,7 @@
       "cube": ["cube"],
       "peg": ["peg"],
       "hammer": ["hammer"],
+      "box": ["box"],
       "NO_option": ["no", "do not","don't","not"],
       "YES_option": ["yes", "can", "sure", "of course"],
       "wheel": ["wheel"],
