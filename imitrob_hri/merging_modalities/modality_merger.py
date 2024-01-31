@@ -13,7 +13,7 @@ from os.path import isfile, join
 
 # import sys; sys.path.append("..")
 from imitrob_hri.imitrob_nlp.nlp_utils import make_conjunction, to_default_name
-from imitrob_templates.small_template_factory import create_template
+from imitrob_hri.imitrob_nlp.TemplateFactory import create_template
 
 from copy import deepcopy
 

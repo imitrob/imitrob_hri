@@ -4,7 +4,7 @@ from imitrob_hri.merging_modalities.modality_merger import MMSentence, ProbsVect
 import numpy as np
 from imitrob_hri.data.datagen_utils import *
 from imitrob_hri.data.scene3_def import *
-from imitrob_templates.small_template_factory import create_template
+from imitrob_hri.imitrob_nlp.TemplateFactory import create_template
 from merging_modalities.configuration import *
 import merging_modalities.noise_model as nm
 

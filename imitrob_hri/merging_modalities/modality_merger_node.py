@@ -23,7 +23,7 @@ from imitrob_hri.data.scene3_def import Scene3, Object3
 from imitrob_templates.small_ontology_scene_reader import SceneOntologyClient
 
 # optional - for checking all configuration templates exists
-from imitrob_templates.small_template_factory import create_template
+from imitrob_hri.imitrob_nlp.TemplateFactory import create_template
 
 from imitrob_hri.imitrob_nlp.nlp_utils import cc
 
