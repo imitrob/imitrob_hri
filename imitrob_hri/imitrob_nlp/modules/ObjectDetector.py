@@ -112,7 +112,7 @@ class ObjectDetector(CrowModule):
         self.prepositions_file = self.ui.load_file('prepositions.json')
         self.verbs_file = self.ui.load_file('verbs.json')
 
-    def detect_object(self, tagged_text : TaggedText, silent_fail=False):
+    def detect_object(self, tagged_text : TaggedText, detect_type='target_object', silent_fail=False):
         """Detects an object mentioned in the input text, extracts its properties and saves it
         in the object placeholder.
 
@@ -158,20 +158,27 @@ class ObjectDetector(CrowModule):
 
                 self.logger.debug(f"Object detected for \"{text}\": {obj}")
                 self.ui.buffered_say(self.guidance_file[self.lang]["object_matched"] + text)
-                obj_pv, objs_properties = self.detect_semantically_explicit_object(tagged_text, obj_str)
-                if obj_pv.names[0] not in obj.objs_mentioned_cls.names:
-                    obj.objs_mentioned_cls.add(obj_pv)
-                    obj.objs_flags['to'].append(self.is_target_object(obj_str_lang, tagged_text))
-                    obj.objs_properties['color'].add(objs_properties['color'])
-            
+                for indx in tagged_text.indices_of(obj_str_lang):
+                    obj_pv, objs_properties = self.detect_semantically_explicit_object(tagged_text, obj_str, indx)
+
+                
+                    if (detect_type == 'target_object' and self.is_target_object(indx, tagged_text)) or (detect_type == 'target_storage' and not self.is_target_object(indx, tagged_text)):
+                        if obj_pv.names[0] not in obj.objs_mentioned_cls.names:
+                            obj.objs_mentioned_cls.add(obj_pv)
+                            obj.objs_flags['to'].append(self.is_target_object(indx, tagged_text))
+                            obj.objs_properties['color'].add(objs_properties['color'])
+                
             for obj_str_lang_syn in self.synonyms_file[self.lang][obj_str_lang]:
                 if tagged_text.contains_text(obj_str_lang_syn):
                 # if tagged_text.contains_pos_token(obj_str_lang_syn, "NN") or tagged_text.contains_pos_token(obj_str_lang_syn, "VBD") or tagged_text.contains_pos_token(obj_str_lang_syn, "VB") or tagged_text.contains_pos_token(obj_str_lang_syn, "NNS") :
-                    obj_pv, objs_properties = self.detect_semantically_explicit_object(tagged_text, obj_str)
-                    if obj_pv.names[0] not in obj.objs_mentioned_cls.names:
-                        obj.objs_mentioned_cls.add(obj_pv)
-                        obj.objs_flags['to'].append(self.is_target_object(obj_str_lang, tagged_text))
-                        obj.objs_properties['color'].add(objs_properties['color'])
+                    for indx in tagged_text.indices_of(obj_str_lang):
+                        obj_pv, objs_properties = self.detect_semantically_explicit_object(tagged_text, obj_str, indx)
+
+                        if (detect_type == 'target_object' and self.is_target_object(indx, tagged_text)) or (detect_type == 'target_storage' and not self.is_target_object(indx, tagged_text)):
+                            if obj_pv.names[0] not in obj.objs_mentioned_cls.names:
+                                obj.objs_mentioned_cls.add(obj_pv)
+                                obj.objs_flags['to'].append(self.is_target_object(indx, tagged_text))
+                                obj.objs_properties['color'].add(objs_properties['color'])
                 
         # Handle cases like "it"
         # try to detect a coreference to an object
@@ -186,7 +193,7 @@ class ObjectDetector(CrowModule):
         if obj.empty: return None
         return obj
 
-    def detect_semantically_explicit_object(self, tagged_text, obj_str):
+    def detect_semantically_explicit_object(self, tagged_text, obj_str, obj_idx):
         """Detect an object which is mentioned explicitly.
 
         Current running pipeline:        
@@ -219,37 +226,24 @@ class ObjectDetector(CrowModule):
 
         assert isinstance(tagged_text.tokens, list), tagged_text.tokens
         obj_pv.add(name=obj_str, p=0.0)
-        print(obj_pv.names, obj_pv.p)
         # obj.objs_mentioned_cls.names = [obj_str_lang]
         # obj.objs_mentioned_cls.p = np.zeros((len(obj.objs_mentioned_cls.names)))
 
         if tagged_text.contains_text(obj_str_lang):
-            idx = tagged_text.indices_of(obj_str_lang)
-            # idx = obj.objs_mentioned_cls.names.index(obj_str_lang)
-            # obj.objs_mentioned_cls.p[idx] = 1.0
             obj_pv.p = [1.0]
         else:
-            #try:
             for obj_str_lang_syn in self.synonyms_file[self.lang][obj_str_lang]:
                 if tagged_text.contains_text(obj_str_lang_syn):
-                    idx = tagged_text.indices_of(obj_str_lang_syn)
-                    # idx = obj.objs_mentioned_cls.names.index(obj_str_lang_syn)
-                    # obj.objs_mentioned_cls.p[idx] = 0.99
                     obj_pv.p = [0.99]
-            # except:
-            #     pass
-        # print(idx)
-        # print(tagged_text)
-        # print(tagged_text[0:idx])
             
         # seber cervenou kostku a modrou -> cervena 
         # seber kostku cervenou -> x
         # TODO: Check for how we want it
         min_idx = 0
-        for idx_ in range(idx[0]):
-            if self.is_VB(tagged_text.tokens[idx_]):
+        for idx_ in range(obj_idx):
+            if self.is_VB(tagged_text.tokens[idx_]) or self.is_PP(tagged_text.tokens[idx_]):
                 min_idx = idx_
-        tagged_text_color = tagged_text.cut(min_idx,idx[0])
+        tagged_text_color = tagged_text.cut(min_idx,obj_idx)
         colors = self.detect_object_color(tagged_text_color)
         colors = list(set(colors))
         #self.detect_object_id(obj, tagged_text)
@@ -275,6 +269,7 @@ class ObjectDetector(CrowModule):
     #     self.detect_object_location(obj, obj_str, tagged_text)
     #
     #     return obj
+
 
     def detect_coreferenced_object(self):
         """
@@ -333,13 +328,13 @@ class ObjectDetector(CrowModule):
         else:
             return False
 
-    def is_target_object(self, to, tagged_text):
+    def is_target_object(self, indx, tagged_text):
         ''' is target_object or target storage (target of manipulation)
             Checks whether before it is no preposition 
         '''
 
-        for tag_idx in range(tagged_text.indices_of(to)[0]-1, -1, -1):
-            # print("1  ", tagged_text.indices_of(to))
+        for tag_idx in range(int(indx)-1, -1, -1):
+            # print("1  ", indx)
             # print("2  ", tagged_text.tokens[tag_idx])
             # print("3  ", self.is_PP(tagged_text.tokens[tag_idx]))
             if self.is_PP(tagged_text.tokens[tag_idx]):

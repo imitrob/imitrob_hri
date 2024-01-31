@@ -8,6 +8,11 @@
     "take":"take",
     "give": "give",
     "pass": "pass",
+    "pass me": "pass me",
+    "stack": "stack",
+    "push": "push",
+    "unglue": "unglue",
+    "put-into": "put-into",
     "glue": "glue",
     "pour": "pour",
     "learn_new_task": "Learn a new task",
@@ -58,7 +63,9 @@
     "release": "release",
     "stop": "stop",
     "cancel_build": "Cancel building",
-    "cancel":"cancel"
+    "cancel":"cancel",
+    "move up": "move up",
+    "move-up": "move up"
     },
 "cs": {
     "build":"stavět",
@@ -69,6 +76,11 @@
     "take": "vezmi",
     "give": "podej",
     "pass": "pass",
+    "pass me": "podej mi",
+    "stack": "nandej",
+    "push": "posuň",
+    "unglue": "odlep",
+    "put-into": "dej do",
     "glue": "nalep",
     "pour": "nalij",
     "learn_new_task": "Nauč se novou úlohu",
@@ -120,6 +132,8 @@
     "release": "pustit",
     "stop": "stop",
     "cancel_build": "zruš stavění",
-    "cancel":"zruš"
+    "cancel":"zruš",
+    "move up": "nahoru",
+    "move-up": "nahoru"
 }
       }

@@ -48,6 +48,7 @@
       "NO_option": ["no", "do not","don't","not"],
       "YES_option": ["yes", "can", "sure", "of course"],
       "wheel": ["wheel"],
+      "drawer": ["drawer", "socket"],
   "CarRoof": ["roof"],
   "ExcavatorBucket": ["bucket"],
   "Sphere": ["sphere"],
@@ -141,6 +142,7 @@
       "tyrkysová": ["tyrkysovou", "tyrkysový", "tyrkysovej", "tyrkysové", "tyrkysovým", "tyrkysových"],
       "bílá": ["bílou", "bílý", "bílej", "bílé", "bílým", "bílých"],
       "bod": ["bot"],
+      "posuň": ["postrč"],
 "kolo": ["kolo","kolečko", "kolem", "kole", "kola", "kol", "kolu", "kolami"],
   "střecha": ["střecha","štřecha","střechu","oblouk"],
   "lžíce": ["lžíce","bagr", "lžíci"],
@@ -168,4 +170,6 @@
 "had":["had","hada"],
   "auto": ["auto"],
 "věž":["věž"],
-"pes":["pes","psa"]}}
+"pes":["pes","psa"],
+"šuplík": ["zásuvka", "šuplík", "šuple"]
+}}

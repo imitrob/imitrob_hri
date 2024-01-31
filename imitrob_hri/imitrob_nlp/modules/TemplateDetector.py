@@ -19,7 +19,7 @@ from imitrob_hri.imitrob_nlp.modules.CrowModule import CrowModule
 #from crow_nlp.nlp_crow.structures.tagging.MorphCategory import POS
 #from crow_nlp.nlp_crow.structures.tagging.ParsedText import TaggedText
 #from crow_nlp.nlp_crow.structures.tagging.Tag import Tag
-from imitrob_hri.imitrob_nlp.TemplateFactory import TemplateType as tt
+from imitrob_hri.imitrob_nlp.TemplateFactory import TemplateFactory, TemplateType as tt
 from imitrob_hri.imitrob_nlp.modules.UserInputManager import UserInputManager
 import logging
 import rclpy
@@ -57,29 +57,33 @@ class TemplateDetector(CrowModule):
         a list of guessed templates for the tagged text sorted by their probability
         """
         templates = []
-        detect_fns = [self.detect_pick,
-                      self.detect_point,
-                      self.detect_pass_me,
-                      self.detect_pour,
-                        # self.detect_define_storage,
-                        # self.detect_define_position,
-                        # self.detect_remove_command_x,
-                        # self.detect_remove_command_last,
-                        # self.detect_fetch,
-                        # self.detect_fetch_to,
-                        # self.detect_release,
-                        #   # self.detect_apply_glue,
-                        #   # self.detect_put, #exchanged for fetch_to
-                        # self.detect_tidy,
-                        # self.detect_stop,
-                        # self.detect_build,
-                        # self.detect_cancel_build,
-                        # self.detect_remove_product,
-                          # self.detect_learn,
-                          # self.detect_tower,
-                          # self.detect_demonstration_list,
-                          # self.detect_define_area
-                    ]
+
+        # all templates
+        detect_fns = TemplateFactory().get_all_template_detect_functions()
+
+        # detect_fns = [self.detect_pick,
+        #               self.detect_point,
+        #               self.detect_pass_me,
+        #               self.detect_pour,
+        #                 # self.detect_define_storage,
+        #                 # self.detect_define_position,
+        #                 # self.detect_remove_command_x,
+        #                 # self.detect_remove_command_last,
+        #                 # self.detect_fetch,
+        #                 # self.detect_fetch_to,
+        #                 # self.detect_release,
+        #                 #   # self.detect_apply_glue,
+        #                 #   # self.detect_put, #exchanged for fetch_to
+        #                 # self.detect_tidy,
+        #                 # self.detect_stop,
+        #                 # self.detect_build,
+        #                 # self.detect_cancel_build,
+        #                 # self.detect_remove_product,
+        #                   # self.detect_learn,
+        #                   # self.detect_tower,
+        #                   # self.detect_demonstration_list,
+        #                   # self.detect_define_area
+        #             ]
 
         # try to find custom templates (compound actions) first
         # custom_templates = self.detect_custom_templates(tagged_text)
@@ -90,7 +94,7 @@ class TemplateDetector(CrowModule):
         # add detected basic templates (actions)
         template_found = False
         for detect_fn in detect_fns:
-            res = detect_fn(tagged_text)
+            res = self.detect_fn_wrapper(detect_fn, tagged_text)
 
             if res:
                 template_found = True
@@ -100,7 +104,15 @@ class TemplateDetector(CrowModule):
             self.ui.buffered_say(self.guidance_file[self.lang]["no_template_match"] + tagged_text.get_text(), say = 2)
 
         return templates
-
+    
+    def detect_fn_wrapper(self, detect_fn, tagged_text):
+        
+        is_detected, template_name = detect_fn(tagged_text, templ_det=self.templ_det, lang=self.lang)
+        if is_detected:
+            self.ui.buffered_say(self.guidance_file[self.lang]["template_match"] + self.templ_det[self.lang][template_name])
+            return [getattr(tt, template_name)]
+        else:
+            return False
 
     # def detect_custom_templates(self, tagged_text : TaggedText):
     #     """
@@ -127,40 +139,55 @@ class TemplateDetector(CrowModule):
     #     return custom_templates
 
 
-    def detect_pick(self, tagged_text) -> List[tt]:
-        """
-        Detector for PickTask
-        """
-        # if tagged_text.contains_pos_token(self.templ_det[self.lang]['take'], "VB") or tagged_text.contains_pos_token(self.templ_det[self.lang]['pick'], "VB"):
-        #     self.ui.say(self.guidance_file[self.lang]["template_match"]+self.templ_det[self.lang]['pick'])
 
-            #if tagged_text.contains_pos_token("take", "VB") or \
-        #        tagged_text.contains_pos_token("pick", "VB"):
-        if tagged_text.contains_text(self.templ_det[self.lang]['pick']):
-            self.ui.buffered_say(self.guidance_file[self.lang]["template_match"] + self.templ_det[self.lang]['pick'])
-            return [tt.PICK_TASK]
-        
-    def detect_point(self, tagged_text) -> List[tt]:
-        """
-        Detector for PointTask
-        """
-        #if tagged_text.contains_text("point"):
-        if tagged_text.contains_text(self.templ_det[self.lang]['point']):
-            self.ui.buffered_say(self.guidance_file[self.lang]["template_match"]+ self.templ_det[self.lang]['point'])
-            return [tt.POINT_TASK]
-        
-    def detect_pass_me(self, tagged_text) -> List[tt]:
-        """
-        Detector for PassMe or Fetch
-        """
-        if tagged_text.contains_text(self.templ_det[self.lang]['give']):
-            self.ui.buffered_say(self.guidance_file[self.lang]["template_match"] + self.templ_det[self.lang]['give'])
-            return [tt.PASSME_TASK]
+        # if tagged_text.contains_text(self.templ_det[self.lang]['pick']):
+        # return [tt.PICK_TASK]
 
-    def detect_pour(self, tagged_text) -> List[tt]:
-        if tagged_text.contains_text(self.templ_det[self.lang]['pour']):
-            self.ui.buffered_say(self.guidance_file[self.lang]["template_match"] + self.templ_det[self.lang]['pour'])
-            return [tt.POUR_TASK]
+    # def detect_pick(self, tagged_text) -> List[tt]:
+    #     """
+    #     Detector for PickTask
+    #     """
+    #     # if tagged_text.contains_pos_token(self.templ_det[self.lang]['take'], "VB") or tagged_text.contains_pos_token(self.templ_det[self.lang]['pick'], "VB"):
+    #     #     self.ui.say(self.guidance_file[self.lang]["template_match"]+self.templ_det[self.lang]['pick'])
+
+    #         #if tagged_text.contains_pos_token("take", "VB") or \
+    #     #        tagged_text.contains_pos_token("pick", "VB"):
+    #     if tagged_text.contains_text(self.templ_det[self.lang]['pick']):
+    #         self.ui.buffered_say(self.guidance_file[self.lang]["template_match"] + self.templ_det[self.lang]['pick'])
+    #         return [tt.PICK_TASK]
+        
+    # def detect_point(self, tagged_text) -> List[tt]:
+    #     """
+    #     Detector for PointTask
+    #     """
+    #     #if tagged_text.contains_text("point"):
+    #     if tagged_text.contains_text(self.templ_det[self.lang]['point']):
+    #         self.ui.buffered_say(self.guidance_file[self.lang]["template_match"]+ self.templ_det[self.lang]['point'])
+    #         return [tt.POINT_TASK]
+        
+    # def detect_pass_me(self, tagged_text) -> List[tt]:
+    #     """
+    #     Detector for PassMe or Fetch
+    #     """
+    #     if tagged_text.contains_text(self.templ_det[self.lang]['give']):
+    #         self.ui.buffered_say(self.guidance_file[self.lang]["template_match"] + self.templ_det[self.lang]['give'])
+    #         return [tt.PASS_TASK]
+
+    # def detect_pour(self, tagged_text) -> List[tt]:
+    #     if tagged_text.contains_text(self.templ_det[self.lang]['pour']):
+    #         self.ui.buffered_say(self.guidance_file[self.lang]["template_match"] + self.templ_det[self.lang]['pour'])
+    #         return [tt.POUR_TASK]
+
+    # def detect_putinto(self, tagged_text) -> List[tt]:
+    #     if tagged_text.contains_text(self.templ_det[self.lang]['put']):
+    #         self.ui.buffered_say(self.guidance_file[self.lang]["template_match"] + self.templ_det[self.lang]['put'])
+    #         return [tt.PUT_INTO_TASK]
+        
+    # def detect_stack(self, tagged_text) -> List[tt]:
+    #     if tagged_text.contains_text(self.templ_det[self.lang]['stack']):
+    #         self.ui.buffered_say(self.guidance_file[self.lang]["template_match"] + self.templ_det[self.lang]['stack'])
+    #         return [tt.PUT_INTO_TASK]
+    
 
 
     # def detect_apply_glue(self, tagged_text) -> List[tt]:

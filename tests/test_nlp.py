@@ -81,25 +81,32 @@ def test_nlp_1():
         ["dej kostku", {'target_action': 'pass', 'target_object': 'cube_holes'}],
         # Program template has two actions 
         ["Kostku mi dej. A pak ukaž na kostku.", {'target_action': 'pass', 'target_object': 'cube_holes'}],
-        # TODO: Barvy, cannot assign the color to object in order to test this
-        # ["Podej mi zelenou kostku.", {'target_action': 'pass', 'target_object': 'cube_holes'}],
-        # ["Podej mi červenou kostku.", {'target_action': 'pass', 'target_object': 'cube_holes'}],
-        # ["Podej mi kladivo", ('Noop', '')],
-        
+        # Target color        
         ["Podej mi červenou kostku", {'target_action': 'pass', 'target_object': 'cube_holes', 'to_color': 'red'}],
         ["Podej mi zelenou kostku", {'target_action': 'pass', 'target_object': 'cube_holes', 'to_color': 'green'}],
-        
-        ["Nalij kostku na kolo.", {'target_action': 'pour', 'target_object': 'cube_holes', 'target_storage': 'wheel'}]
-        # ["Ukaž na modrý kolík", ('point', 'blue peg')],
+        # Test all template detections
+        ["Nalij kostku na kolo.", {'target_action': 'pour', 'target_object': 'cube_holes', 'target_storage': 'wheel'}],
+        ["Nandej kostku na kolo.", {'target_action': 'stack', 'target_object': 'cube_holes', 'target_storage': 'wheel'}],
+        ["Polož kostku na kolo.", {'target_action': 'put-into', 'target_object': 'cube_holes', 'target_storage': 'wheel'}],
+        ["Stop.", {'target_action': 'stop'}],
+        ["Nahoru.", {'target_action': 'move-up'}],
+        ["Pusť.", {'target_action': 'release'}],
+        ["Postrč kostku.", {'target_action': 'push', 'target_object': 'cube_holes'}],
+        ["Odlep kostku.", {'target_action': 'unglue', 'target_object': 'cube_holes'}],
+        # Distinguish between green and red cubes
+        ["Nandej zelenou kostku na červený kostku.", {'target_action': 'stack', 'target_object': 'cube_holes', 'to_color': 'green', 'target_storage': 'cube_holes', 'ts_color': 'red'}],
+        # Colors
+        ["Podej mi zelenou kostku.", {'target_action': 'pass', 'target_object': 'cube_holes'}],
+        ["Podej mi červenou kostku.", {'target_action': 'pass', 'target_object': 'cube_holes'}],
+        # Point
+        ["Ukaž na modrý šuplík", {'target_action': 'point', 'target_object': 'drawer', 'to_color': 'blue'}],
         # ["Ukaž na zelenou kostku", ('point', 'green cube')],
         # ["Ukaž na kolík", ('', '')],
         # ["Ukaž na zelenou kostku", ('', '')],
-        # ["Definuj modrou pozici", ('', '')],
-        # ["Pick a red cube", ('', '')],
-        # ["Seber kostku", ('', '')],
+        
+        # ["Podej mi kladivo", ('Noop', '')],
     ]
     '''example_list = [    
-        ["Dej zelenou kostku do červený krabice.", ('place', 'cube_holes', 'paper box')],
         # FUTURE?
         # ["Vezmi jablko a hrušku a dej je do krabice", (..)]
         ["Dej zelenou kostku na červenou kostku"]

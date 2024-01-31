@@ -92,6 +92,7 @@ TemplateType = Enum('TemplateType', list(zip(enum_strs, enum_values)))
 # DEMONSTRATION_LIST = DemonstrationListAction
 # DEFINE_AREA = DefineAreaAction
 
+
 class TemplateFactory:
     def get_template(self, type : TemplateType):
         return type.value()
@@ -102,6 +103,14 @@ class TemplateFactory:
     def get_template_class_from_str(self, name):
         return getattr(TemplateType,name).value
     
+
+    def get_all_template_values(self):
+        return [getattr(TemplateType, name).value for name in TemplateType._member_names_]
+
+    def get_all_template_detect_functions(self):
+        templates = self.get_all_template_values()
+        template_detect_functions = [t.detect_fun for t in templates]
+        return template_detect_functions
 
 
 def to_default_name(name, ct='template'):

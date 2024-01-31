@@ -26,7 +26,14 @@
            "release": "release",
            "stop": "stop",
            "cancel_build": "Cancel building",
-           "cancel":"cancel"
+           "cancel":"cancel",
+           "pass me": "pass me",
+           "stack": "stack",
+           "push": "push",
+           "unglue": "unglue",
+           "put-into": "put-into",
+           "move up": "move up",
+           "move-up": "move up"
            },
        "cs": {
            "build":"stavět",
@@ -57,6 +64,13 @@
            "release": "pustit",
            "stop": "stop",
            "cancel_build": "zruš stavění",
-           "cancel":"zruš"
+           "cancel":"zruš",
+           "pass me": "podej mi",
+           "stack": "nandej",
+           "push": "posuň",
+           "unglue": "odlep",
+           "put-into": "dej do",
+           "move up": "nahoru",
+           "move-up": "nahoru"
        }
              }

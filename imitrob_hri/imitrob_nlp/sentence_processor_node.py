@@ -191,15 +191,34 @@ class SentenceProcessor(Node):
         d['target_action'] = str(template.target_action)
         d['target_object'] = str(template.target_object)
         d['target_storage'] = str(template.target_storage)
-        d['to_color'] = str(template._1_detected_data['to'].objs_properties['color'].activated)
+        if 'to' in template._1_detected_data:
+            d['to_color'] = str(template._1_detected_data['to'].objs_properties['color'].activated)
+        if 'ts' in template._1_detected_data:
+            d['ts_color'] = str(template._1_detected_data['ts'].objs_properties['color'].activated)
         
+
         # d['target_object_probs'] = list(template.target_object_probs)
         d['actions'] = list(template.nlp_all_detected_templates)
         d['action_probs'] = [1.0] * len(template.nlp_all_detected_templates)
         # d['action_timestamp'] = 0.0
-        d['objects'] = list(template._1_detected_data['to'].objs_mentioned_cls.names)
-        d['object_probs'] = list(template._1_detected_data['to'].objs_mentioned_cls.p)
-        # d['object_classes'] = ['object']
+
+        if 'to' in template._1_detected_data:   
+            d['objects'] = list(template._1_detected_data['to'].objs_mentioned_cls.names)
+            d['object_probs'] = list(template._1_detected_data['to'].objs_mentioned_cls.p)
+            # d['object_classes'] = ['object']
+
+            d['to_colors'] = list(template._1_detected_data['to'].objs_properties['color'].names)
+            d['to_color_probs'] = list(template._1_detected_data['to'].objs_properties['color'].p)
+
+        if 'ts' in template._1_detected_data:   
+            d['storages'] = list(template._1_detected_data['ts'].objs_mentioned_cls.names)
+            d['storage_probs'] = list(template._1_detected_data['ts'].objs_mentioned_cls.p)
+            # d['object_classes'] = ['object']
+
+            d['ts_colors'] = list(template._1_detected_data['ts'].objs_properties['color'].names)
+            d['ts_color_probs'] = list(template._1_detected_data['ts'].objs_properties['color'].p)
+
+
         # d['parameters'] = ""        
         
         # print("template._1_detected_data")
@@ -207,8 +226,8 @@ class SentenceProcessor(Node):
         # print("template._2_groundede_data")
         # print(template._2_grounded_data['to'])
         # print("target_storage? ", 'ts' in template._1_detected_data)
-        if 'ts' in template._1_detected_data:
-            print(template._1_detected_data['ts'])
+        # if 'ts' in template._1_detected_data:
+        #     print(template._1_detected_data['ts'])
 
 
         # d["objs_mentioned_cls"] = template.objs_mentioned_cls
