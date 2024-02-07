@@ -39,6 +39,7 @@ def get_random_triplet(c):
 
 def generate_probs(names, true_name, det_fun, min_ch, sim_table, scene, regulation_policy, noise_fun):
     ''' approach v2
+        - Note: chosen_names_subset is full list
         - We have names of category items, true detected name
     Parameters:
         names (String[]): e.g. template names
@@ -53,7 +54,8 @@ def generate_probs(names, true_name, det_fun, min_ch, sim_table, scene, regulati
         return np.array([]), np.array([])
 
     # 1. Get observed gesture templates: [pick, pour] chosen from all e.g. [pick, pour, point, push, ...]
-    chosen_names_subset = np.random.choice(names, size=np.random.randint(min_ch, len(names) ), replace=False)
+    # chosen_names_subset =     np.random.choice(names, size=np.random.randint(min_ch, len(names) ), replace=False)
+    chosen_names_subset = names
     # 2. If true_name == 'stack' -> is not in chosen_names_subset -> add it 
     chosen_names_subset = add_if_not_there(chosen_names_subset, true_name)
     # 3. Give all likelihoods ones [1.0, 1.0, 1.0], [pick, pour, stack]

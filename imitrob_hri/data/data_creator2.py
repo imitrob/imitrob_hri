@@ -13,7 +13,7 @@ def req_prop_to_observation(prop, sign):
     assert sign in ['-','+'], f"sign should be + or -, it is {sign}"
     assert isinstance(prop, str), f"property in string form, it is type: {type(prop)}"
     
-    RATE_DIFF = 0.1
+    RATE_DIFF = 0.5
     
     if prop == 'pickable':
         threshold_being_unpickable = 0.12 # [m] <- robot's gripper max opened distance 
@@ -29,8 +29,10 @@ def req_prop_to_observation(prop, sign):
         
         if sign == '+': # property is needed to be pickable
             value = [threshold_radius_being_unreachable * (1-RATE_DIFF)] * 3
+            # Note: value = [x,y,z]
         elif sign == '-':
             value = [threshold_radius_being_unreachable * (1+RATE_DIFF)] * 3
+            # Note: value = [x,y,z]
         return 'position', value
     
     if prop == 'stackable':
@@ -81,7 +83,7 @@ def req_prop_to_observation(prop, sign):
 
 def get_minimal_valid_scene_for_triplet(c, triplet, other_prop_oposite):
     y_template, y_selection, y_storage = triplet
-    template_o = create_template(y_template)
+    template_o = create_template(y_template, nlp=False)
 
     o = None
     if y_selection is not None:
@@ -132,7 +134,7 @@ def get_minimal_valid_scene_for_triplet(c, triplet, other_prop_oposite):
     return o, s
 
 def get_observations_cannot_be_done_by_this_action(c, target_action):
-    template_o = create_template(target_action)
+    template_o = create_template(target_action, nlp=False)
     
     # get requirements (properties) for the action
     positive_requirements = deepcopy(template_o.feasibility_requirements['+'])
@@ -237,6 +239,7 @@ def generate_dataset2(gen_params):
             
             # I needed to add this workaround argument for  for D5
             if dataset_policy == 'one_bigger': # D5
+                # [modality x arity]
                 rp_M_C = ((dataset_policy, '-', '-'), ('-', '-', '-'))
             else:
                 rp_M_C = ((dataset_policy, '-', '-'), (dataset_policy, '-', '-'))

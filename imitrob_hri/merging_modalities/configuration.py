@@ -319,8 +319,8 @@ class Configuration2_2(Configuration):
             'storages': ['paper box', 'abstract marked zone', 'out of table', 'on the table'],
         }
         self.scene_gen_config = {
-            'selections_n': ('uniform', 2, 3), # Always two objects
-            'storages_n': ('uniform', 1, 2), # Always one storage 
+            'selections_n': ('uniform', 5, 6),
+            'storages_n': ('uniform', 0, 1),
         }
         #self.ct_properties = self.ct_properties_default
 
@@ -356,8 +356,8 @@ class Configuration2_3(Configuration):
             'storages': ['paper box', 'abstract marked zone', 'out of table', 'on the table'],
         }
         self.scene_gen_config = {
-            'selections_n': ('uniform', 6, 7), # Always 6 Objects
-            'storages_n': ('uniform', 3, 4), # Always 3 Storages
+            'selections_n': ('uniform', 5, 6),
+            'storages_n': ('uniform', 3, 4),
         }
         #self.ct_properties = self.ct_properties_default
         

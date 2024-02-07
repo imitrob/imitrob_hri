@@ -1,15 +1,5 @@
 #!/usr/bin/env python3
-"""
-Copyright (c) 2023 CIIRC, CTU in Prague
-All rights reserved.
 
-This source code is licensed under the BSD-3-Clause license found in the
-LICENSE file in the root directory of this source tree.
-
-@author: Karla Štěpánová, Megi Mejdrechová
-@mail:  karla.stepanova@cvut.cz
-@edited: January 2024
-"""
 import json
 import re
 
@@ -198,8 +188,8 @@ class SentenceProcessor(Node):
         
 
         # d['target_object_probs'] = list(template.target_object_probs)
-        d['actions'] = list(template.nlp_all_detected_templates)
-        d['action_probs'] = [1.0] * len(template.nlp_all_detected_templates)
+        d['actions'] = list(template.template_probs.names)
+        d['action_probs'] = list(template.template_probs.p)
         # d['action_timestamp'] = 0.0
 
         if 'to' in template._1_detected_data:   

@@ -1,13 +1,4 @@
 #!/usr/bin/env python
-"""
-Copyright (c) 2019 CIIRC, CTU in Prague
-All rights reserved.
-
-This source code is licensed under the BSD-3-Clause license found in the
-LICENSE file in the root directory of this source tree.
-
-@author: Zdenek Kasner
-"""
 import logging
 from typing import Any
 
@@ -182,13 +173,13 @@ class ObjectDetector(CrowModule):
                 
         # Handle cases like "it"
         # try to detect a coreference to an object
-        if obj.empty:
-            if tagged_text.contains_text(self.obj_det_file[self.lang]["it"]):
-                obj = self.detect_coreferenced_object()
-            else:
-                if not silent_fail:
-                    self.ui.buffered_say(self.guidance_file[self.lang]["object_not_matched"] + " " + text , say = 2)
-                    self.ui.buffered_say(self.guidance_file[self.lang]["object_not_matched_repeat"], say = 3)
+        # if obj.empty:
+        #     if tagged_text.contains_text(self.obj_det_file[self.lang]["it"]):
+        #         obj = self.detect_coreferenced_object()
+        #     else:
+        #         if not silent_fail:
+        #             self.ui.buffered_say(self.guidance_file[self.lang]["object_not_matched"] + " " + text , say = 2)
+        #             self.ui.buffered_say(self.guidance_file[self.lang]["object_not_matched_repeat"], say = 3)
         
         if obj.empty: return None
         return obj
@@ -236,6 +227,16 @@ class ObjectDetector(CrowModule):
                 if tagged_text.contains_text(obj_str_lang_syn):
                     obj_pv.p = [0.99]
             
+        
+
+        return obj_pv, self.detect_all_properties(tagged_text, obj_idx)
+
+    def detect_standalone_properties(self, tagged_text):
+        obj = ObjectsDetectedData()
+        obj.objs_properties = self.detect_all_properties(tagged_text, len(tagged_text.tokens))
+        return obj
+
+    def detect_all_properties(self, tagged_text, obj_idx):
         # seber cervenou kostku a modrou -> cervena 
         # seber kostku cervenou -> x
         # TODO: Check for how we want it
@@ -252,10 +253,10 @@ class ObjectDetector(CrowModule):
         objs_properties = {}
         objs_properties['color'] = ProbsVector(c='default')
         if len(colors) > 0:
-            objs_properties['color'] = ProbsVector(template_names=colors, p=np.ones((len(colors))), c='default')
-            
+            p = np.ones((len(colors)))
+            objs_properties['color'] = ProbsVector(template_names=colors, p=p, c='default')
+        return objs_properties
 
-        return obj_pv, objs_properties
 
     # def detect_known_object(self, tagged_text, obj_str):
     #     cls = self.class_map[obj_str]
@@ -329,10 +330,17 @@ class ObjectDetector(CrowModule):
             return False
 
     def is_target_object(self, indx, tagged_text):
-        ''' is target_object or target storage (target of manipulation)
-            Checks whether before it is no preposition 
-        '''
+        """Returns true if token on position indx is target object
+           Returns False if token on position indx is target storage, a.k.a. target of manipulation
 
+        Args:
+            indx (int): token index
+            tagged_text (TaggedText())
+
+        Returns:
+            Bool
+        """
+        # from the token indx to 0
         for tag_idx in range(int(indx)-1, -1, -1):
             # print("1  ", indx)
             # print("2  ", tagged_text.tokens[tag_idx])
