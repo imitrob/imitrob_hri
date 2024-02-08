@@ -1,6 +1,7 @@
 import numpy as np
 from imitrob_hri.merging_modalities.configuration import ConfigurationDefault
 from imitrob_hri.merging_modalities.utils import *
+from copy import deepcopy
 
 class ProbsVector():
     ''' Making decisions based on probability vector

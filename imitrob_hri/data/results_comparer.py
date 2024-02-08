@@ -13,6 +13,7 @@ from extraction_funs import *
 from copy import deepcopy
 from merging_modalities.utils import singlehistplot_customized
 
+DATASET_PREFIX = '2' # '' for original dataset
 
 class Results6DComparer():
     def __init__(self):
@@ -22,9 +23,9 @@ class Results6DComparer():
         results_all = []
 
         for name in ['baseline', 'mul', 'add_2', 'entropy', 'entropy_add_2']:
-            accs = np.load(f"{os.path.dirname(os.path.abspath(__file__))}/results/accs_{name}.npy", allow_pickle=True)
+            accs = np.load(f"{os.path.dirname(os.path.abspath(__file__))}/results{DATASET_PREFIX}/accs_{name}.npy", allow_pickle=True)
 
-            results = np.load(f"{os.path.dirname(os.path.abspath(__file__))}/results/results_{name}.npy", allow_pickle=True)
+            results = np.load(f"{os.path.dirname(os.path.abspath(__file__))}/results{DATASET_PREFIX}/results_{name}.npy", allow_pickle=True)
             
             results_6D = []
             results_6D.append(np.array(accs))

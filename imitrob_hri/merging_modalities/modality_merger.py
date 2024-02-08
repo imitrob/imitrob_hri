@@ -18,7 +18,7 @@ from imitrob_hri.imitrob_nlp.TemplateFactory import create_template
 from copy import deepcopy
 
 from teleop_msgs.msg import HRICommand
-from imitrob_hri.merging_modalities.probs_vector import NaiveProbsVector, ProbsVector
+from imitrob_hri.merging_modalities.probs_vector import EntropyProbsVector, NaiveProbsVector, ProbsVector
 
 """
 class ModalityReceiver():

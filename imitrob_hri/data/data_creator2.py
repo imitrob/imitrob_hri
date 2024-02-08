@@ -9,6 +9,12 @@ from merging_modalities.configuration import *
 import merging_modalities.noise_model as nm
 import time
 
+from imitrob_templates.templates import imported_classes
+for cls in imported_classes:
+    globals()[cls.__name__] = getattr(__import__(f'imitrob_templates.templates.{cls.__name__}', globals(), locals(), [cls.__name__], 0), cls.__name__)
+
+DATASET_PREFIX = '2' # '' for original dataset
+
 def req_prop_to_observation(prop, sign):
     assert sign in ['-','+'], f"sign should be + or -, it is {sign}"
     assert isinstance(prop, str), f"property in string form, it is type: {type(prop)}"
@@ -333,15 +339,17 @@ def generate_dataset2(gen_params):
 
 def gen_dataset2(c,n,d):
     config = {'c1': Configuration2_1(), 'c2':Configuration2_2(), 'c3': Configuration2_3()}[c]
-    noise = {'n1': (nm.NormalModel(1.0, 0.0), nm.NormalModel(0.0,0.0)), 
-             'n2': (nm.gesture_det_model, nm.gesture_noise_model2),
-             'n3': (nm.gesture_det_model, nm.gesture_noise_model4),}[n]
+    noise = {'n0': (nm.NormalModel(1.0, 0.0), nm.NormalModel(0.0,0.0)), 
+             'n1': (nm.NormalModel(1.0, 0.0), nm.NormalModel(0.0,0.1)),
+             'n2': (nm.NormalModel(1.0, 0.0), nm.gesture_noise_model2),
+             'n3': (nm.NormalModel(1.0, 0.0), nm.gesture_noise_model4),}[n]
     policies_str = d[1:]
     policies_list = [
         '-',
         'fake_arity_decidable_wrt_true',
         'fake_properties_decidable_wrt_true',
         'one_bigger',
+        'undecidable_wrt_true',
     ]
     policies = []
     for char in policies_str:
@@ -355,15 +363,15 @@ def gen_dataset2(c,n,d):
         'dataset_policies': policies,
     })
 
-    np.save(f'{os.path.dirname(os.path.abspath(__file__))}/saves/artificial_dataset2_{c}_{n}_{d}.npy', dataset)
+    np.save(f'{os.path.dirname(os.path.abspath(__file__))}/saves/artificial_dataset{DATASET_PREFIX}_{c}_{n}_{d}.npy', dataset)
 
 if __name__ == '__main__':
     
     dataset_name = sys.argv[1]
     if dataset_name == 'all':
         for c in ['c1', 'c2', 'c3']:
-            for n in ['n1', 'n2', 'n3']:
-                for d in ['D1', 'D2', 'D3', 'D4']:
+            for n in ['n0', 'n1', 'n2', 'n3']:
+                for d in ['D1', 'D2', 'D3', 'D4', 'D5']:
                     gen_dataset2(c,n,d)
     
     else:

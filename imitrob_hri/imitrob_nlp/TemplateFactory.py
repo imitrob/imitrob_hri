@@ -29,7 +29,10 @@ for cls in imported_classes:
     s1 = s1.lower()
 
     enum_strs.append(f"{s1}")
-    enum_values.append(cls)
+    enum_values.append(getattr(__import__(f'imitrob_templates.templates.{cls.__name__}', globals(), locals(), [cls.__name__], 0), cls.__name__))
+
+    # hack to import class for saving
+    globals()[cls.__name__] = getattr(__import__(f'imitrob_templates.templates.{cls.__name__}', globals(), locals(), [cls.__name__], 0), cls.__name__)
 
 TemplateType = Enum('TemplateType', list(zip(enum_strs, enum_values)))
 
@@ -93,8 +96,11 @@ if __name__ == '__main__':
         t = create_template(tmplt, nlp=False)
         print(f"time {tmplt}: {time.perf_counter()-t0}")
         ts.append(t)
-
-    from imitrob_templates.templates.StopTask import StopTask
-    st = StopTask(nlp=False)
+    
+    st = [StopTask(nlp=False),
+          PassTask(nlp=False),
+          StackTask(nlp=False),
+          MoveUpTask(nlp=False),
+          ]
 
     np.save('/home/petr/Downloads/test_only', st)
