@@ -28,7 +28,7 @@ template_name_synonyms = {
     '30': ['replace', 'swap', 'change'],
     
     '40': ['unglue'],
-    '41': ['grip', 'close'],
+    '41': ['close', 'grip'],
     '42': ['open', "pustit"],
     
     #'208': ['pnp'], # pick n place
