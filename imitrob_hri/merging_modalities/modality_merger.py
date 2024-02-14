@@ -369,7 +369,7 @@ class ModalityMerger():
             elif self.use_magic == 'entropy_add_2':
                 msp = lsp + gsp
             else:
-                raise Exception("TODO?")
+                raise Exception(f"magic: {self.use_magic} TODO?")
 
         msp /= np.sum(msp)  # normalize
 
@@ -527,6 +527,7 @@ class ModalityMerger():
         template_ct_penalized = deepcopy(S_naive['template']) # 1D (templates)
         template_ct_penalized_real = deepcopy(S_naive['template']) # 1D (templates)
         
+        DEBUGdata.append(f"templates: {templates}")
         if model > 1:
             for nt, template in enumerate(templates): # e.g. pick, push, put=into
                 template_obj = create_template(template)
@@ -544,29 +545,36 @@ class ModalityMerger():
                         alpha *= alpha_penal
 
                 if model > 2:
+                    beta = 0.0
                     if template_obj.mm_pars_compulsary == ['template', 'selections', 'storages']:
-                        beta = 0.0
+                        # beta = 0.0
                         for o in scene.selections:
                             for s in scene.storages:
+                                
                                 if template_obj.is_feasible(o, s):
                                     beta = 1.0
+                                # DEBUGdata.append(f"template: {template}, isfeasible {template_obj.is_feasible(o, s)}")
                     elif template_obj.mm_pars_compulsary == ['template', 'selections']:
-                        beta = 0.0
+                        # beta = 0.0
                         for o in scene.selections:
                             if template_obj.is_feasible(o):
                                 beta = 1.0
+                            # DEBUGdata.append(f"template: {template}, isfeasible {template_obj.is_feasible(o)}")
                     elif template_obj.mm_pars_compulsary == ['template']:
                         beta = 1.0
+                        # DEBUGdata.append(f"template: {template}, been here!")
                     else: raise Exception(f"TODO {template_obj.mm_pars_compulsary}")
-
+                    # DEBUGdata.append(f"alpha: {alpha}")
+                    # DEBUGdata.append(f"beta: {beta}")
                 template_ct_penalized.p[nt] *= alpha
                 template_ct_penalized.p[nt] *= beta
 
                 template_ct_penalized_real.p[nt] *= beta_real
-            
         
         if use_magic == 'entropy' or use_magic == 'entropy_add_2':
             template_ct_penalized.recompute_ids()
+        
+
         # hack - only if mul
         if use_magic == 'mul' or use_magic == 'entropy':
             template_ct_penalized.p = np.clip(1.4 * template_ct_penalized.p, 0, 1)

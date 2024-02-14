@@ -135,7 +135,7 @@ def get_minimal_valid_scene_for_triplet(c, triplet, other_prop_oposite):
                 obs_name, obs_value = req_prop_to_observation(prop, '+')
                 observations[obs_name] = obs_value
         
-        o = Object3(observations)
+        s = Object3(observations)
         
     return o, s
 
@@ -183,7 +183,7 @@ def generate_dataset2(gen_params):
     c = gen_params['configuration']
     dataset = []
     for dataset_policy in gen_params['dataset_policies']:
-        for i_sample in range(c.samples):
+        while len(dataset) < c.samples:
             # 1: true random triplet (y_template, y_selection, y_storages) (str, str, str)
             triplet = get_random_triplet(c)
             y_template, y_selection, y_storages = triplet
@@ -250,9 +250,10 @@ def generate_dataset2(gen_params):
             else:
                 rp_M_C = ((dataset_policy, '-', '-'), (dataset_policy, '-', '-'))
             
+            successfull = True
             # 3. Generate probs
-            G = {
-                'template': ProbsVector(*generate_probs(
+            G = {}
+            p = generate_probs(
                     names=c.templates,
                     true_name=y_template,
                     det_fun=det_fun,
@@ -260,8 +261,10 @@ def generate_dataset2(gen_params):
                     sim_table=c.sim_table_gesture,
                     scene=scene,
                     regulation_policy=rp_M_C[0][0],
-                    noise_fun=noise_fun), c),
-                'selections': ProbsVector(*generate_probs(
+                    noise_fun=noise_fun)
+            if p[0] is None: successfull = False
+            G['template'] = ProbsVector(*p, c)
+            p = generate_probs(
                     names=c.objects, #scene.selection_names,
                     true_name=y_selection,
                     det_fun=det_fun,
@@ -269,8 +272,10 @@ def generate_dataset2(gen_params):
                     sim_table=c.sim_table_gesture_objects,
                     scene=scene,
                     regulation_policy=rp_M_C[0][1],
-                    noise_fun=noise_fun), c),
-                'storages': ProbsVector(*generate_probs(
+                    noise_fun=noise_fun)
+            if p[0] is None: successfull = False
+            G['selections'] = ProbsVector(*p, c)
+            p = generate_probs(
                     names=c.storages, #scene.storage_names,
                     true_name=y_storages,
                     det_fun=det_fun,
@@ -278,10 +283,12 @@ def generate_dataset2(gen_params):
                     sim_table=c.sim_table_gesture_storages,
                     scene=scene,
                     regulation_policy=rp_M_C[0][2],
-                    noise_fun=noise_fun), c),
-            }
-            L = {
-                'template': ProbsVector(*generate_probs(
+                    noise_fun=noise_fun)
+            if p[0] is None: successfull = False
+            G['storages'] = ProbsVector(*p, c)
+            
+            L = {}
+            p = generate_probs(
                     names=c.templates,
                     true_name=y_template,
                     det_fun=det_fun,
@@ -289,8 +296,10 @@ def generate_dataset2(gen_params):
                     sim_table=c.sim_table_language,
                     scene=scene,
                     regulation_policy=rp_M_C[1][0],
-                    noise_fun=noise_fun), c),
-                'selections':ProbsVector(*generate_probs(
+                    noise_fun=noise_fun)
+            if p[0] is None: successfull = False
+            L['template'] = ProbsVector(*p, c),
+            p = generate_probs(
                     names=c.objects, #scene.selection_names,
                     true_name=y_selection,
                     det_fun=det_fun,
@@ -298,17 +307,24 @@ def generate_dataset2(gen_params):
                     sim_table=c.sim_table_language_objects,
                     scene=scene,
                     regulation_policy=rp_M_C[1][1],
-                    noise_fun=noise_fun), c),
-                'storages':ProbsVector(*generate_probs(
-                    names=c.storages, #scene.storage_names,
-                    true_name=y_storages,
-                    det_fun=det_fun,
-                    min_ch=0,
-                    sim_table=c.sim_table_language_storages,
-                    scene=scene,
-                    regulation_policy=rp_M_C[1][2],
-                    noise_fun=noise_fun), c),
-            }
+                    noise_fun=noise_fun)
+            if p[0] is None: successfull = False
+            L['selections'] = ProbsVector(*p, c)
+            p = generate_probs(
+                names=c.storages, #scene.storage_names,
+                true_name=y_storages,
+                det_fun=det_fun,
+                min_ch=0,
+                sim_table=c.sim_table_language_storages,
+                scene=scene,
+                regulation_policy=rp_M_C[1][2],
+                noise_fun=noise_fun)
+            if p[0] is None: successfull = False
+            L['storages'] = ProbsVector(*p, c)
+
+            if not successfull:
+                print(f"not successful, return, len of dataset: {len(dataset)}")
+                continue
 
             # I don't use this for now
             if gen_params['complementary']:

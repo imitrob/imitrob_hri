@@ -93,14 +93,17 @@ def generate_probs(names, true_name, det_fun, min_ch, sim_table, scene, regulati
         chosen_names_subset_ = get_templates_decisive_based_on_arity(names, true_name, min_ch, scene)
         
         for chosen_name_subset_ in chosen_names_subset_:
+            # the ones which are not decisive based on arity
             if chosen_name_subset_ not in chosen_names_subset:
+                raise Exception("This won't happen, when there is not subsets")
                 chosen_names_subset = np.append(chosen_names_subset,chosen_name_subset_)
                 P = np.append(P, activated_normal)
             else:
+                # It is decisive a 
                 id = list(chosen_names_subset).index(chosen_name_subset_)
-                P[id] = np.clip(activated_normal + added_noise_regulation_policy, 0,1)
+                P[id] = np.clip(activated_normal + added_noise[id], 0,1)
 
-    # D4
+    # D5
     elif regulation_policy == 'undecidable_wrt_true':
         # 1. choose random subset 
         
@@ -112,11 +115,12 @@ def generate_probs(names, true_name, det_fun, min_ch, sim_table, scene, regulati
 
         for chosen_name_subset_ in chosen_names_subset_inv:
             if chosen_name_subset_ not in chosen_names_subset:
+                raise Exception("This won't happen, when there is not subsets")
                 chosen_names_subset = np.append(chosen_names_subset,chosen_name_subset_)
                 P = np.append(P, activated_normal)
             else:
                 id = list(chosen_names_subset).index(chosen_name_subset_)
-                P[id] = np.clip(activated_normal + added_noise_regulation_policy,0,1)
+                P[id] = np.clip(activated_normal + added_noise[id],0,1)
 
     # D3
     if regulation_policy == 'fake_properties_decidable_wrt_true':
@@ -131,9 +135,9 @@ def generate_probs(names, true_name, det_fun, min_ch, sim_table, scene, regulati
                 id = list(chosen_names_subset).index(chosen_name_subset_)
                 P[id] = np.clip(activated_normal + added_noise_regulation_policy,0,1)
 
-    # D5
+    # D4
     if regulation_policy == 'one_bigger':
-
+        
         chosen_names_subset_1 = get_templates_decisive_based_on_arity(names, true_name, min_ch, scene)
         chosen_names_subset_2 = get_templates_decisive_based_on_properties(names, true_name, min_ch, scene)
         chosen_names_subset_ = list(set(chosen_names_subset_1 + chosen_names_subset_2))
@@ -143,9 +147,12 @@ def generate_probs(names, true_name, det_fun, min_ch, sim_table, scene, regulati
         if len(chosen_names_subset_inv) > 0:
             chosen_name_subset_ = chosen_names_subset_inv[0]
         else:
+            # Should return None
+            # return None, None
             chosen_name_subset_ = chosen_names_subset_[0]
 
         if chosen_name_subset_ not in chosen_names_subset:
+            raise Exception("This won't happen, when there is not subsets")
             chosen_names_subset = np.append(chosen_names_subset,chosen_name_subset_)
             P = np.append(P, 1.0)
         else:

@@ -2,6 +2,8 @@ import sys, os; sys.path.append(os.path.dirname(os.path.abspath(__file__))+"/.."
 import numpy as np
 from collections import Counter
 
+from imitrob_hri.merging_modalities.modality_merger import ModalityMerger
+
 DATASET_PREFIX = '2' # '' for original dataset
 
 def check_single(dataset_name, all=True):
@@ -56,7 +58,24 @@ def check_single(dataset_name, all=True):
             print(f"x {sample['x_sentence']}")
 
             print("target_action probs")
-            print(sample['x_sentence'].L['template'].max)
+            # print(sample['x_sentence'].L['template'].max)
+            print(sample['x_sentence'].L['template'].activated)
+            print(sample['x_sentence'].L['selections'].activated)
+            print(sample['x_sentence'].L['storages'].activated)
+
+            c = dataset[n]['config']
+            mm = ModalityMerger(c, "entropy")
+            s = sample['x_sentence'] 
+            s.make_conjunction(c)
+            s.M, DEBUGdata = mm.feedforward3(s.L, s.G, sample['x_scene'], epsilon=c.epsilon, gamma=c.gamma, alpha_penal=c.alpha_penal, model=3, use_magic="entropy")
+
+            
+
+            print("Merged:")
+            print(s.M['template'])
+            print(s.M['selections'])
+            print(s.M['storages'])
+            print(DEBUGdata)
 
             input("next sample?")
 

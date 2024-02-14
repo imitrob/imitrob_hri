@@ -13,6 +13,7 @@ from extraction_funs import *
 from copy import deepcopy
 from merging_modalities.utils import singlehistplot_customized
 
+DATASET_PREFIX = '2' # '' for original dataset
 
 class Results6DComparer():
     def __init__(self):
@@ -22,9 +23,9 @@ class Results6DComparer():
         results_all = []
 
         for name in ['baseline', 'mul', 'add_2', 'entropy', 'entropy_add_2']:
-            accs = np.load(f"{os.path.dirname(os.path.abspath(__file__))}/results/accs_{name}.npy", allow_pickle=True)
+            accs = np.load(f"{os.path.dirname(os.path.abspath(__file__))}/results{DATASET_PREFIX}/accs_{name}.npy", allow_pickle=True)
 
-            results = np.load(f"{os.path.dirname(os.path.abspath(__file__))}/results/results_{name}.npy", allow_pickle=True)
+            results = np.load(f"{os.path.dirname(os.path.abspath(__file__))}/results{DATASET_PREFIX}/results_{name}.npy", allow_pickle=True)
             
             results_6D = []
             results_6D.append(np.array(accs))
@@ -69,13 +70,13 @@ class Results6DComparer():
         self.C3 = 2
         ''' Configuration3()'s index '''
         
-        self.n1 = 0
+        self.n0 = 0
         ''' Noise level 1 refers to id=0 index '''
-        self.n2 = 1
+        self.n1 = 1
         ''' Noise level 2 refers to id=1 index '''        
-        self.n3 = 2
+        self.n2 = 2
         ''' Noise level 3 refers to id=2 index '''
-        self.n4 = 3
+        self.n3 = 3
         ''' Noise level 4 refers to id=3 index '''
 
         
@@ -94,7 +95,7 @@ class Results6DComparer():
         ''' Only single modality information activated '''
         self.Ds = [self.D1, self.D2, self.D3, self.D4, self.D5]
         ''' All datasets '''
-        self.Ds_des = [self.D1, self.D2, self.D3, self.D5]
+        self.Ds_des = [self.D1, self.D2, self.D3, self.D4]
         ''' Only decisible '''
         
         self.M1 = 0
@@ -114,8 +115,8 @@ class Results6DComparer():
             1. Merge function is argmax (self.baseline=0)
             2. Model is always the M1 (self.M1=0)
         '''
-        baseline = self.extract_data(indices=[self.baseline,self.acc,self.C3,self.n3,self.Ds_des,self.M1])
-        other = self.extract_data(indices=[self.entropy,self.acc,self.C3,self.n3,self.Ds_des,self.Ms])
+        baseline = self.extract_data(indices=[self.baseline,self.acc,self.C3,self.n0,self.Ds_des,self.M1])
+        other = self.extract_data(indices=[self.entropy,self.acc,self.C3,self.n0,self.Ds_des,self.Ms])
         
         print(baseline.shape)
         print(other.shape)
@@ -248,7 +249,7 @@ class Results6DComparer():
         indx = ['$D1$','$D2$','$D3$','$D4$','$D5$']
         
         
-        data = self.extract_data(indices=[self.baseline,self.acc,[self.C1,self.C2,self.C3],self.n4,self.Ds,self.M1]).T
+        data = self.extract_data(indices=[self.baseline,self.acc,[self.C1,self.C2,self.C3],self.n3,self.Ds,self.M1]).T
 
         print(pd.DataFrame(100*data, columns=cols, index=indx))
         singlehistplot_customized(100*data, 'baseline_examination', labels=cols, xticks=indx, xlbl='Baseline examination', ylbl='Accuracy [%]', plot=True)
@@ -288,15 +289,25 @@ class Results6DComparer():
 if __name__ == '__main__':
     rc = Results6DComparer()
 
-    # rc._1_ablation_study()
-    # rc._2_noise_influence(magic=rc.entropy)
-    # rc._2_noise_influence(magic=rc.add_2)
-    # rc._2_noise_influence(magic=rc.entropy_add_2)
-    # rc._2_noise_influence(magic=rc.mul)
+    rc._1_ablation_study()
+    input("------ next ------")
+    rc._2_noise_influence(magic=rc.entropy)
+    input("------ next ------")
+    rc._2_noise_influence(magic=rc.add_2)
+    input("------ next ------")
+    rc._2_noise_influence(magic=rc.entropy_add_2)
+    input("------ next ------")
+    rc._2_noise_influence(magic=rc.mul)
+    input("------ next ------")
     
-    # Results6DComparer()._3_types_merging()
-    # Results6DComparer()._4_thresholding()
-    # _5_noise_levels_compared_to_models()
+    rc._3_types_merging()
+    input("------ next ------")
+    rc._4_thresholding()
+    input("------ next ------")
+    
+    rc._5_noise_levels_compared_to_models()
+    input("------ next ------")
+    
     rc._6_baseline_examination()
     
     

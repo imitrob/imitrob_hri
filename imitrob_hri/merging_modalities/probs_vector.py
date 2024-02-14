@@ -147,7 +147,7 @@ class ProbsVector():
             activated template (String) or None
         '''
         if len(self.clear) > 0 and self.diffs_above_threshold():
-            return self.clear_id[0]
+            return self.max_id
         #elif (len(self.unsure) > 0 and self.diffs_above_threshold()):
         #    return self.unsure_id[0] 
 

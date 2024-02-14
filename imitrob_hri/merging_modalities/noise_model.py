@@ -42,6 +42,7 @@ class MixtureModel():
 # Static models to be accessible global 
 global gesture_det_model, gesture_noise_model, gesture_noise_model2, gesture_noise_model3
 
+# prumer n uniform distr, match threshold 0.25-1.0, 
 gesture_det_model = MixtureModel([
     ('norm', (0.70518772634005173, 0.11254289107220866)),
     ('norm', (0.8162473647795723, 0.10747602382933483))
@@ -82,15 +83,17 @@ gesture_noise_model4 = MixtureModel([
 def entropy_tester():
     nm = NormalModel(0.0, 0.05)
     fig = plt.figure(figsize =(4,2))
-    plt.hist(nm(10000), bins=np.linspace(0.001,1,200))
-    plt.hist(gesture_noise_model.rvs(10000), bins=np.linspace(0.001, 1, 200))
-    plt.hist(gesture_noise_model2.rvs(10000), bins=np.linspace(0.001, 1, 200))
+    # plt.hist(gesture_det_model(100000), bins=np.linspace(0.001,1,200))
+    plt.hist(nm(100000), bins=np.linspace(0.001,1,200))
+    plt.hist(gesture_noise_model.rvs(100000), bins=np.linspace(0.001, 1, 200))
+    plt.hist(gesture_noise_model2.rvs(100000), bins=np.linspace(0.001, 1, 200))
     plt.legend(['$n_1$', '$n_2$', '$n_3$'])
     #plt.hist(gesture_det_model.rvs(10000), bins=np.linspace(0, 1, 200))
     plt.xlabel("Noise level [-]", fontsize = 15)
     plt.ylabel("Occurance [-]", fontsize = 15)
     plt.grid()
-    plt.axis([0.0, 0.6, 0, 1000])
+    plt.axis([0.0, 1.0, 0, 100000])
+    # plt.axis([0.0, 0., 0, 1000])
 
     plt.rcParams['pdf.fonttype'] = 42
     plt.rcParams['ps.fonttype'] = 42
