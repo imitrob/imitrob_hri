@@ -250,7 +250,6 @@ def generate_dataset2(gen_params):
             else:
                 rp_M_C = ((dataset_policy, '-', '-'), (dataset_policy, '-', '-'))
             
-            successfull = True
             # 3. Generate probs
             G = {}
             p = generate_probs(
@@ -262,7 +261,8 @@ def generate_dataset2(gen_params):
                     scene=scene,
                     regulation_policy=rp_M_C[0][0],
                     noise_fun=noise_fun)
-            if p[0] is None: successfull = False
+            if p[0] is None: 
+                print(f"not successful, return, len of dataset: {len(dataset)}"); continue
             G['template'] = ProbsVector(*p, c)
             p = generate_probs(
                     names=c.objects, #scene.selection_names,
@@ -273,7 +273,8 @@ def generate_dataset2(gen_params):
                     scene=scene,
                     regulation_policy=rp_M_C[0][1],
                     noise_fun=noise_fun)
-            if p[0] is None: successfull = False
+            if p[0] is None:
+                print(f"not successful, return, len of dataset: {len(dataset)}"); continue
             G['selections'] = ProbsVector(*p, c)
             p = generate_probs(
                     names=c.storages, #scene.storage_names,
@@ -284,7 +285,8 @@ def generate_dataset2(gen_params):
                     scene=scene,
                     regulation_policy=rp_M_C[0][2],
                     noise_fun=noise_fun)
-            if p[0] is None: successfull = False
+            if p[0] is None:
+                print(f"not successful, return, len of dataset: {len(dataset)}"); continue
             G['storages'] = ProbsVector(*p, c)
             
             L = {}
@@ -297,7 +299,8 @@ def generate_dataset2(gen_params):
                     scene=scene,
                     regulation_policy=rp_M_C[1][0],
                     noise_fun=noise_fun)
-            if p[0] is None: successfull = False
+            if p[0] is None: 
+                print(f"not successful, return, len of dataset: {len(dataset)}"); continue
             L['template'] = ProbsVector(*p, c)
             p = generate_probs(
                     names=c.objects, #scene.selection_names,
@@ -308,7 +311,8 @@ def generate_dataset2(gen_params):
                     scene=scene,
                     regulation_policy=rp_M_C[1][1],
                     noise_fun=noise_fun)
-            if p[0] is None: successfull = False
+            if p[0] is None:
+                print(f"not successful, return, len of dataset: {len(dataset)}"); continue
             L['selections'] = ProbsVector(*p, c)
             p = generate_probs(
                 names=c.storages, #scene.storage_names,
@@ -319,12 +323,10 @@ def generate_dataset2(gen_params):
                 scene=scene,
                 regulation_policy=rp_M_C[1][2],
                 noise_fun=noise_fun)
-            if p[0] is None: successfull = False
+            if p[0] is None: 
+                print(f"not successful, return, len of dataset: {len(dataset)}"); continue
             L['storages'] = ProbsVector(*p, c)
 
-            if not successfull:
-                print(f"not successful, return, len of dataset: {len(dataset)}")
-                continue
 
             # I don't use this for now
             if gen_params['complementary']:
