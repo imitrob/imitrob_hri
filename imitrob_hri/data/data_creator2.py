@@ -46,9 +46,9 @@ def req_prop_to_observation(prop, sign):
         threshold_roundtop_being_unstackable = 0.1 # [belief rate]
         
         if sign == '+': # property is needed to be pickable
-            value = threshold_roundtop_being_unstackable * (1-RATE_DIFF)
-        elif sign == '-':
             value = threshold_roundtop_being_unstackable * (1+RATE_DIFF)
+        elif sign == '-':
+            value = threshold_roundtop_being_unstackable * (1-RATE_DIFF)
         return 'roundness-top', value
 
     if prop == 'pushable':
@@ -94,7 +94,7 @@ def get_minimal_valid_scene_for_triplet(c, triplet, other_prop_oposite):
     o = None
     if y_selection is not None:
         # find a single object with valid properties
-        observations = {'name': y_selection, 'types': ['liquid-container', 'object', 'container']}
+        observations = {'name': y_selection, 'types': []} #, 'types': ['liquid-container', 'object', 'container']}
         # Generate observations for object, if observation is needed for the object to have property for the template, it is fulfilled
         # If the observation is not needed for the object, we doesn't care (random), or
         # other_prop_oposite=True: we care, and assign observation as oposite
@@ -113,13 +113,17 @@ def get_minimal_valid_scene_for_triplet(c, triplet, other_prop_oposite):
             elif other_prop_oposite:
                 obs_name, obs_value = req_prop_to_observation(prop, '+')
                 observations[obs_name] = obs_value
-            
+        
+        # object must be particular type
+        if 'st' in template_o.feasibility_requirements.keys():
+            observations['types'] = template_o.feasibility_requirements['st']
+
         o = Object3(observations)
         
     s = None
     if y_storage is not None:
         # find a single storage with valid properties
-        observations = {'name': y_storage, 'types': ['liquid-container', 'object', 'container']}
+        observations = {'name': y_storage, 'types': []} #['liquid-container', 'object', 'container']}
         for prop in c.properties:
             if prop in template_o.feasibility_requirements['s+']:
                 obs_name, obs_value = req_prop_to_observation(prop, '+')
@@ -135,6 +139,10 @@ def get_minimal_valid_scene_for_triplet(c, triplet, other_prop_oposite):
                 obs_name, obs_value = req_prop_to_observation(prop, '+')
                 observations[obs_name] = obs_value
         
+        # object must be particular type
+        if 'st' in template_o.feasibility_requirements.keys():
+            observations['types'] = template_o.feasibility_requirements['st']
+
         s = Object3(observations)
         
     return o, s
@@ -204,7 +212,7 @@ def generate_dataset2(gen_params):
                     # Objects that cannot be done by this action
                     obsv = get_observations_cannot_be_done_by_this_action(c, triplet[0])
                     obsv['name'] = name
-                    obsv['types'] = ['liquid-container', 'object', 'container']
+                    obsv['types'] = []#['liquid-container', 'object', 'container']
                     o = Object3(obsv)
                     O.append(o)
             else:
@@ -219,7 +227,7 @@ def generate_dataset2(gen_params):
                     # Storages that cannot be done by this action
                     obsv = get_observations_cannot_be_done_by_this_action(c, triplet[0])
                     obsv['name'] = name
-                    obsv['types'] = ['liquid-container', 'object', 'container']
+                    obsv['types'] = []#['liquid-container', 'object', 'container']
                     s = Object3(obsv)
                     S.append(s)
             else:

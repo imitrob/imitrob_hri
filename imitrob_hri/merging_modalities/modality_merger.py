@@ -341,7 +341,7 @@ class ModalityMerger():
 
         # penalize according to entropy?
         PENALIZE_BY_ENTROPY = True
-        DISCARD_ENTROPY_THRESHOLD = 0.85
+        DISCARD_ENTROPY_THRESHOLD = 0.99
 
         if normalized_entropy(lsp) > DISCARD_ENTROPY_THRESHOLD:
             # lsp = np.ones_like(lsp) * np.finfo(lsp.dtype).eps

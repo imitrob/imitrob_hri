@@ -127,6 +127,8 @@ def generate_probs(names, true_name, det_fun, min_ch, sim_table, scene, regulati
     if regulation_policy == 'fake_properties_decidable_wrt_true':
         chosen_names_subset_ = get_templates_decisive_based_on_properties(names, true_name, 
         min_ch, scene)
+        # print("regulation_policy", regulation_policy)
+        # print("chosen_names_subset_", chosen_names_subset_)
         
         for chosen_name_subset_ in chosen_names_subset_:
             if chosen_name_subset_ not in chosen_names_subset: 
@@ -219,15 +221,38 @@ def get_templates_decisive_based_on_properties(names, true_name, min_ch, scene):
     templates = scene.templates
     unfeasible_templates = []
     for template in templates:
-        is_unfeasible_template = False
-        for o in scene.selections:
-            for s in scene.storages:
-                if not template.is_feasible(o, s):
-                    is_unfeasible_template = True
         
-        if is_unfeasible_template:
+        feasible = is_action_is_feasible_given_this_scene(template, scene)
+        
+        if not feasible and template.complexity > 0:
             unfeasible_templates.append(template.name)
 
 
     return unfeasible_templates
 
+def is_action_is_feasible_given_this_scene(template, scene):
+    feasible = False
+    # if any combination feasible -> It is False
+    if len(scene.selections) == 0 and len(scene.storages) == 0:
+        
+        feasible = template.is_feasible(o=None, s=None)
+    elif len(scene.selections) > 0 and len(scene.storages) == 0:
+
+        for o in scene.selections:
+            if template.is_feasible(o, s=None):
+                feasible = True
+
+    elif len(scene.selections) == 0 and len(scene.storages) > 0:
+        raise Exception("resolve here, we have storage but no object!")
+    
+    elif len(scene.selections) > 0 and len(scene.storages) > 0:
+        
+        for o in scene.selections:
+            for s in scene.storages:
+                if template.is_feasible(o, s):
+                    feasible = True
+    
+    else: 
+        raise Exception("This is strange!")
+    
+    return feasible

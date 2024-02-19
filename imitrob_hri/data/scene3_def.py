@@ -23,20 +23,21 @@ class Object3():
             'types': ['liquid-container', 'object', 'container'],
             'glued': False
         }):
+        assert 'types' in observations
         self.name = observations['name']
 
         self.observations = observations
 
         self.properties = {}
         self.properties['glued'] = self.glued
-        if 'object' in observations['types']:
-            self.properties['pickable'] = self.pickable
-            self.properties['reachable'] = self.reachable
-            self.properties['stackable'] = self.stackable
-            self.properties['pushable'] = self.pushable
-        if 'liquid-container' in observations['types']:
-            self.properties['full-stack'] = self.full_stack
-            self.properties['full-liquid'] = self.full_liquid
+        # if 'object' in observations['types']:
+        self.properties['pickable'] = self.pickable
+        self.properties['reachable'] = self.reachable
+        self.properties['stackable'] = self.stackable
+        self.properties['pushable'] = self.pushable
+        # if 'liquid-container' in observations['types']:
+        self.properties['full-stack'] = self.full_stack
+        self.properties['full-liquid'] = self.full_liquid
 
     def is_type(self, typ):
         return typ in self.observations['types']
@@ -63,7 +64,7 @@ class Object3():
         threshold_roundtop_being_unstackable = 0.1 # [belief rate]
         
         penalization = self.sigmoid(self.observations['roundness-top'], center=threshold_roundtop_being_unstackable)
-        eval = (self.observations['roundness-top'] <= threshold_roundtop_being_unstackable)
+        eval = (self.observations['roundness-top'] >= threshold_roundtop_being_unstackable)
         return round(penalization,r), eval
 
     def pushable(self, r=4):
@@ -104,7 +105,7 @@ class Object3():
         return 1 / (1 + np.exp((center-x)*(-tau)))
     
     def __str__(self):
-        return f"{cc.F}{self.name}{cc.E}: s: {round(self.observations['size'],2)}, p: {np.round(self.observations['position'],2)}, roundness: {round(self.observations['roundness-top'],2)}, weight: {round(self.observations['weight'],2)}, contains: {round(self.observations['contains'],2)}, glued: {self.observations['glued']}\nProperties: {cc.H}Glued:{cc.E} {self.glued(2)}, {cc.H}Pickable:{cc.E} {self.pickable(2)}, {cc.H}Reachable:{cc.E} {self.reachable(2)}, {cc.H}Stackable {cc.E}{self.stackable(2)}, {cc.H}Pushable:{cc.E} {self.pushable(2)}, {cc.H}Full stack:{cc.E} {self.full_stack(2)} full liquid: {self.full_liquid(2)}\n"
+        return f"{cc.F}{self.name}{cc.E}: s: {round(self.observations['size'],2)}, p: {np.round(self.observations['position'],2)}, roundness: {round(self.observations['roundness-top'],2)}, weight: {round(self.observations['weight'],2)}, contains: {round(self.observations['contains'],2)}, glued: {self.observations['glued']}, types: {self.observations['types']}\nProperties: {cc.H}Glued:{cc.E} {self.glued(2)}, {cc.H}Pickable:{cc.E} {self.pickable(2)}, {cc.H}Reachable:{cc.E} {self.reachable(2)}, {cc.H}Stackable {cc.E}{self.stackable(2)}, {cc.H}Pushable:{cc.E} {self.pushable(2)}, {cc.H}Full stack:{cc.E} {self.full_stack(2)} full liquid: {self.full_liquid(2)}\n"
     
     
 class Scene3():
