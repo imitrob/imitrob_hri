@@ -291,3 +291,15 @@ def singlehistplot_customized(data, filename, labels=['baseline','M1', 'M2', 'M3
         plt.savefig(f"{os.path.expanduser(os.path.dirname(os.path.abspath(__file__)))}/../data/pictures/{filename}.png", dpi=fig.dpi, bbox_inches='tight')
     if plot:
         plt.show()
+
+
+class ForDebugOnly():
+    def __init__(self):
+        self.arity = {'template': [],
+                      'selections': [],
+                      'storages': [],}
+        self.properties = {'template': [],
+                      'selections': [],
+                      'storages': [],}
+        
+fdo = ForDebugOnly()

@@ -100,8 +100,9 @@ if __name__ == '__main__':
             for mgn,use_magic in enumerate(['baseline', 'mul', 'add_2', 'entropy', 'entropy_add_2']):
                 tester_all(use_magic)
     else:
-        model = int(sys.argv[3]) if len(sys.argv) > 3 else 2
-
+        # Model M3: model = 3
+        model = int(sys.argv[3]) if len(sys.argv) > 3 else 3
+        
         dataset = np.load(os.path.expanduser(f'{os.path.dirname(os.path.abspath(__file__))}/../data/saves/artificial_dataset{DATASET_PREFIX}_{dataset_name}.npy'), allow_pickle=True)
         use_magic = sys.argv[2]
         tester_on_data(dataset, model, use_magic=use_magic, printer=True)

@@ -240,7 +240,7 @@ use_magic: {self.use_magic} \n\
                 'weight': np.random.random() * 4, # [kg]
                 'contains': np.random.random(), # normalized rate being full 
                 'contain_item': np.random.randint(0,2), # normalized rate being full 
-                'types': ['liquid container', 'object'],
+                'types': ['liquid-container', 'object', 'container'],
                 'glued': np.random.randint(0,2),
             }
             objects.append(Object3(observations))
@@ -257,7 +257,7 @@ use_magic: {self.use_magic} \n\
                 'weight': np.random.random() * 4, # [kg]
                 'contains': np.random.random(), # normalized rate being full 
                 'contain_item': np.random.randint(0,2), # normalized rate being full 
-                'types': ['liquid container', 'object'],
+                'types': ['liquid-container', 'object', 'container'],
                 'glued': np.random.randint(0,2),
             }
             storages.append(Object3(observations))

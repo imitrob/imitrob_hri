@@ -6,6 +6,7 @@ from copy import deepcopy
 from merging_modalities import noise_model
 from imitrob_hri.data.scene3_def import add_if_not_there
 
+from merging_modalities.utils import fdo
 
 def get_random_triplet(c):
     ''' approach 2
@@ -128,7 +129,9 @@ def generate_probs(names, true_name, det_fun, min_ch, sim_table, scene, regulati
         min_ch, scene)
         
         for chosen_name_subset_ in chosen_names_subset_:
-            if chosen_name_subset_ not in chosen_names_subset:
+            if chosen_name_subset_ not in chosen_names_subset: 
+                # This shouldn't happen        
+                raise Exception("This should not happen")     
                 chosen_names_subset = np.append(chosen_names_subset,chosen_name_subset_)
                 P = np.append(P, activated_normal)
             else:
@@ -148,7 +151,7 @@ def generate_probs(names, true_name, det_fun, min_ch, sim_table, scene, regulati
             chosen_name_subset_ = chosen_names_subset_inv[0]
         else:
             # Should return None
-            # return None, None
+            return None, None
             chosen_name_subset_ = chosen_names_subset_[0]
 
         if chosen_name_subset_ not in chosen_names_subset:
@@ -203,6 +206,7 @@ def get_templates_decisive_based_on_arity(names, true_name, min_ch, scene):
     # 2. assign probs
     #act_p = normal(gen_params['activated_prob_mu'], gen_params['activated_prob_sigma'])
     #P = act_p * np.ones(len(chosen_names_subset))
+    # fdo.arity['template'].append() 
     return chosen_names_subset
 
 def get_templates_decisive_based_on_properties(names, true_name, min_ch, scene):

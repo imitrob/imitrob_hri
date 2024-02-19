@@ -20,7 +20,7 @@ class Object3():
             'weight': 1, # [kg]
             'contains': 0.1, # normalized rate being full 
             'contain_item': False, # how many items contains
-            'types': ['liquid container', 'object'],
+            'types': ['liquid-container', 'object', 'container'],
             'glued': False
         }):
         self.name = observations['name']
@@ -34,7 +34,7 @@ class Object3():
             self.properties['reachable'] = self.reachable
             self.properties['stackable'] = self.stackable
             self.properties['pushable'] = self.pushable
-        if 'liquid container' in observations['types']:
+        if 'liquid-container' in observations['types']:
             self.properties['full-stack'] = self.full_stack
             self.properties['full-liquid'] = self.full_liquid
 
@@ -79,8 +79,8 @@ class Object3():
     def full_liquid(self, r=4):
         threshold_capacity_being_full = 0.7 # [norm. rate being full]
         
-        penalization = self.sigmoid(self.observations['contains'], center=threshold_capacity_being_full)
-        eval = (self.observations['contains'] <= threshold_capacity_being_full)
+        penalization = self.isigmoid(self.observations['contains'], center=threshold_capacity_being_full)
+        eval = (self.observations['contains'] >= threshold_capacity_being_full)
         return round(penalization,r), eval     
 
     def glued(self, r=4):
@@ -90,6 +90,12 @@ class Object3():
     @staticmethod
     def gaussian(x, sigma=0.2):
         return np.exp(-np.power(x, 2.) / (2 * np.power(sigma, 2.)))
+
+    @staticmethod
+    def isigmoid(x, center=0.14, tau=40):
+        ''' Inverted sigmoid. sigmoid(x=0)=1, sigmoid(x=center)=0.5
+        '''
+        return 1 / (1 + np.exp((center-x)*(tau)))
 
     @staticmethod
     def sigmoid(x, center=0.14, tau=40):
@@ -190,7 +196,7 @@ def get_random_scene(c, object_name_list=['potted meat can', 'tomato soup can', 
             'weight': np.random.random() * 4, # [kg]
             'contains': np.random.random(), # normalized rate being full 
             'contain_item': np.random.randint(0,2), # normalized rate being full 
-            'types': ['liquid container', 'object'],
+            'types': ['liquid-container', 'object', 'container'],
             'glued': np.random.randint(0,2),
         }
         objects.append(Object3(observations))
@@ -207,7 +213,7 @@ def get_random_scene(c, object_name_list=['potted meat can', 'tomato soup can', 
             'weight': np.random.random() * 4, # [kg]
             'contains': np.random.random(), # normalized rate being full 
             'contain_item': np.random.randint(0,2), # normalized rate being full 
-            'types': ['liquid container', 'object'],
+            'types': ['liquid-container', 'object', 'container'],
             'glued': np.random.randint(0,2),
         }
         storages.append(Object3(observations))

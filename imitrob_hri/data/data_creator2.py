@@ -71,10 +71,10 @@ def req_prop_to_observation(prop, sign):
     if prop == 'full-liquid':
         threshold_capacity_being_full = 0.7 # [norm. rate being full]
 
-        if sign == '+': # property is needed to be pickable
-            value = threshold_capacity_being_full * (1-RATE_DIFF)
-        elif sign == '-':
+        if sign == '+':
             value = threshold_capacity_being_full * (1+RATE_DIFF)
+        elif sign == '-':
+            value = threshold_capacity_being_full * (1-RATE_DIFF)
         return 'contains', value
 
     if prop == 'glued':
@@ -94,7 +94,7 @@ def get_minimal_valid_scene_for_triplet(c, triplet, other_prop_oposite):
     o = None
     if y_selection is not None:
         # find a single object with valid properties
-        observations = {'name': y_selection, 'types': ['liquid container', 'object']}
+        observations = {'name': y_selection, 'types': ['liquid-container', 'object', 'container']}
         # Generate observations for object, if observation is needed for the object to have property for the template, it is fulfilled
         # If the observation is not needed for the object, we doesn't care (random), or
         # other_prop_oposite=True: we care, and assign observation as oposite
@@ -119,16 +119,16 @@ def get_minimal_valid_scene_for_triplet(c, triplet, other_prop_oposite):
     s = None
     if y_storage is not None:
         # find a single storage with valid properties
-        observations = {'name': y_storage, 'types': ['liquid container', 'object']}
+        observations = {'name': y_storage, 'types': ['liquid-container', 'object', 'container']}
         for prop in c.properties:
-            if prop in template_o.feasibility_requirements['+']:
+            if prop in template_o.feasibility_requirements['s+']:
                 obs_name, obs_value = req_prop_to_observation(prop, '+')
                 observations[obs_name] = obs_value
             elif other_prop_oposite:
                 obs_name, obs_value = req_prop_to_observation(prop, '-')
                 observations[obs_name] = obs_value
             
-            if prop in template_o.feasibility_requirements['-']:
+            if prop in template_o.feasibility_requirements['s-']:
                 obs_name, obs_value = req_prop_to_observation(prop, '-')
                 observations[obs_name] = obs_value
             elif other_prop_oposite:
@@ -173,7 +173,7 @@ def gen_random_object(name):
         'weight': np.random.random() * 4, # [kg]
         'contains': np.random.random(), # normalized rate being full 
         'contain_item': np.random.randint(0,2), # normalized rate being full 
-        'types': ['liquid container', 'object'],
+        'types': ['liquid-container', 'object', 'container'],
         'glued': np.random.randint(0,2),
     }
     return Object3(observations)
@@ -204,7 +204,7 @@ def generate_dataset2(gen_params):
                     # Objects that cannot be done by this action
                     obsv = get_observations_cannot_be_done_by_this_action(c, triplet[0])
                     obsv['name'] = name
-                    obsv['types'] = ['liquid container', 'object']
+                    obsv['types'] = ['liquid-container', 'object', 'container']
                     o = Object3(obsv)
                     O.append(o)
             else:
@@ -219,7 +219,7 @@ def generate_dataset2(gen_params):
                     # Storages that cannot be done by this action
                     obsv = get_observations_cannot_be_done_by_this_action(c, triplet[0])
                     obsv['name'] = name
-                    obsv['types'] = ['liquid container', 'object']
+                    obsv['types'] = ['liquid-container', 'object', 'container']
                     s = Object3(obsv)
                     S.append(s)
             else:
@@ -298,7 +298,7 @@ def generate_dataset2(gen_params):
                     regulation_policy=rp_M_C[1][0],
                     noise_fun=noise_fun)
             if p[0] is None: successfull = False
-            L['template'] = ProbsVector(*p, c),
+            L['template'] = ProbsVector(*p, c)
             p = generate_probs(
                     names=c.objects, #scene.selection_names,
                     true_name=y_selection,

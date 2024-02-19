@@ -50,7 +50,7 @@ def check_single(dataset_name, all=True):
 
     if all:
         for n,sample in enumerate(dataset):
-            print(f"--- SAMPLE {n} ---")
+            print(f"-------------- SAMPLE {n} --------------")
             
             print(f"y: {sample['y']['template']}, {sample['y']['selections']}, {sample['y']['storages']}")
             print(f"config {sample['config']}")
@@ -64,14 +64,33 @@ def check_single(dataset_name, all=True):
             print(sample['x_sentence'].L['storages'].activated)
 
             c = dataset[n]['config']
-            mm = ModalityMerger(c, "entropy")
+            
             s = sample['x_sentence'] 
+            # s.make_conjunction(c)
+
+            print("--- Merged M1 ---")
+            print("[[[[[[MUL]]]]]]")
+            mm = ModalityMerger(c, "mul")
             s.make_conjunction(c)
+            s.M, DEBUGdata = mm.feedforward3(s.L, s.G, sample['x_scene'], epsilon=c.epsilon, gamma=c.gamma, alpha_penal=c.alpha_penal, model=1, use_magic="mul")
+            print(s.M['template'])
+            print(s.M['selections'])
+            print(s.M['storages'])
+            print("[[[[[[ENTROPY]]]]]]")
+            mm = ModalityMerger(c, "entropy")
+            s.make_conjunction(c)
+            
+            s.M, DEBUGdata = mm.feedforward3(s.L, s.G, sample['x_scene'], epsilon=c.epsilon, gamma=c.gamma, alpha_penal=c.alpha_penal, model=1, use_magic="entropy")
+            print(s.M['template'])
+            print(s.M['selections'])
+            print(s.M['storages'])
+            
+            mm = ModalityMerger(c, "entropy")
+            s.make_conjunction(c)
+            
             s.M, DEBUGdata = mm.feedforward3(s.L, s.G, sample['x_scene'], epsilon=c.epsilon, gamma=c.gamma, alpha_penal=c.alpha_penal, model=3, use_magic="entropy")
 
-            
-
-            print("Merged:")
+            print("--- Merged M3 ---")
             print(s.M['template'])
             print(s.M['selections'])
             print(s.M['storages'])

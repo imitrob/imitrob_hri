@@ -675,7 +675,7 @@ class MMSentence():
 
 
     def __str__(self):
-        return f"L:\n{self.L['template']}\n{self.L['selections']}\n{self.L['storages']}, G:\n{self.G['template']}\n{self.G['selections']}\n{self.G['storages']}"
+        return f"--- Print MM sentence ---\n[1.] L:\n{self.L['template']}\n{self.L['selections']}\n{self.L['storages']},\n[2.] G:\n{self.G['template']}\n{self.G['selections']}\n{self.G['storages']}\n-------------------------"
 
     def merged_part_to_HRICommand(self):
         return self.to_HRICommand(self.M)
