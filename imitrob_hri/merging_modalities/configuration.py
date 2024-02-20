@@ -106,7 +106,7 @@ class Configuration(ABC):
             [1.  , 0.22, 0.22, 0.22, 0.22, 0.22, 0.22],
             [0.22, 1.  , 0.22, 0.22, 0.22, 0.22, 0.22],
             [0.22, 0.22, 1.  , 0.22, 0.22, 0.22, 0.22],
-            [0.22, 0.22 ,0.22, 1.  ,0.22, 0.22, 0.22],
+            [0.22, 0.22 ,0.22, 1.  , 0.22, 0.22, 0.22],
             [0.22, 0.22, 0.22, 0.22, 1.  , 0.22, 0.22],
             [0.22, 0.22, 0.22, 0.22, 0.22, 1.  , 0.22],
             [0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 1.  ],
@@ -114,7 +114,7 @@ class Configuration(ABC):
 
     @property
     def samples_default(self):
-        return 10000
+        return 1000
     
     ''' This is list of Observations and Properties is fixed, cannot be added, they are tied to Object3 definition '''
     @property
@@ -298,8 +298,8 @@ class Configuration2_1(Configuration):
 
         self.DEBUG = False
 
-        self.sim_table_gesture = self.sim_table_gesture_default[0:3,0:3]
-        self.sim_table_language = self.sim_table_language_default[0:3,0:3]
+        self.sim_table_gesture = self.sim_table_gesture_default[0:3,0:3] / 2 + 0.5
+        self.sim_table_language = self.sim_table_language_default[0:3,0:3] / 2 + 0.5
 
         self.sim_table_language_objects = self.sim_table_language_objects_default
         self.sim_table_gesture_objects = self.sim_table_gesture_objects_default
@@ -335,8 +335,8 @@ class Configuration2_2(Configuration):
 
         self.DEBUG = False
 
-        self.sim_table_gesture = self.sim_table_gesture_default[0:6,0:6]
-        self.sim_table_language = self.sim_table_language_default[0:6,0:6]
+        self.sim_table_gesture = self.sim_table_gesture_default[0:6,0:6] / 2 + 0.5
+        self.sim_table_language = self.sim_table_language_default[0:6,0:6] / 2 + 0.5
 
         self.sim_table_language_objects = self.sim_table_language_objects_default
         self.sim_table_gesture_objects = self.sim_table_gesture_objects_default
@@ -372,8 +372,8 @@ class Configuration2_3(Configuration):
 
         self.DEBUG = False
 
-        self.sim_table_gesture = self.sim_table_gesture_default
-        self.sim_table_language = self.sim_table_language_default
+        self.sim_table_gesture = self.sim_table_gesture_default / 2 + 0.5
+        self.sim_table_language = self.sim_table_language_default / 2 + 0.5
 
         self.sim_table_language_objects = self.sim_table_language_objects_default
         self.sim_table_gesture_objects = self.sim_table_gesture_objects_default

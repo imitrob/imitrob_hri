@@ -162,7 +162,8 @@ def generate_probs(names, true_name, det_fun, min_ch, sim_table, scene, regulati
             P = np.append(P, 1.0)
         else:
             id = list(chosen_names_subset).index(chosen_name_subset_)
-            P[id] = np.clip(1.0,0,1)
+            P[id] = 1.0
+            P *= 0.9 # one needs to be bigger
 
     return P, chosen_names_subset
 

@@ -44,6 +44,9 @@ class Results6DComparer():
         
         self.data = results_all
         
+        self.merge_fun_to_str = [
+            '$baseline$', '$mul_{fixed}$', '$add_{fixed}$', '$mul_{entropy}$', '$add_{entropy}$'
+        ]
         ''' Merge function index'''
         self.baseline = 0, 
         ''' baseline model is special case where:
@@ -91,9 +94,9 @@ class Results6DComparer():
         ''' Decisible based on object properties (M3 solves that) '''
         self.D4 = 3
         ''' Undecisible '''
-        self.D5 = 4
+        # self.D5 = 4
         ''' Only single modality information activated '''
-        self.Ds = [self.D1, self.D2, self.D3, self.D4, self.D5]
+        self.Ds = [self.D1, self.D2, self.D3, self.D4]
         ''' All datasets '''
         self.Ds_des = [self.D1, self.D2, self.D3, self.D4]
         ''' Only decisible '''
@@ -126,7 +129,7 @@ class Results6DComparer():
 
         print(pd.DataFrame(data, columns=cols, index=indx))
 
-        singlehistplot_customized(data, 'exp_ablation', labels=cols, xticks=indx, xlbl='Dataset generation policy', ylbl='Accuracy [%]', plot=True)
+        singlehistplot_customized(data, 'exp_ablation', labels=cols, xticks=indx, xlbl='Dataset generation policy', ylbl='Accuracy [%]', plot=True, title='Ablation study: $C_3$, $n_0$, $mul_{entropy}$')
 
     def extract_data(self, indices):
         ''' My supercool function to extract not only slices but different point from n dim array which is impossible to do with self.data[[1,2], [1,2,3], ...], etc.
@@ -154,26 +157,26 @@ class Results6DComparer():
 
     def _2_noise_influence(self, magic=None):
         ''' Here we compare Models '''
-        cols = ['$n_1$','$n_2$', '$n_3$', '$n_4$']
+        cols = ['$n_0$','$n_1$', '$n_2$', '$n_3$']
         ''' with Generated Datasets '''
-        indx = ['$c_2,D1$','$c_2,D2$', '$c_2,D3$', '$c_2,D4$', '$c_2,D5$'] #, '$c_3,D2$', '$c_3,D3$', '$c_3,D4$']
+        indx = ['$c_2,D1$','$c_2,D2$', '$c_2,D3$', '$c_2,D4$'] #, '$c_3,D2$', '$c_3,D3$', '$c_3,D4$']
         
-        noise_levels=self.extract_data(indices=[magic,self.acc,self.C2,self.ns,[self.D1, self.D2,self.D3,self.D4,self.D5],self.M3])
+        noise_levels=self.extract_data(indices=[magic,self.acc,self.C2,self.ns,[self.D1, self.D2,self.D3,self.D4],self.M3])
         noise_levels = noise_levels.T
         print( pd.DataFrame(100*noise_levels, columns=cols, index=indx))
 
-        singlehistplot_customized(100*noise_levels, f'exp_noise_c2_{magic}', labels=cols, xticks=indx, xlbl='', ylbl='Accuracy [%]',bottom=0, plot=True)
+        singlehistplot_customized(100*noise_levels, f'exp_noise_c2_{magic}', labels=cols, xticks=indx, xlbl='', ylbl='Accuracy [%]',bottom=0, plot=True, title=f'Noise levels: $M_3$, $C_2$, {self.merge_fun_to_str[magic]}')
         
         ''' Here we compare Models '''
-        cols = ['$n_1$','$n_2$', '$n_3$', '$n_4$']
+        cols = ['$n_0$','$n_1$', '$n_2$', '$n_3$']
         ''' with Generated Datasets '''
-        indx = ['$c_3,D1$','$c_3,D2$', '$c_3,D3$', '$c_3,D4$', '$c_3,D5$']
+        indx = ['$c_3,D1$','$c_3,D2$', '$c_3,D3$', '$c_3,D4$']
         
-        noise_levels=self.extract_data(indices=[magic,self.acc,self.C3,self.ns,[self.D1, self.D2,self.D3,self.D4,self.D5],self.M3])
+        noise_levels=self.extract_data(indices=[magic,self.acc,self.C3,self.ns,[self.D1, self.D2,self.D3,self.D4],self.M3])
         noise_levels = noise_levels.T
         print( pd.DataFrame(100*noise_levels, columns=cols, index=indx))
 
-        singlehistplot_customized(100*noise_levels, f'exp_noise_c3_{magic}', labels=cols, xticks=indx, xlbl='', ylbl='Accuracy [%]',bottom=0, plot=True)
+        singlehistplot_customized(100*noise_levels, f'exp_noise_c3_{magic}', labels=cols, xticks=indx, xlbl='', ylbl='Accuracy [%]',bottom=0, plot=True, title=f'Noise levels: $M_3$, $C_3$, {self.merge_fun_to_str[magic]}')
         
 
     def _3_types_merging(self):
@@ -205,7 +208,7 @@ class Results6DComparer():
 
         data = np.vstack((data1,data2,data3,data4,data5))
 
-        singlehistplot_customized(100*data, 'exp_merge_methods', labels=cols, xticks=indx, xlbl='Metrics', ylbl='Accuracy [%]', plot=True)
+        singlehistplot_customized(100*data, 'exp_merge_methods', labels=cols, xticks=indx, xlbl='Metrics', ylbl='Accuracy [%]', plot=True, title="Merging types: $M_3$, $n_3$, $C_3$")
 
     def _4_thresholding(self):
         ''' Here we compare Datasets '''
@@ -220,7 +223,7 @@ class Results6DComparer():
 
         print( pd.DataFrame(100*data, columns=cols, index=indx))
 
-        singlehistplot_customized(100*data.T, 'exp_thresholding', labels=indx, xticks=cols, xlbl='Generation Policies', ylbl='Accuracy [%]', plot=True)
+        singlehistplot_customized(100*data.T, 'exp_thresholding', labels=indx, xticks=cols, xlbl='Generation Policies', ylbl='Accuracy [%]', plot=True, title="Thresholding: $M_3$, $n_3$, $C_3$")
 
     def _5_noise_levels_compared_to_models(self):
         ''' Here we compare Models '''
@@ -240,19 +243,19 @@ class Results6DComparer():
         print( data_accumulated[0] )
 
 
-        singlehistplot_customized((100/4)*data_accumulated.T - (100/4)*data_accumulated[0:1].T, 'exp_thresholdin_comparison', labels=indx, xticks=cols, ylbl='Accuracy [%]', plot=True)
+        singlehistplot_customized((100/4)*data_accumulated.T - (100/4)*data_accumulated[0:1].T, 'exp_thresholdin_comparison', labels=indx, xticks=cols, ylbl='Accuracy [%]', plot=True, title="Noise levels compared: $mul_{fixed}$, $C_3$")
 
     def _6_baseline_examination(self):
         ''' Here we compare Models '''
         cols = ['C1', 'C2', 'C3']
         ''' with Generated Datasets '''
-        indx = ['$D1$','$D2$','$D3$','$D4$','$D5$']
+        indx = ['$D1$','$D2$','$D3$','$D4$']
         
         
         data = self.extract_data(indices=[self.baseline,self.acc,[self.C1,self.C2,self.C3],self.n3,self.Ds,self.M1]).T
 
         print(pd.DataFrame(100*data, columns=cols, index=indx))
-        singlehistplot_customized(100*data, 'baseline_examination', labels=cols, xticks=indx, xlbl='Baseline examination', ylbl='Accuracy [%]', plot=True)
+        singlehistplot_customized(100*data, 'baseline_examination', labels=cols, xticks=indx, xlbl='Baseline examination', ylbl='Accuracy [%]', plot=True, title="Baseline examination: $baseline$, $n_3$, $C_1$")
 
     def _7_some_custom_plot2(self):
         ''' Here we compare generated datasets '''

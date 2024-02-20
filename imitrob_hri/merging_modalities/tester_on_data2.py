@@ -10,11 +10,11 @@ from sklearn.metrics import precision_score, recall_score, accuracy_score
 DATASET_PREFIX = '2' # '' for original dataset
 
 def tester_all(use_magic):
-    accs = np.zeros((3,4,5,3))
-    results_save = np.zeros((3,4,5,3), dtype=object)
+    accs = np.zeros((3,6,4,3))
+    results_save = np.zeros((3,6,4,3), dtype=object)
     for cn,c in enumerate(['c1', 'c2', 'c3']):  # error? : c1 n3 D1 M1
-        for nn,n in enumerate(['n0', 'n1', 'n2', 'n3']):
-            for pn,d in enumerate(['D1', 'D2', 'D3', 'D4', 'D5']):
+        for nn,n in enumerate(['n0', 'n1', 'n2', 'n3', 'n4', 'n5']):
+            for pn,d in enumerate(['D1', 'D2', 'D3', 'D4']):
                 for mn,m in enumerate(['M1','M2','M3']):
                     dataset = np.load(os.path.expanduser(f'{os.path.dirname(os.path.abspath(__file__))}/../data/saves/artificial_dataset{DATASET_PREFIX}_{c}_{n}_{d}.npy'), allow_pickle=True)
                     model = int(m[1]) # (from M1 chooses the 1)
@@ -36,7 +36,6 @@ def tester_on_data(dataset, model, use_magic, printer=False):
     acc = 0
     nsamples = len(dataset)
     for n,sample in enumerate(dataset):
-        if n > 1000: break
         if printer: print(f"{'*' * 10} {n}th sample {'*' * 10}")
         c = sample['config']
         s = sample['x_sentence'] 
@@ -66,8 +65,8 @@ def tester_on_data(dataset, model, use_magic, printer=False):
                 print("-- True Value: --")                
                 print(sample['y'])
 
-                #print(DEBUGdata)
-                #input()
+                print(DEBUGdata)
+                input()
         y_true_ct, y_pred_ct = s.get_true_and_pred(sample['y'], c)
         y_pred_cts.append(y_pred_ct)
         y_true_cts.append(y_true_ct)
@@ -84,7 +83,7 @@ def tester_on_data(dataset, model, use_magic, printer=False):
         'y_true_cts': y_true_cts[:,ct],
         'y_pred_cts': y_pred_cts[:,ct],
         }
-
+    n+=1
     if printer: print(f"Final acc: {acc/n*100}%")
     return acc/n*100, results
 

@@ -5,19 +5,19 @@ from sklearn.metrics import multilabel_confusion_matrix
 
 
 def get_from_results(ct, metric, results):
-    ret = np.zeros((3,4,5,3))
+    ret = np.zeros((3,6,4,3))
     for cn,c in enumerate(['c1', 'c2', 'c3']):
-        for nn,n in enumerate(['n1', 'n2', 'n3', 'n4']):
-            for pn,p in enumerate(['D1','D2','D3','D4','D5']):
+        for nn,n in enumerate(['n0', 'n1', 'n2', 'n3', 'n4', 'n5']):
+            for pn,p in enumerate(['D1','D2','D3','D4']):
                 for mn,m in enumerate(['m1', 'm2', 'm3']):
                     ret[cn,nn,pn,mn] = results[cn,nn,pn,mn].item()[ct][metric]
     return ret
 
 def get_specificity(ct, results):
-    ret = np.zeros((3,4,5,3))
+    ret = np.zeros((3,6,4,3))
     for cn,c in enumerate(['c1', 'c2', 'c3']):
-        for nn,n in enumerate(['n1', 'n2', 'n3', 'n4']):
-            for pn,p in enumerate(['D1','D2','D3','D4','D5']):
+        for nn,n in enumerate(['n0', 'n1', 'n2', 'n3', 'n4', 'n5']):
+            for pn,p in enumerate(['D1','D2','D3','D4']):
                 for mn,m in enumerate(['m1', 'm2', 'm3']):
                     Y_pred = results[cn,nn,pn,mn].item()[ct]['y_pred_cts']
                     Y_true = results[cn,nn,pn,mn].item()[ct]['y_true_cts']
@@ -33,10 +33,10 @@ def get_specificity(ct, results):
     return ret
 
 def get_f1(ct, results):
-    ret = np.zeros((3,4,5,3))
+    ret = np.zeros((3,6,4,3))
     for cn,c in enumerate(['c1', 'c2', 'c3']):
-        for nn,n in enumerate(['n1', 'n2', 'n3', 'n4']):
-            for pn,p in enumerate(['D1','D2','D3','D4','D5']):
+        for nn,n in enumerate(['n0', 'n1', 'n2', 'n3', 'n4', 'n5']):
+            for pn,p in enumerate(['D1','D2','D3','D4']):
                 for mn,m in enumerate(['m1', 'm2', 'm3']):
                     Y_pred = results[cn,nn,pn,mn].item()[ct]['y_pred_cts']
                     Y_true = results[cn,nn,pn,mn].item()[ct]['y_true_cts']
