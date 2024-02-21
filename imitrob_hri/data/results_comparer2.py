@@ -48,7 +48,7 @@ class Results6DComparer():
             '$baseline$', '$mul_{fixed}$', '$add_{fixed}$', '$mul_{entropy}$', '$add_{entropy}$'
         ]
         ''' Merge function index'''
-        self.baseline = 0, 
+        self.baseline = 0
         ''' baseline model is special case where:
             1. Merge function is argmax (self.baseline=0)
             2. Model is always the M1 (self.M1=0)
