@@ -108,7 +108,7 @@ class Results6DComparer():
         self.Ms = slice(None,None,None) #[self.M1, self.M2, self.M3]
 
 
-    def _1_ablation_study(self):
+    def _1_ablation_study(self, magic=None):
         ''' Here we compare Models '''
         cols = ['baseline','M1', 'M2', 'M3']
         ''' with Generated Datasets '''
@@ -119,7 +119,7 @@ class Results6DComparer():
             2. Model is always the M1 (self.M1=0)
         '''
         baseline = self.extract_data(indices=[self.baseline,self.acc,self.C3,self.n0,self.Ds_des,self.M1])
-        other = self.extract_data(indices=[self.entropy,self.acc,self.C3,self.n0,self.Ds_des,self.Ms])
+        other = self.extract_data(indices=[magic,self.acc,self.C3,self.n0,self.Ds_des,self.Ms])
         
         print(baseline.shape)
         print(other.shape)
@@ -129,7 +129,7 @@ class Results6DComparer():
 
         print(pd.DataFrame(data, columns=cols, index=indx))
 
-        singlehistplot_customized(data, 'exp_ablation', labels=cols, xticks=indx, xlbl='Dataset generation policy', ylbl='Accuracy [%]', plot=True, title='Ablation study: $C_3$, $n_0$, $mul_{entropy}$')
+        singlehistplot_customized(data, f'exp_ablation_{magic}', labels=cols, xticks=indx, xlbl='Dataset generation policy', ylbl='Accuracy [%]', plot=True, title=f'Ablation study: $C_3$, $n_0$, {self.merge_fun_to_str[magic]}')
 
     def extract_data(self, indices):
         ''' My supercool function to extract not only slices but different point from n dim array which is impossible to do with self.data[[1,2], [1,2,3], ...], etc.
@@ -157,7 +157,7 @@ class Results6DComparer():
 
     def _2_noise_influence(self, magic=None):
         ''' Here we compare Models '''
-        cols = ['$n_0$','$n_1$', '$n_2$', '$n_3$']
+        cols = ['$n_0$','$n_1$', '$n_2$', '$n_3$','$n_4$','$n_5$']
         ''' with Generated Datasets '''
         indx = ['$c_2,D1$','$c_2,D2$', '$c_2,D3$', '$c_2,D4$'] #, '$c_3,D2$', '$c_3,D3$', '$c_3,D4$']
         
@@ -168,7 +168,7 @@ class Results6DComparer():
         singlehistplot_customized(100*noise_levels, f'exp_noise_c2_{magic}', labels=cols, xticks=indx, xlbl='', ylbl='Accuracy [%]',bottom=0, plot=True, title=f'Noise levels: $M_3$, $C_2$, {self.merge_fun_to_str[magic]}')
         
         ''' Here we compare Models '''
-        cols = ['$n_0$','$n_1$', '$n_2$', '$n_3$']
+        cols = ['$n_0$','$n_1$', '$n_2$', '$n_3$','$n_4$','$n_5$']
         ''' with Generated Datasets '''
         indx = ['$c_3,D1$','$c_3,D2$', '$c_3,D3$', '$c_3,D4$']
         
@@ -292,24 +292,21 @@ class Results6DComparer():
 if __name__ == '__main__':
     rc = Results6DComparer()
 
-    rc._1_ablation_study()
-    input("------ next ------")
+    rc._1_ablation_study(magic=rc.entropy)
+    rc._1_ablation_study(magic=rc.add_2)
+    rc._1_ablation_study(magic=rc.entropy_add_2)
+    rc._1_ablation_study(magic=rc.mul)
+
     rc._2_noise_influence(magic=rc.entropy)
-    input("------ next ------")
     rc._2_noise_influence(magic=rc.add_2)
-    input("------ next ------")
     rc._2_noise_influence(magic=rc.entropy_add_2)
-    input("------ next ------")
     rc._2_noise_influence(magic=rc.mul)
-    input("------ next ------")
     
     rc._3_types_merging()
-    input("------ next ------")
+    
     rc._4_thresholding()
-    input("------ next ------")
     
     rc._5_noise_levels_compared_to_models()
-    input("------ next ------")
     
     rc._6_baseline_examination()
     

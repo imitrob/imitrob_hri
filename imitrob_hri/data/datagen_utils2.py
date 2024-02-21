@@ -127,6 +127,9 @@ def generate_probs(names, true_name, det_fun, min_ch, sim_table, scene, regulati
     if regulation_policy == 'fake_properties_decidable_wrt_true':
         chosen_names_subset_ = get_templates_decisive_based_on_properties(names, true_name, 
         min_ch, scene)
+
+        #chosen_names_subset_1 = get_templates_decisive_based_on_arity(names, true_name, min_ch, scene)
+
         # print("regulation_policy", regulation_policy)
         # print("chosen_names_subset_", chosen_names_subset_)
         
@@ -162,8 +165,8 @@ def generate_probs(names, true_name, det_fun, min_ch, sim_table, scene, regulati
             P = np.append(P, 1.0)
         else:
             id = list(chosen_names_subset).index(chosen_name_subset_)
-            P[id] = 1.0
             P *= 0.9 # one needs to be bigger
+            P[id] = 1.0
 
     return P, chosen_names_subset
 

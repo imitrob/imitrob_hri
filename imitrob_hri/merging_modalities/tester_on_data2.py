@@ -84,7 +84,7 @@ def tester_on_data(dataset, model, use_magic, printer=False):
         'y_pred_cts': y_pred_cts[:,ct],
         }
     n+=1
-    if printer: print(f"Final acc: {acc/n*100}%")
+    print(f"Final acc: {acc/n*100}%")
     return acc/n*100, results
 
 if __name__ == '__main__':

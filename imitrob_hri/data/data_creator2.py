@@ -103,16 +103,14 @@ def get_minimal_valid_scene_for_triplet(c, triplet, other_prop_oposite):
             if prop in template_o.feasibility_requirements['+']:
                 obs_name, obs_value = req_prop_to_observation(prop, '+')
                 observations[obs_name] = obs_value
-            elif other_prop_oposite:
-                obs_name, obs_value = req_prop_to_observation(prop, '-')
-                observations[obs_name] = obs_value
-            
-            if prop in template_o.feasibility_requirements['-']:
+            elif prop in template_o.feasibility_requirements['-']:
                 obs_name, obs_value = req_prop_to_observation(prop, '-')
                 observations[obs_name] = obs_value
             elif other_prop_oposite:
-                obs_name, obs_value = req_prop_to_observation(prop, '+')
+                # TODO: settings -> random or '-','+'
+                obs_name, obs_value = req_prop_to_observation(prop, '-')
                 observations[obs_name] = obs_value
+                
         
         # object must be particular type
         if 'st' in template_o.feasibility_requirements.keys():
@@ -128,16 +126,14 @@ def get_minimal_valid_scene_for_triplet(c, triplet, other_prop_oposite):
             if prop in template_o.feasibility_requirements['s+']:
                 obs_name, obs_value = req_prop_to_observation(prop, '+')
                 observations[obs_name] = obs_value
-            elif other_prop_oposite:
-                obs_name, obs_value = req_prop_to_observation(prop, '-')
-                observations[obs_name] = obs_value
-            
-            if prop in template_o.feasibility_requirements['s-']:
+            elif prop in template_o.feasibility_requirements['s-']:
                 obs_name, obs_value = req_prop_to_observation(prop, '-')
                 observations[obs_name] = obs_value
             elif other_prop_oposite:
-                obs_name, obs_value = req_prop_to_observation(prop, '+')
+                # TODO: settings -> random or '-','+'
+                obs_name, obs_value = req_prop_to_observation(prop, '-')
                 observations[obs_name] = obs_value
+                
         
         # object must be particular type
         if 'st' in template_o.feasibility_requirements.keys():
@@ -157,12 +153,23 @@ def get_observations_cannot_be_done_by_this_action(c, target_action):
     # invert the requirements, get object that CANNOT be done by this action
     # this is not right
     # c.properties - positive_requirements
-    positive_requirements_ = [x for x in c.properties if not x in positive_requirements or positive_requirements.remove(x)]
-    # c.properties - negative_requirements
-    negative_requirements_ = [x for x in c.properties if not x in negative_requirements or negative_requirements.remove(x)]
     
+    positive_requirements_ = negative_requirements 
+    #[x for x in c.properties if not x in positive_requirements or positive_requirements.remove(x)]
+    # c.properties - negative_requirements
+    negative_requirements_ = positive_requirements
+    #[x for x in c.properties if not x in negative_requirements or negative_requirements.remove(x)]
+    
+
+
     # convert them to the observations
     observations = {}
+    # This is placeholder: Set every property as:
+    for prop in c.properties:
+        obs_name, obs_value = req_prop_to_observation(prop, '-')
+        observations[obs_name] = obs_value
+    
+    # Rewrite:
     for prop in positive_requirements_:
         obs_name, obs_value = req_prop_to_observation(prop, '+')
         observations[obs_name] = obs_value

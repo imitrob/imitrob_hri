@@ -256,7 +256,7 @@ def singlehistplot_customized(data, filename, labels=['baseline','M1', 'M2', 'M3
     yl = shape[1]
 
     # set width of bar
-    barWidth = 0.2
+    barWidth = 0.1
     fig = plt.figure(figsize=figsize)
 
     # bars
