@@ -81,7 +81,8 @@ class Results6DComparer():
         ''' Noise level 3 refers to id=2 index '''
         self.n3 = 3
         ''' Noise level 4 refers to id=3 index '''
-
+        self.n4 = 4
+        self.n5 = 5
         
         self.ns = slice(None,None,None) #[self.n1, self.n2, self.n3]
         ''' All Noise levels '''
@@ -186,44 +187,44 @@ class Results6DComparer():
         (accuracy, precision,recall,specificity,f1) '''
         indx = ['$mul_{accuracy}$', '$add_{accuracy}$', '$mul_{precision}$', '$add_{precision}$', '$mul_{recall}$', '$add_{recall}$','$mul_{specificity}$', '$add_{specificity}$','$mul_{f1}$', '$add_{f1}$']
 
-        data1=self.extract_data(indices=[[self.mul, self.add_2],self.acc,self.C3,self.n3,self.Ds_des,self.M3])
+        data1=self.extract_data(indices=[[self.mul, self.add_2],self.acc,self.C3,self.n5,self.Ds_des,self.M3])
         print("Accuracy:")
         print( pd.DataFrame(100*data1, columns=cols, index=['mul', 'add']))
 
-        data2=self.extract_data(indices=[[self.mul, self.add_2],self.prc,self.C3,self.n3,self.Ds_des,self.M3])
+        data2=self.extract_data(indices=[[self.mul, self.add_2],self.prc,self.C3,self.n5,self.Ds_des,self.M3])
         print("Precision:")
         print( pd.DataFrame(100*data2, columns=cols, index=['mul', 'add']))
 
-        data3=self.extract_data(indices=[[self.mul, self.add_2],self.rcl,self.C3,self.n3,self.Ds_des,self.M3])
+        data3=self.extract_data(indices=[[self.mul, self.add_2],self.rcl,self.C3,self.n5,self.Ds_des,self.M3])
         print("Recall:")
         print( pd.DataFrame(100*data3, columns=cols, index=['mul', 'add']))
 
-        data4=self.extract_data(indices=[[self.mul, self.add_2],self.spc,self.C3,self.n3,self.Ds_des,self.M3])
+        data4=self.extract_data(indices=[[self.mul, self.add_2],self.spc,self.C3,self.n5,self.Ds_des,self.M3])
         print("Specificity:")
         print( pd.DataFrame(100*data4, columns=cols, index=['mul', 'add']))
 
-        data5=self.extract_data(indices=[[self.mul, self.add_2],self.f1,self.C3,self.n3,self.Ds_des,self.M3])
+        data5=self.extract_data(indices=[[self.mul, self.add_2],self.f1,self.C3,self.n5,self.Ds_des,self.M3])
         print("F1:")
         print( pd.DataFrame(100*data5, columns=cols, index=['mul', 'add']))
 
         data = np.vstack((data1,data2,data3,data4,data5))
 
-        singlehistplot_customized(100*data, 'exp_merge_methods', labels=cols, xticks=indx, xlbl='Metrics', ylbl='Accuracy [%]', plot=True, title="Merging types: $M_3$, $n_3$, $C_3$")
+        singlehistplot_customized(100*data, 'exp_merge_methods', labels=cols, xticks=indx, xlbl='Metrics', ylbl='Accuracy [%]', plot=True, title="Merging types: $M_3$, $n_5$, $C_3$")
 
-    def _4_thresholding(self):
+    def _4_thresholding(self, n, M):
         ''' Here we compare Datasets '''
         cols = ['$D1$', '$D2$', '$D3$', '$D4$']
         ''' with merge functions '''
         indx = ['$baseline$','$mul_{fixed}$','$add_{fixed}$', '$mul_{entropy}$', '$add_{entropy}$']
 
         data = np.vstack((
-        self.extract_data(indices=[self.baseline,self.acc,self.C3,self.n3,self.Ds_des,self.M1]),
-        self.extract_data(indices=[[self.mul,self.add_2,self.entropy,self.entropy_add_2],self.acc,self.C3,self.n3,self.Ds_des,self.M3])
+        self.extract_data(indices=[self.baseline,self.acc,self.C3,n,self.Ds_des,self.M1]),
+        self.extract_data(indices=[[self.mul,self.add_2,self.entropy,self.entropy_add_2],self.acc,self.C3,n,self.Ds_des,M])
         ))
 
         print( pd.DataFrame(100*data, columns=cols, index=indx))
 
-        singlehistplot_customized(100*data.T, 'exp_thresholding', labels=indx, xticks=cols, xlbl='Generation Policies', ylbl='Accuracy [%]', plot=True, title="Thresholding: $M_3$, $n_3$, $C_3$")
+        singlehistplot_customized(100*data.T, f'exp_thresholding_n{n}_M{M+1}', labels=indx, xticks=cols, xlbl='Generation Policies', ylbl='Accuracy [%]', plot=True, title=f"Thresholding: $M_{M+1}$, $n_{n}$, $C_3$")
 
     def _5_noise_levels_compared_to_models(self):
         ''' Here we compare Models '''
@@ -292,23 +293,26 @@ class Results6DComparer():
 if __name__ == '__main__':
     rc = Results6DComparer()
 
-    rc._1_ablation_study(magic=rc.entropy)
-    rc._1_ablation_study(magic=rc.add_2)
-    rc._1_ablation_study(magic=rc.entropy_add_2)
-    rc._1_ablation_study(magic=rc.mul)
+    # rc._1_ablation_study(magic=rc.entropy)
+    # rc._1_ablation_study(magic=rc.add_2)
+    # rc._1_ablation_study(magic=rc.entropy_add_2)
+    # rc._1_ablation_study(magic=rc.mul)
 
-    rc._2_noise_influence(magic=rc.entropy)
-    rc._2_noise_influence(magic=rc.add_2)
-    rc._2_noise_influence(magic=rc.entropy_add_2)
-    rc._2_noise_influence(magic=rc.mul)
+    # rc._2_noise_influence(magic=rc.entropy)
+    # rc._2_noise_influence(magic=rc.add_2)
+    # rc._2_noise_influence(magic=rc.entropy_add_2)
+    # rc._2_noise_influence(magic=rc.mul)
     
     rc._3_types_merging()
     
-    rc._4_thresholding()
+    # rc._4_thresholding(n=rc.n4, M=rc.M2)
+    # rc._4_thresholding(n=rc.n5, M=rc.M2)
+    # rc._4_thresholding(n=rc.n4, M=rc.M3)
+    # rc._4_thresholding(n=rc.n5, M=rc.M3)
     
-    rc._5_noise_levels_compared_to_models()
+    # rc._5_noise_levels_compared_to_models()
     
-    rc._6_baseline_examination()
+    # rc._6_baseline_examination()
     
     
 def old():

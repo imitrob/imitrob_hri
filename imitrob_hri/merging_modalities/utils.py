@@ -236,7 +236,7 @@ def  diagonal_cross_entropy(v):
 
 def singlehistplot_customized(data, filename, labels=['baseline','M1', 'M2', 'M3'], 
                               xticks=['D1','D2','D3','D4','D5'], xlbl='', ylbl='Accuracy [%]',
-                              bottom=0, plot=False, savefig=True, figsize=(6,3), title=""):
+                              bottom=0, plot=False, savefig=True, figsize=(12,6), title=""):
     ''' Plot histogram plot: Used at MM paper results
     Parameters:
         data (Float[][]): (bars, series?)
@@ -273,6 +273,7 @@ def singlehistplot_customized(data, filename, labels=['baseline','M1', 'M2', 'M3
         plt.bar(br, d_-bottom, color =next(colors), width = barWidth,
                 edgecolor ='grey', label =l_, bottom=bottom)
 
+    plt.ylim(top = 100)
     # Adding Xticks
     plt.rcParams['pdf.fonttype'] = 42
     plt.rcParams['ps.fonttype'] = 42
