@@ -3,11 +3,13 @@ import sys, os; sys.path.append(os.path.dirname(os.path.abspath(__file__))+"/.."
 from modality_merger import ModalityMerger
 from utils import *
 from imitrob_nlp.nlp_utils import make_conjunction
-import data.datagen_utils as datagen_utils 
+import data.datagen_utils2 as datagen_utils2 
 import numpy as np
 from sklearn.metrics import precision_score, recall_score, accuracy_score
 
 DATASET_PREFIX = '2' # '' for original dataset
+
+import matplotlib.pyplot as plt
 
 def tester_all(use_magic):
     accs = np.zeros((3,6,4,3))
@@ -33,6 +35,8 @@ def tester_on_data(dataset, model, use_magic, printer=False):
     y_pred_cts = []
     y_true_cts = []
 
+    test_actionsdoability_hist = []
+
     acc = 0
     nsamples = len(dataset)
     for n,sample in enumerate(dataset):
@@ -44,8 +48,45 @@ def tester_on_data(dataset, model, use_magic, printer=False):
         mm = ModalityMerger(c, use_magic)
         s.M, DEBUGdata = mm.feedforward3(s.L, s.G, scene=sample['x_scene'], epsilon=c.epsilon, gamma=c.gamma, alpha_penal=c.alpha_penal, model=model, use_magic=use_magic)
 
+        n_actions_possible = 0
+        for template in c.templates:
+            tmpl = None
+            for t in sample['x_scene'].templates:
+                if t.name == template:
+                    tmpl = t
+            assert tmpl is not None
+            
+            # [template].is_feasible()
+            isfeasible = datagen_utils2.is_action_is_feasible_given_this_scene(tmpl, sample['x_scene'])
+            # print(f"template {template} is doable? {isfeasible}")
+            if isfeasible:
+                n_actions_possible += 1
+
+        test_actionsdoability_hist.append(n_actions_possible)
+
+
         if s.check_merged(sample['y'], c, printer):
             acc +=1
+            if printer:
+                print("-- Scene: --")
+                print(sample['x_scene'])
+                print("-- Input Language --")
+                print(s.L['template'])
+                print(s.L['selections'])
+                print(s.L['storages'])
+                print("-- Input Gesture --")
+                print(s.G['template'])
+                print(s.G['selections'])
+                print(s.G['storages'])
+                print("-- Output --")
+                print(s.M['template'])
+                print(s.M['selections'])
+                print(s.M['storages'])
+                print("-- True Value: --")                
+                print(sample['y'])
+
+                print(DEBUGdata)
+                input()
         else:
             if printer:
                 print("-- Scene: --")
@@ -85,6 +126,13 @@ def tester_on_data(dataset, model, use_magic, printer=False):
         }
     n+=1
     print(f"Final acc: {acc/n*100}%")
+
+    # plt.hist(test_actionsdoability_hist, bins=np.linspace(0, 10, 20))
+    # plt.grid()
+    # plt.xlabel("Number of feasible actions on scene")
+    # plt.savefig("/home/petr/Downloads/test_actionsdoability_hist.png")
+    # plt.show()
+
     return acc/n*100, results
 
 if __name__ == '__main__':
@@ -101,7 +149,9 @@ if __name__ == '__main__':
     else:
         # Model M3: model = 3
         model = int(sys.argv[3]) if len(sys.argv) > 3 else 3
+        printer = eval(sys.argv[4]) if len(sys.argv) > 4 else False
         
+
         dataset = np.load(os.path.expanduser(f'{os.path.dirname(os.path.abspath(__file__))}/../data/saves/artificial_dataset{DATASET_PREFIX}_{dataset_name}.npy'), allow_pickle=True)
         use_magic = sys.argv[2]
-        tester_on_data(dataset, model, use_magic=use_magic, printer=True)
+        tester_on_data(dataset, model, use_magic=use_magic, printer=printer)
