@@ -5,15 +5,20 @@ from teleop_msgs.msg import HRICommand
 
 from imitrob_templates.small_ontology_scene_reader import SceneOntologyClient
 
+MM_G_IN = "/mm/g_command"
+MM_L_IN = "/mm/l_command"
+MM_OUT = "/mm/solution"
+
 class PublishHRICommand(Node):
     def __init__(self):
         super().__init__("rosnodePublisherOfHRICommand")
         
-        self.pub = self.create_publisher(HRICommand, "/hri/command", 5)
+        self.pub_g = self.create_publisher(HRICommand, MM_G_IN, 5)
+        self.pub_l = self.create_publisher(HRICommand, MM_L_IN, 5)
 
         self.soc = SceneOntologyClient(self)
 
-        self.sub = self.create_subscription(HRICommand, "/mm/solution", self.mm_solution_clb, 5)
+        self.sub = self.create_subscription(HRICommand, MM_OUT, self.mm_solution_clb, 5)
         self.mm_solution_queue = []
 
     def mm_solution_clb(self, msg):
@@ -68,7 +73,9 @@ def main():
         s = s.replace("'", '"')
         msg_to_send.data = [s]
         
-        rosnode.pub.publish(msg_to_send)
+        rosnode.pub_g.publish(msg_to_send)
+        time.sleep(0.5)
+        rosnode.pub_l.publish(msg_to_send)
         
         while len(rosnode.mm_solution_queue) == 0:
             rclpy.spin_once(rosnode)

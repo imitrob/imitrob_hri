@@ -341,7 +341,7 @@ class ModalityMerger():
 
         # penalize according to entropy?
         PENALIZE_BY_ENTROPY = True
-        DISCARD_ENTROPY_THRESHOLD = 0.99
+        DISCARD_ENTROPY_THRESHOLD = 1.01
 
         if normalized_entropy(lsp) > DISCARD_ENTROPY_THRESHOLD:
             # lsp = np.ones_like(lsp) * np.finfo(lsp.dtype).eps
@@ -364,12 +364,17 @@ class ModalityMerger():
                 lsp /= penalization_by_entropy_l
                 gsp /= penalization_by_entropy_g
 
-            if self.use_magic == 'entropy':
-                msp = lsp * gsp  # "merge"
-            elif self.use_magic == 'entropy_add_2':
-                msp = lsp + gsp
+            if self.is_zeros(gsp):
+                msp = lsp
+            elif self.is_zeros(lsp):
+                msp = gsp 
             else:
-                raise Exception(f"magic: {self.use_magic} TODO?")
+                if self.use_magic == 'entropy':
+                    msp = lsp * gsp  # "merge"
+                elif self.use_magic == 'entropy_add_2':
+                    msp = lsp + gsp
+                else:
+                    raise Exception(f"magic: {self.use_magic} TODO?")
 
         msp /= np.sum(msp)  # normalize
 
@@ -486,7 +491,6 @@ class ModalityMerger():
         # A.) Data preprocessing
         ls, gs = self.preprocessing(ls, gs, epsilon, gamma)
 
-
         # B.) Merging
         # 1. Compare types independently
         S_naive = {}
@@ -511,7 +515,7 @@ class ModalityMerger():
                                     deepcopy(ls[compare_type].p),
                                     deepcopy(gs[compare_type].p))                
             else: raise Exception("Wrong")
-            
+        
         # print(f"{cc.H}============================={cc.E}")
         # print(f"{cc.H}==== AFTER Compare types independently ========{cc.E}")
         # print(f"{cc.H}============================={cc.E}")

@@ -17,7 +17,7 @@ import traceback as tb
 import time
 import numpy as np
 from crow_ontology.crowracle_client import CrowtologyClient
-from rdflib.namespace import Namespace, RDF, RDFS, OWL, FOAF, XSD
+from rdflib.namespace import Namespace, RDF, RDFS, OWL, FOAF, XSD, URIRef
 from imitrob_hri.imitrob_nlp.processing.ProgramRunner import ProgramRunner
 from imitrob_hri.imitrob_nlp.modules.UserInputManager import UserInputManager
 from crow_params.client import ParamClient
@@ -171,6 +171,13 @@ class SentenceProcessor(Node):
         return stripped_text
 
     def template_to_hricommand(self, template):
+
+        def target_object_struri_to_type(uri):
+            try:
+                return URIRef(uri).fragment.split("_od_")[0]
+            except TypeError:
+                return ''
+             
         d = {}
         
         if template is None:
@@ -179,8 +186,8 @@ class SentenceProcessor(Node):
             return HRICommand(data=[str(d)]) 
 
         d['target_action'] = str(template.target_action)
-        d['target_object'] = str(template.target_object)
-        d['target_storage'] = str(template.target_storage)
+        d['target_object'] = target_object_struri_to_type(template.target_object)
+        d['target_storage'] = target_object_struri_to_type(template.target_storage)
         if 'to' in template._1_detected_data:
             d['to_color'] = str(template._1_detected_data['to'].objs_properties['color'].activated)
         if 'ts' in template._1_detected_data:
@@ -194,19 +201,22 @@ class SentenceProcessor(Node):
 
         if 'to' in template._1_detected_data:   
             d['objects'] = list(template._1_detected_data['to'].objs_mentioned_cls.names)
+            # d['objects_names'] = list([target_object_struri_to_type(obj_name) for obj_name in d['object_classes']])
             d['object_probs'] = list(template._1_detected_data['to'].objs_mentioned_cls.p)
-            # d['object_classes'] = ['object']
-
+            
             d['to_colors'] = list(template._1_detected_data['to'].objs_properties['color'].names)
             d['to_color_probs'] = list(template._1_detected_data['to'].objs_properties['color'].p)
 
         if 'ts' in template._1_detected_data:   
             d['storages'] = list(template._1_detected_data['ts'].objs_mentioned_cls.names)
+            # d['storage_names'] = list([target_object_struri_to_type(strg_name) for strg_name in d['storage_classes']])
             d['storage_probs'] = list(template._1_detected_data['ts'].objs_mentioned_cls.p)
-            # d['object_classes'] = ['object']
-
+            
             d['ts_colors'] = list(template._1_detected_data['ts'].objs_properties['color'].names)
             d['ts_color_probs'] = list(template._1_detected_data['ts'].objs_properties['color'].p)
+
+
+
 
 
         # d['parameters'] = ""        
@@ -223,8 +233,12 @@ class SentenceProcessor(Node):
         # d["objs_mentioned_cls"] = template.objs_mentioned_cls
         # d["objs_mentioned_cls_probs"] = list(template.objs_mentioned_cls_probs)
         # d["objs_mentioned_properties"] = template.objs_properties
-        
-        return HRICommand(data=[str(d)]) 
+        d = str(d)
+        d = d.replace("'", '"')
+        print("FINAL STRING HRICOMMAND PRINT JSON COMPATIBLE HERE: ")
+        print(d)
+
+        return HRICommand(data=[d]) 
         
     # def make_one_hot_vector(self, template_names, activated_template_name):
     #     ''' For Language likelihoods vector construction

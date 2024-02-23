@@ -10,6 +10,8 @@ import numpy as np
 # from teleop_msgs.msg import EEPoseGoals, JointAngles
 # from visualization_msgs.msg import MarkerArray, Marker
 # from sensor_msgs.msg import JointState
+from rclpy.qos import QoSProfile
+from rclpy.qos import QoSReliabilityPolicy
 
 from teleop_msgs.msg import HRICommand
 from std_msgs.msg import Bool
@@ -26,6 +28,8 @@ from imitrob_templates.small_ontology_scene_reader import SceneOntologyClient
 from imitrob_hri.imitrob_nlp.TemplateFactory import create_template
 
 from imitrob_hri.imitrob_nlp.nlp_utils import cc
+import threading
+from copy import deepcopy
 
 class MMNode(Node):
     def __init__(self, max_time_delay = 5., model = 1, use_magic = 'entropy', c=ConfigurationCrow1()):
@@ -39,13 +43,10 @@ class MMNode(Node):
 
         self.max_time_delay = max_time_delay
         
-        self.create_subscription(HRICommand, '/hri/command', self.receiveHRIcommandG, 10)
-        self.create_subscription(HRICommand, '/mm/natural_input', self.receiveHRIcommandL, 10)
-        
-        self.create_subscription(Bool, '/mm/gestures_ongoing', self.ongoingG, 10)
-        self.create_subscription(Bool, '/mm/natural_ongoing', self.ongoingL, 10)
-        
-        self.create_subscription(HRICommand, '/mm/crow_scene', self.receive_scene, 10)
+
+        self.create_subscription(HRICommand, '/gg/hri_command', self.receiveHRIcommandG, 10)
+        qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
+        self.create_subscription(HRICommand, '/nlp/hri_command', self.receiveHRIcommandL, qos_profile=qos)
         
         self.receivedHRIcommandG = None
         self.receivedHRIcommandGstamp = 0.
@@ -53,16 +54,9 @@ class MMNode(Node):
         self.receivedHRIcommandL = None
         self.receivedHRIcommandLstamp = 0.
         
-        # We won't use service
-        # self.srv = self.create_service(SrvType, '<topic>', self.receiveHRIcommand)
-        
         self.model = model
         self.use_magic = use_magic
         self.c = c
-        
-        
-        self.isOnGoingG = False
-        self.isOnGoingL = False
         
         self.soc = SceneOntologyClient(self)
         self.soc.add_dummy_cube()
@@ -73,40 +67,38 @@ class MMNode(Node):
         
         print("Initialized")
         
-    def ongoingG(self):
-        pass
-        # TODO
-    def ongoingL(self):
-        pass
-        # TODO
+    def clean_up(self):
+        self.receivedHRIcommandG = None
+        self.receivedHRIcommandGstamp = 0.
+        
+        self.receivedHRIcommandL = None
+        self.receivedHRIcommandLstamp = 0.
         
     def receiveHRIcommandG(self, msg):
         self.receivedHRIcommandGstamp = time.perf_counter()
         self.receivedHRIcommandG = msg
         
-        if self.execution_trigger():
-            self.mm_publisher.publish(self.merge_modalities())
-
     def receiveHRIcommandL(self, msg):
         self.receivedHRIcommandLstamp = time.perf_counter()
         self.receivedHRIcommandL = msg
-        
-        if self.execution_trigger():
-            self.mm_publisher.publish(self.merge_modalities())
-        
-    def execution_trigger(self):
+
+    def execution_trigger(self, delay_run):
         """  Should check ongoing topics
         Returns:
             Bool: Execution can begin
         """        ''''''
         # Ongoing bool message frequency should be 10Hz
-        # -> Wait 30ms (factor 3)
-        time.sleep(0.03)
+        # -> Wait 30ms (factor 5)
+        time.sleep(0.05)
         # If not gesturing and not speaking -> execute
-        if not self.isOnGoingL and not self.isOnGoingG:
-             return True
-         
-        return False
+        if self.receivedHRIcommandG is not None and self.receivedHRIcommandL is not None:
+            print(f"Execution both modalities ready!")
+            return 'run'
+        elif self.receivedHRIcommandG is not None or self.receivedHRIcommandL is not None:
+            if delay_run == -1:
+                return 'run delay'
+        else:
+            return 'no'
         
     def merge_modalities(self):
         """ Calls merge modalities function
@@ -117,43 +109,59 @@ class MMNode(Node):
         Returns:
             HRICommand: Merged Command
         """        ''''''
-        inputs = self.receivedHRIcommandG, self.receivedHRIcommandL
+        G_dict = {
+            'action_probs': [], 
+            'actions': [],
+            'object_probs': [],
+            'objects': []}
+        L_dict = {
+            'action_probs': [], 
+            'actions': [],
+            'object_probs': [],
+            'objects': []}
         
-        print("GG:")
-        print(inputs[0])
-        
-        receivedHRIcommandGStringToParse = self.receivedHRIcommandG.data[0]
-        receivedHRIcommandG_parsed = json.loads(receivedHRIcommandGStringToParse)
-        ['template_probs']
-        
-        template_names = receivedHRIcommandG_parsed['actions']
-        receivedHRIcommandG_parsed['target_action']
-        template_probs = receivedHRIcommandG_parsed['action_probs']
-        receivedHRIcommandG_parsed['action_timestamp']
-        object_names = receivedHRIcommandG_parsed['objects']
-        object_probs = receivedHRIcommandG_parsed['object_probs']
-        receivedHRIcommandG_parsed['object_classes']
-        receivedHRIcommandG_parsed['parameters']
-        
-        print("template_probs", template_probs)
-        print("template_names", template_names)
-        print("object_names", object_names)
-        print("object_probs", object_probs)
+        print("TOBE parsed: ")
+        if self.receivedHRIcommandG is not None: print(f"receivedHRIcommandGStringToParse: {self.receivedHRIcommandG.data[0]}")
+        if self.receivedHRIcommandL is not None: print(f"receivedHRIcommandLStringToParse: {self.receivedHRIcommandL.data[0]}")
+        input("WAITING TO BE MERGED")
 
+        if self.receivedHRIcommandG is not None:
+            receivedHRIcommandGStringToParse = self.receivedHRIcommandG.data[0]
+            G_dict = json.loads(receivedHRIcommandGStringToParse)
+
+        if self.receivedHRIcommandL is not None:
+            receivedHRIcommandLStringToParse = self.receivedHRIcommandL.data[0]
+            L_dict = json.loads(receivedHRIcommandLStringToParse)
+        
+        # G_dict['target_action']
+        # G_dict['action_timestamp']
+        # G_dict['object_classes']
+        # G_dict['parameters']
+        
+        # In crow experiment, there are only one object of each kind
+        # cube,cup,can,foam,crackers,bowl,drawer_socket        
+        # - Discard _od_ number here
+        for n,o in enumerate(deepcopy(G_dict['objects'])):
+            if '_od_' in o:
+                G_dict['objects'][n] = o.split("_od_")[0]
+        # for n,o in enumerate(deepcopy(L_dict['objects'])):
+        #     if '_od_' in o:
+        #         G_dict['objects'][n] = o.split("_od_")[0]
+        
         mms = MMSentence(G = {
-            'template': ProbsVector(template_probs, template_names, self.c),
-            'selections': ProbsVector(object_probs, object_names, self.c),
+            'template': ProbsVector(G_dict['action_probs'], G_dict['actions'], self.c),
+            'selections': ProbsVector(G_dict['object_probs'], G_dict['objects'], self.c),
             'storages': ProbsVector([], [], self.c),
         },
         L = {
-            'template': ProbsVector(template_probs, template_names, self.c),
-            'selections': ProbsVector(object_probs, object_names, self.c),
+            'template': ProbsVector(L_dict['action_probs'], L_dict['actions'], self.c),
+            'selections': ProbsVector(L_dict['object_probs'], L_dict['objects'], self.c),
             'storages': ProbsVector([], [], self.c),
         })
         
         scene = self.soc.get_scene3()
         
-        mm = ModalityMerger(self.c, self.use_magic)
+        
         # print(
         #     f" I dont understand {self.c.mm_pars_names_dict} \n\
         #     L: \n\
@@ -172,7 +180,6 @@ class MMNode(Node):
         #     use_magic: {self.use_magic} \n\
         #     "
         # )
-        # print("=== make_conjunction ===")
 
         print(f"{cc.H}============================={cc.E}")
         print(f"{mms.L['template']}\n{mms.L['selections']}")
@@ -189,41 +196,55 @@ class MMNode(Node):
         print("=== make_conjunction ===")
         print(
             f"L: \n\
-template: {mms.L['template']}, \n\
-selections: {mms.L['selections']}, \n\
-storages: {mms.L['storages']}, \n\
-G: \n\
-template: {mms.G['template']}, \n\
-selections: {mms.G['selections']}, \n\
-storages: {mms.G['storages']}, \n\
-scene: {scene} \n\
-epsilon: {self.c.epsilon} \n\
-gamma: {self.c.gamma} \n\
-alpha_penal: {self.c.alpha_penal} \n\
-model: {self.model} \n\
-use_magic: {self.use_magic} \n\
-"
-        )
+            template: {mms.L['template']}, \n\
+            selections: {mms.L['selections']}, \n\
+            storages: {mms.L['storages']}, \n\
+            G: \n\
+            template: {mms.G['template']}, \n\
+            selections: {mms.G['selections']}, \n\
+            storages: {mms.G['storages']}, \n\
+            scene: {scene} \n\
+            epsilon: {self.c.epsilon} \n\
+            gamma: {self.c.gamma} \n\
+            alpha_penal: {self.c.alpha_penal} \n\
+            model: {self.model} \n\
+            use_magic: {self.use_magic}")
         
+        mm = ModalityMerger(self.c, self.use_magic)
         mms.M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=self.c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=self.model, use_magic=self.use_magic)
-        
+
+        mm = ModalityMerger(self.c, self.use_magic)
+        mms.M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=self.c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=self.model, use_magic=self.use_magic)
+
+
         # mms.merged_part_to_HRICommand()
-        return HRICommand(data=[f'"target_action": "{mms.M["template"].activated}", \
-                                "target_object": "{mms.M["template"]}", \
-                                "actions": {mms.M["template"].names}, \
-                                "action_probs": {mms.M["template"].p}, \
-                                "objects": {mms.M["selections"].names} ,\
-                                "object_probs": {mms.M["selections"].p} ,\
-                                "object_classes": "TODO", \
-                                "parameters": "TODO", \
-                                "action_timestamp": "TODO", \
-                                "scene": {scene} \
-                                "epsilon": {self.c.epsilon} \
-                                "gamma": {self.c.gamma} \
-                                "alpha_penal": {self.c.alpha_penal} \
-                                "model": {self.model} \
-                                "use_magic": {self.use_magic} '])
-    
+
+        def float_array_to_str(x):
+            x = list(x)
+            substr = '['
+            for x_ in x:
+                substr += '"'+f'{x_:.5f}'+'",'
+            substr = substr[:-1]
+            substr += ']'
+            return substr
+
+        final_s = '{' + f'"target_action": "{mms.M["template"].activated}", "target_object": "{mms.M["selections"].activated}",' 
+        final_s+= f'"actions": {mms.M["template"].names}, "action_probs": {float_array_to_str(mms.M["template"].p)},'
+        final_s+= f'"objects": {mms.M["selections"].names} , "object_probs": {float_array_to_str(mms.M["selections"].p)} , "object_classes": "TODO", '
+        # final_s+= f'"parameters": "TODO", "action_timestamp": "TODO", "scene": {scene}'
+        final_s+= f'"epsilon": "{self.c.epsilon}", "gamma": "{self.c.gamma}", "alpha_penal": "{self.c.alpha_penal}", "model": "{self.model}", "use_magic": "{self.use_magic}",'
+        final_s+= f'"merge_function": {self.use_magic}'
+        final_s+= '}'
+        final_s = final_s.replace("'", '"')
+        print(f"final_s:   {str(final_s)}")
+        hric = HRICommand(data=[final_s])
+        print(f"{cc.H}============================={cc.E}")
+        print(f"{cc.H}=========== OUT ============={cc.E}")
+        print(hric.data)
+        print(f"{cc.H}============================={cc.E}")
+
+        return hric
+
     
     def receive_scene(self, scene):
         ''' Node sends crow ontology scene info to ROS topic. Here, the topic msg is received and 
@@ -264,10 +285,46 @@ use_magic: {self.use_magic} \n\
 
         scene = Scene3(objects, storages, template_names=c.templates)
 
+
+
 def main():
     rclpy.init()
     mmn = MMNode()
-    rclpy.spin(mmn)
+
+    def spinning_threadfn():
+        while rclpy.ok():
+            rclpy.spin_once(mmn)
+            time.sleep(0.01)
+
+    spinning_thread = threading.Thread(target=spinning_threadfn, args=(), daemon=True)
+    spinning_thread.start()
+
+    delay_run = -1
+    while rclpy.ok():
+        print("--- new round ---")
+        time.sleep(1)
+        et = mmn.execution_trigger(delay_run)
+        if et == 'run':
+            mmn.mm_publisher.publish(mmn.merge_modalities())
+            mmn.clean_up()
+        elif et == 'run delay':
+            delay_run = 5
+        
+        if delay_run > 0:
+            delay_run -= 1
+            if mmn.receivedHRIcommandG is not None and mmn.receivedHRIcommandL is not None:
+                receivedsecondmodalityintheprocess = 'Both L&G ready'
+            else: 
+                receivedsecondmodalityintheprocess = ''
+            print(f"Execution in {delay_run} {receivedsecondmodalityintheprocess}")
+
+        if delay_run == 0:
+            delay_run = -1
+
+            
+            mmn.mm_publisher.publish(mmn.merge_modalities())
+            mmn.clean_up()
+        
 
 if __name__ == '__main__':
     main()

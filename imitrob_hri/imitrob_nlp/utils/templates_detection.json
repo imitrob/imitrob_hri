@@ -66,7 +66,9 @@
     "cancel":"cancel",
     "move up": "move up",
     "move-up": "move up",
-    "noop": "noop"
+    "noop": "noop",
+    "open": "open",
+    "close": "close"
     },
 "cs": {
     "build":"stavět",
@@ -136,6 +138,8 @@
     "cancel":"zruš",
     "move up": "nahoru",
     "move-up": "nahoru",
-    "noop": "nic"
+    "noop": "nic",
+    "open": "otevři",
+    "close": "zavři"
 }
       }

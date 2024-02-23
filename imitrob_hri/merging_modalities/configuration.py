@@ -240,13 +240,15 @@ class Configuration3(Configuration):
 class ConfigurationCrow1(Configuration):
     def __init__(self):
         # need to be the default names
-        self.mm_pars_names_dict = {'template': ['pick', 'point', 'pass','release'],
-            'selections': ['cube holes'],
-            'storages': [],
+        self.mm_pars_names_dict = {'template': ['move-up', 'release', 'stop',
+                                    'pick', 'push', 'unglue',
+                                    'pour', 'put-into', 'stack'],
+            'selections': ['cube','cup','can','foam','crackers'],
+            'storages': ['drawer_socket', 'bowl','crackers'],
         }
         self.scene_gen_config = {
-            'selections_n': ('uniform', 3, 7),
-            'storages_n': ('uniform', 2, 3),
+            'selections_n': ('uniform', 5, 6),
+            'storages_n': ('uniform', 3, 4),
         }
         #self.ct_properties = self.ct_properties_default
         

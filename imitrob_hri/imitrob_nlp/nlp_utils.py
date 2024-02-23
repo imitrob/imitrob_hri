@@ -59,10 +59,16 @@ selections_name_synonyms = {
     '2': ['table'],
     '3': ['aruco box'],
 
-    '10': ['Cube'],
-    '11': ['Peg'],
+    '10': ['cube'],
+    '11': ['peg'],
     '12': ['wrench'],
     '13': ['paper'],
+    '14': ['cup'],
+    '15': ['foam'],
+    '16': ['can'],
+    '17': ['crackers'],
+    '18': ['bowl'],
+    '19': ['drawer_socket', 'drawer_cabinet', 'drawer cabinet'],
     # YCB
     '100': ['tomato soup can'], 
     '101': ['potted meat can'],
@@ -74,6 +80,7 @@ selections_name_synonyms = {
     '202': ['sphere'],
 
     '1000': ['glued wrench'],
+    
 }
 
 storages_name_synonyms = {
@@ -173,7 +180,8 @@ class cc:
 
 
 def make_conjunction(gesture_templates, language_templates, gesture_likelihoods, language_likelihoods, ct='template', keep_only_items_in_c_templates=False, c_templates=None):
-    ''' If language and gesture templates has different sizes or one/few templates are missing
+    ''' template or objects or storages is names template here!
+        If language and gesture templates has different sizes or one/few templates are missing
         This function makes UNION from both template lists.
     '''
     
@@ -217,9 +225,10 @@ def make_conjunction(gesture_templates, language_templates, gesture_likelihoods,
         discards_l = []        
         # print("discards_l", discards_l)
         # print(f"language_{ct}", language_templates)
+
         for n,lt in enumerate(language_templates):
             if lt not in c_templates:
-                print(f"WARNING! {gt} was discarded!")
+                print(f"WARNING! {lt} was discarded!")
                 discards_l.append(n)
         discards_l.reverse()
         for i in discards_l:
