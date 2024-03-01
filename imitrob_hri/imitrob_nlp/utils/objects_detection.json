@@ -6,7 +6,12 @@
   "wafer": "wafer",
   "it": "it",
   "box": "box",
-  "drawer": "drawer"
+  "drawer": "drawer",
+  "cup": "cup",
+  "can": "can",
+  "bowl": "bowl",
+  "cleaner": "cleaner",
+  "drawer": "drawer_socket"
 },
 "cs": { "cube": "kostka",
   "hammer": "kladivo",
@@ -15,6 +20,11 @@
   "wafer": "destička",
   "it": "to",
   "box": "krabice",
-  "drawer": "šuplík"
+  "drawer": "šuplík",
+  "cup": "hrnek",
+  "can": "plechovka",
+  "bowl": "miska",
+  "cleaner": "čistič",
+  "drawer_socket": "šuplík"
 }
       }

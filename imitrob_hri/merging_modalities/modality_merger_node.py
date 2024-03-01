@@ -30,6 +30,7 @@ from imitrob_hri.imitrob_nlp.TemplateFactory import create_template
 from imitrob_hri.imitrob_nlp.nlp_utils import cc
 import threading
 from copy import deepcopy
+from pathlib import Path
 
 class MMNode(Node):
     def __init__(self, max_time_delay = 5., model = 1, use_magic = 'entropy', c=ConfigurationCrow1()):
@@ -120,11 +121,9 @@ class MMNode(Node):
             'object_probs': [],
             'objects': []}
         
-        print("TOBE parsed: ")
         if self.receivedHRIcommandG is not None: print(f"receivedHRIcommandGStringToParse: {self.receivedHRIcommandG.data[0]}")
         if self.receivedHRIcommandL is not None: print(f"receivedHRIcommandLStringToParse: {self.receivedHRIcommandL.data[0]}")
-        input("WAITING TO BE MERGED")
-
+        
         if self.receivedHRIcommandG is not None:
             receivedHRIcommandGStringToParse = self.receivedHRIcommandG.data[0]
             G_dict = json.loads(receivedHRIcommandGStringToParse)
@@ -141,23 +140,67 @@ class MMNode(Node):
         # In crow experiment, there are only one object of each kind
         # cube,cup,can,foam,crackers,bowl,drawer_socket        
         # - Discard _od_ number here
-        for n,o in enumerate(deepcopy(G_dict['objects'])):
-            if '_od_' in o:
-                G_dict['objects'][n] = o.split("_od_")[0]
-        # for n,o in enumerate(deepcopy(L_dict['objects'])):
-        #     if '_od_' in o:
-        #         G_dict['objects'][n] = o.split("_od_")[0]
+        if 'objects' in G_dict:
+            for n,o in enumerate(deepcopy(G_dict['objects'])):
+                if '_od_' in o:
+                    G_dict['objects'][n] = o.split("_od_")[0]
+            # for n,o in enumerate(deepcopy(L_dict['objects'])):
+            #     if '_od_' in o:
+            #         G_dict['objects'][n] = o.split("_od_")[0]
+        if 'objects' in L_dict:
+            for n,o in enumerate(deepcopy(L_dict['objects'])):
+                if '_od_' in o:
+                    L_dict['objects'][n] = o.split("_od_")[0]
+
+
+        if 'storages' in G_dict:
+            for n,o in enumerate(deepcopy(G_dict['storages'])):
+                if '_od_' in o:
+                    G_dict['storages'][n] = o.split("_od_")[0]
+
+        if 'storages' in L_dict:
+            for n,o in enumerate(deepcopy(L_dict['storages'])):
+                if '_od_' in o:
+                    L_dict['storages'][n] = o.split("_od_")[0]
+
+        G = {}
+        if 'action_probs' in G_dict:
+            G['template'] = ProbsVector(G_dict['action_probs'], G_dict['actions'], self.c)
+        else:
+            G['template'] = ProbsVector([], [], self.c)
+        if 'object_probs' in G_dict:
+            G['selections'] = ProbsVector(G_dict['object_probs'], G_dict['objects'], self.c)
+        else:
+            G['selections'] = ProbsVector([], [], self.c)
+        # if 'storage_probs' in G_dict:
+        #     G['storages'] = ProbsVector(G_dict['storage_probs'], G_dict['storages'], self.c)
         
-        mms = MMSentence(G = {
-            'template': ProbsVector(G_dict['action_probs'], G_dict['actions'], self.c),
-            'selections': ProbsVector(G_dict['object_probs'], G_dict['objects'], self.c),
-            'storages': ProbsVector([], [], self.c),
-        },
-        L = {
-            'template': ProbsVector(L_dict['action_probs'], L_dict['actions'], self.c),
-            'selections': ProbsVector(L_dict['object_probs'], L_dict['objects'], self.c),
-            'storages': ProbsVector([], [], self.c),
-        })
+        if 'storage_probs' in G_dict:
+            G['storages'] = ProbsVector(G_dict['storage_probs'], G_dict['storages'], self.c)
+        else:
+            G['storages'] = ProbsVector([], [], self.c)
+
+        L = {}
+        if 'action_probs' in L_dict:
+            L['template'] = ProbsVector(L_dict['action_probs'], L_dict['actions'], self.c)
+        else:
+            L['template'] = ProbsVector([], [], self.c)
+
+        if 'object_probs' in L_dict:
+            L['selections'] = ProbsVector(L_dict['object_probs'], L_dict['objects'], self.c)
+        else:
+            L['selections'] = ProbsVector([], [], self.c)
+
+        if 'storage_probs' in L_dict:
+            L['storages'] = ProbsVector(L_dict['storage_probs'], L_dict['storages'], self.c)
+        else:
+            L['storages'] = ProbsVector([], [], self.c)
+
+        # if 'storage_probs' in L_dict:
+        #     L['storages'] = ProbsVector(L_dict['storage_probs'], L_dict['storages'], self.c)
+
+        mms = MMSentence(L=L, G=G)
+
         
         scene = self.soc.get_scene3()
         
@@ -210,13 +253,24 @@ class MMNode(Node):
             model: {self.model} \n\
             use_magic: {self.use_magic}")
         
+
+        # baseline
         mm = ModalityMerger(self.c, self.use_magic)
-        mms.M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=self.c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=self.model, use_magic=self.use_magic)
-
+        mms.M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=self.c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=0, use_magic='baseline')
+        # M1
+        mms1 = deepcopy(mms)
         mm = ModalityMerger(self.c, self.use_magic)
-        mms.M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=self.c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=self.model, use_magic=self.use_magic)
+        mms1.M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=self.c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=0, use_magic=self.use_magic)
+        # M2
+        mms2 = deepcopy(mms)
+        mm = ModalityMerger(self.c, self.use_magic)
+        mms2.M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=self.c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=1, use_magic=self.use_magic)
+        # M3
+        mms3 = deepcopy(mms)
+        mm = ModalityMerger(self.c, self.use_magic)
+        mms3.M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=self.c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=2, use_magic=self.use_magic)
 
-
+        
         # mms.merged_part_to_HRICommand()
 
         def float_array_to_str(x):
@@ -228,20 +282,37 @@ class MMNode(Node):
             substr += ']'
             return substr
 
-        final_s = '{' + f'"target_action": "{mms.M["template"].activated}", "target_object": "{mms.M["selections"].activated}",' 
-        final_s+= f'"actions": {mms.M["template"].names}, "action_probs": {float_array_to_str(mms.M["template"].p)},'
-        final_s+= f'"objects": {mms.M["selections"].names} , "object_probs": {float_array_to_str(mms.M["selections"].p)} , "object_classes": "TODO", '
-        # final_s+= f'"parameters": "TODO", "action_timestamp": "TODO", "scene": {scene}'
-        final_s+= f'"epsilon": "{self.c.epsilon}", "gamma": "{self.c.gamma}", "alpha_penal": "{self.c.alpha_penal}", "model": "{self.model}", "use_magic": "{self.use_magic}",'
-        final_s+= f'"merge_function": {self.use_magic}'
-        final_s+= '}'
-        final_s = final_s.replace("'", '"')
-        print(f"final_s:   {str(final_s)}")
-        hric = HRICommand(data=[final_s])
-        print(f"{cc.H}============================={cc.E}")
-        print(f"{cc.H}=========== OUT ============={cc.E}")
-        print(hric.data)
-        print(f"{cc.H}============================={cc.E}")
+        hricommandstrs = []
+        for i in [mms,mms1,mms2,mms3]:
+            final_s = '{' + f'"target_action": "{mms.M["template"].activated}", "target_object": "{mms.M["selections"].activated}", "target_storage": "{mms.M["storages"].activated}",' 
+            final_s+= f'"actions": {mms.M["template"].names}, "action_probs": {float_array_to_str(mms.M["template"].p)},'
+            final_s+= f'"objects": {mms.M["selections"].names} , "object_probs": {float_array_to_str(mms.M["selections"].p)} , "object_classes": "TODO", '
+            final_s+= f'"storages": {mms.M["storages"].names} , "storage_probs": {float_array_to_str(mms.M["storages"].p)} , '
+            # final_s+= f'"parameters": "TODO", "action_timestamp": "TODO", "scene": {scene}'
+            final_s+= f'"epsilon": "{self.c.epsilon}", "gamma": "{self.c.gamma}", "alpha_penal": "{self.c.alpha_penal}", "model": "{self.model}", "use_magic": "{self.use_magic}",'
+            final_s+= f'"merge_function": {self.use_magic}'
+            final_s+= '}'
+            final_s = final_s.replace("'", '"')
+            print(f"final_s:   {str(final_s)}")
+            hric = HRICommand(data=[final_s])
+            print(f"{cc.H}============================={cc.E}")
+            print(f"{cc.H}=========== OUT ============={cc.E}")
+            print(hric.data)
+            print(f"{cc.H}============================={cc.E}")
+
+            hricommandstrs.append(deepcopy(final_s))
+
+        # Here load the subpath
+        subpath = "/home/imitlearn/crow-base_robot_control/crow-base/src/imitrob_hri/imitrob_hri/data_real"
+        i = 0
+        while True:
+            if Path(subpath).joinpath(f"mms_trial_{i}.npy").exists():
+                i+=1
+            else:
+                break
+        np.save(f"{subpath}/mms_trial_{i}", [mms,mms1,mms2,mms3])
+        np.save(f"{subpath}/str_trial_{i}", hricommandstrs)
+
 
         return hric
 

@@ -73,7 +73,13 @@
   "all": ["all", "everything"],
 "give that": ["give me that"],
 "stop": ["stop"],
-"build":["build","building"]},
+"build":["build","building"],
+"bowl": ["bowl"],
+"cup": ["cup"],
+"can": ["can"],
+"cleaner": ["cleaner"],
+"crackers": ["crackers"]
+},
 "cs":{"or": ["nebo"],
       " todelete ":["ten", "ta", "tou", "pouze", "jenom", "toho", "tím","tedy", "teda", "té", "těmi", "aby", "svůj", "svá", "svojí", "svou", "svoje", "svýma", "svými", "takže", "no", "vlastně", "jakoby", "to znamená", "že", "asi",
 "protože", "nějaký", "nějakej", "nějakým", "nějakou", "nějak", "nějaká", "nějaké", "nějakými", "dobře", "možná", "všechny", "všechna", "všecky", "potřebovat", "potřebuje"],
@@ -171,5 +177,11 @@
   "auto": ["auto"],
 "věž":["věž"],
 "pes":["pes","psa"],
-"šuplík": ["zásuvka", "šuplík", "šuple", "šuplíku", "šuplíka", "šuplíkem"]
+"šuplík": ["zásuvka", "šuplík", "šuple", "šuplíku", "šuplíka", "šuplíkem"],
+"hrnek": ["hrnek", "hrnku", "hrnky"],
+"plechovka": ["plechovka", "plechovku", "plechovky"],
+"miska": ["miska", "misku", "misky"],
+"čistič": ["čistič", "čističe"],
+"krabice": ["krabice", "krabici"],
+"crackers": ["krekry"]
 }}

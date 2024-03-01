@@ -20,7 +20,7 @@ class Talker(Node):
 		self.pub = self.create_publisher(SentenceProgram, "/nl_input", 5)
 
 def main():
-	sentence = 'Seber kostku'
+	sentence = 'Polož čistič na krekry'
 
 	rclpy.init()
 	rosnode = Talker()

@@ -64,11 +64,15 @@ selections_name_synonyms = {
     '12': ['wrench'],
     '13': ['paper'],
     '14': ['cup'],
-    '15': ['foam'],
     '16': ['can'],
     '17': ['crackers'],
     '18': ['bowl'],
-    '19': ['drawer_socket', 'drawer_cabinet', 'drawer cabinet'],
+    '19': ['drawer_socket', 'drawer_cabinet', 'drawer cabinet', "drawer socket"],
+    '21': ['cleaner'],
+    '22': ['foam'],
+    '23': ['crackers'],
+
+
     # YCB
     '100': ['tomato soup can'], 
     '101': ['potted meat can'],
@@ -84,11 +88,23 @@ selections_name_synonyms = {
 }
 
 storages_name_synonyms = {
+    '24': ['box'],
     '0': ['paper box'],
     '1': ['abstract marked zone'],
     '2': ['out of table'],
     '3': ['on the table'],
-
+    '4': ['bowl'],
+    '5': ['drawer_socket', 'drawer_cabinet', 'drawer cabinet', "drawer socket"],
+    '6': ['crackers'],
+    '7': ['foam'],
+    '8': ['cup'],
+    '16': ['can'],
+    '17': ['crackers'],
+    '18': ['bowl'],
+    '19': ['drawer_socket', 'drawer_cabinet', 'drawer cabinet', "drawer socket"],
+    '21': ['cleaner'],
+    '22': ['foam'],
+    '23': ['cube'],
 }
 
 '''

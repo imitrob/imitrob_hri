@@ -5,8 +5,8 @@ from teleop_msgs.msg import HRICommand
 
 from imitrob_templates.small_ontology_scene_reader import SceneOntologyClient
 
-MM_G_IN = "/mm/g_command"
-MM_L_IN = "/mm/l_command"
+MM_G_IN = "/gg/hri_command"
+MM_L_IN = "/nlp/hri_command"
 MM_OUT = "/mm/solution"
 
 class PublishHRICommand(Node):
@@ -40,7 +40,7 @@ def main():
             scene = rosnode.soc.get_scene2()
             target_object = None
             for o_name in scene.O:
-                if 'cube_holes' in o_name: # e.g.: 'cube_holes_od_0'
+                if 'cube_holes' in o_name or 'cube' in o_name: # e.g.: 'cube_holes_od_0'
                     target_object = o_name
                     break
             if target_object is None:

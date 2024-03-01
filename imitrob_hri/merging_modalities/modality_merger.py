@@ -527,7 +527,7 @@ class ModalityMerger():
         
         # 2. Penalize likelihood for every template
         templates = self.get_all_templates()
-        # print("final templates: ", templates)
+        print("final templates: ", templates)
         template_ct_penalized = deepcopy(S_naive['template']) # 1D (templates)
         template_ct_penalized_real = deepcopy(S_naive['template']) # 1D (templates)
         

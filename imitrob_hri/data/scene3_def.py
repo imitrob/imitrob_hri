@@ -22,25 +22,30 @@ class Object3():
             'contain_item': False, # how many items contains
             'types': ['liquid-container', 'object', 'container'],
             'glued': False
-        }):
-        assert 'types' in observations
+        }, properties_config=None):
+        
         self.name = observations['name']
 
-        self.observations = observations
-
         self.properties = {}
-        self.properties['glued'] = self.glued
-        # if 'object' in observations['types']:
-        self.properties['pickable'] = self.pickable
-        self.properties['reachable'] = self.reachable
-        self.properties['stackable'] = self.stackable
-        self.properties['pushable'] = self.pushable
-        # if 'liquid-container' in observations['types']:
-        self.properties['full-stack'] = self.full_stack
-        self.properties['full-liquid'] = self.full_liquid
+        if properties_config is not None:
+            self.observations = None
+            self.properties = properties_config
+        else:
+            assert 'types' in observations
+            self.observations = observations
+
+            self.properties['glued'] = self.glued
+            # if 'object' in observations['types']:
+            self.properties['pickable'] = self.pickable
+            self.properties['reachable'] = self.reachable
+            self.properties['stackable'] = self.stackable
+            self.properties['pushable'] = self.pushable
+            # if 'liquid-container' in observations['types']:
+            self.properties['full-stack'] = self.full_stack
+            self.properties['full-liquid'] = self.full_liquid
 
     def is_type(self, typ):
-        return typ in self.observations['types']
+        return typ in self.properties and self.properties[typ]
 
     def pickable(self, r=4):
         threshold_being_unpickable = 0.12 # [m] <- robot's gripper max opened distance 
@@ -105,6 +110,8 @@ class Object3():
         return 1 / (1 + np.exp((center-x)*(-tau)))
     
     def __str__(self):
+        if self.observations is None:
+            return f"{cc.F}{self.name}{cc.E}: properties loaded from config"
         return f"{cc.F}{self.name}{cc.E}: s: {round(self.observations['size'],2)}, p: {np.round(self.observations['position'],2)}, roundness: {round(self.observations['roundness-top'],2)}, weight: {round(self.observations['weight'],2)}, contains: {round(self.observations['contains'],2)}, glued: {self.observations['glued']}, types: {self.observations['types']}\nProperties: {cc.H}Glued:{cc.E} {self.glued(2)}, {cc.H}Pickable:{cc.E} {self.pickable(2)}, {cc.H}Reachable:{cc.E} {self.reachable(2)}, {cc.H}Stackable {cc.E}{self.stackable(2)}, {cc.H}Pushable:{cc.E} {self.pushable(2)}, {cc.H}Full stack:{cc.E} {self.full_stack(2)} full liquid: {self.full_liquid(2)}\n"
     
     

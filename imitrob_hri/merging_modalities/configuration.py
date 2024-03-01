@@ -243,8 +243,8 @@ class ConfigurationCrow1(Configuration):
         self.mm_pars_names_dict = {'template': ['move-up', 'release', 'stop',
                                     'pick', 'push', 'unglue',
                                     'pour', 'put-into', 'stack'],
-            'selections': ['cube','cup','can','foam','crackers'],
-            'storages': ['drawer_socket', 'bowl','crackers'],
+            'selections': ['cube','cup','can','crackers','cleaner','box'],
+            'storages': ['drawer_socket', 'bowl','crackers','foam'],
         }
         self.scene_gen_config = {
             'selections_n': ('uniform', 5, 6),
