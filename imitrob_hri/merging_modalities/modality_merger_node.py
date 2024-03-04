@@ -31,9 +31,11 @@ from imitrob_hri.imitrob_nlp.nlp_utils import cc
 import threading
 from copy import deepcopy
 from pathlib import Path
+import argparse
+
 
 class MMNode(Node):
-    def __init__(self, max_time_delay = 5., model = 1, use_magic = 'entropy', c=ConfigurationCrow1()):
+    def __init__(self, max_time_delay = 15., model = 1, use_magic = 'entropy', c=ConfigurationCrow1(), experiment_args=None):
         """Standard ROS Node
 
         Args:
@@ -46,7 +48,7 @@ class MMNode(Node):
         
 
         self.create_subscription(HRICommand, '/gg/hri_command', self.receiveHRIcommandG, 10)
-        qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
+        qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.BEST_EFFORT)
         self.create_subscription(HRICommand, '/nlp/hri_command', self.receiveHRIcommandL, qos_profile=qos)
         
         self.receivedHRIcommandG = None
@@ -62,6 +64,8 @@ class MMNode(Node):
         self.soc = SceneOntologyClient(self)
         self.soc.add_dummy_cube()
         print(self.soc.get_scene3())
+
+        self.experiment_args = experiment_args
         
         for template in self.c.mm_pars_names_dict['template']:
             assert create_template(template) is not None, f"Template {template} not exists!"
@@ -260,15 +264,15 @@ class MMNode(Node):
         # M1
         mms1 = deepcopy(mms)
         mm = ModalityMerger(self.c, self.use_magic)
-        mms1.M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=self.c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=0, use_magic=self.use_magic)
+        mms1.M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=self.c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=1, use_magic=self.use_magic)
         # M2
         mms2 = deepcopy(mms)
         mm = ModalityMerger(self.c, self.use_magic)
-        mms2.M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=self.c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=1, use_magic=self.use_magic)
+        mms2.M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=self.c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=2, use_magic=self.use_magic)
         # M3
         mms3 = deepcopy(mms)
         mm = ModalityMerger(self.c, self.use_magic)
-        mms3.M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=self.c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=2, use_magic=self.use_magic)
+        mms3.M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=self.c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=3, use_magic=self.use_magic)
 
         
         # mms.merged_part_to_HRICommand()
@@ -283,35 +287,55 @@ class MMNode(Node):
             return substr
 
         hricommandstrs = []
-        for i in [mms,mms1,mms2,mms3]:
-            final_s = '{' + f'"target_action": "{mms.M["template"].activated}", "target_object": "{mms.M["selections"].activated}", "target_storage": "{mms.M["storages"].activated}",' 
-            final_s+= f'"actions": {mms.M["template"].names}, "action_probs": {float_array_to_str(mms.M["template"].p)},'
-            final_s+= f'"objects": {mms.M["selections"].names} , "object_probs": {float_array_to_str(mms.M["selections"].p)} , "object_classes": "TODO", '
-            final_s+= f'"storages": {mms.M["storages"].names} , "storage_probs": {float_array_to_str(mms.M["storages"].p)} , '
+        for i, (model, name) in enumerate(zip([mms,mms1,mms2,mms3], ["baseline", "M1", "M2", "M3"])):
+            final_s = '{' + f'"target_action": "{model.M["template"].activated}", "target_object": "{model.M["selections"].activated}", "target_storage": "{model.M["storages"].activated}",' 
+            final_s+= f'"actions": {model.M["template"].names}, "action_probs": {float_array_to_str(model.M["template"].p)},'
+            final_s+= f'"objects": {model.M["selections"].names} , "object_probs": {float_array_to_str(model.M["selections"].p)} , "object_classes": "TODO", '
+            final_s+= f'"storages": {model.M["storages"].names} , "storage_probs": {float_array_to_str(model.M["storages"].p)} , '
             # final_s+= f'"parameters": "TODO", "action_timestamp": "TODO", "scene": {scene}'
-            final_s+= f'"epsilon": "{self.c.epsilon}", "gamma": "{self.c.gamma}", "alpha_penal": "{self.c.alpha_penal}", "model": "{self.model}", "use_magic": "{self.use_magic}",'
+            final_s+= f'"epsilon": "{self.c.epsilon}", "gamma": "{self.c.gamma}", "alpha_penal": "{self.c.alpha_penal}", "model index": "{i}", "use_magic": "{self.use_magic}",'
             final_s+= f'"merge_function": {self.use_magic}'
             final_s+= '}'
             final_s = final_s.replace("'", '"')
-            print(f"final_s:   {str(final_s)}")
+
+            # out_sentence = f'{name}: {model.M["template"].activated} {model.M["selections"].activated} {model.M["storages"].activated}'
+
+            # print(f"final_s:   {str(final_s)}")
             hric = HRICommand(data=[final_s])
-            print(f"{cc.H}============================={cc.E}")
-            print(f"{cc.H}=========== OUT ============={cc.E}")
+            print(f"{cc.H}=========== OUT: {name} ============={cc.E}")
             print(hric.data)
+            sel_obj_name = model.M["selections"].activated
+            if sel_obj_name is not None:
+                try:
+                    sel_obj = scene.get_object(sel_obj_name)
+                except:
+                    print(f"Object {sel_obj_name} not in Scene!")
+                else:
+                    print(f"Target obj props: {sel_obj.get_all_properties()}")
+            else:
+                print("No activated objects")
             print(f"{cc.H}============================={cc.E}")
 
             hricommandstrs.append(deepcopy(final_s))
 
         # Here load the subpath
-        subpath = "/home/imitlearn/crow-base_robot_control/crow-base/src/imitrob_hri/imitrob_hri/data_real"
+        # subpath2 = Path(__file__).joinpath("..").joinpath("datareal") # cut python file and add
+        subpath = "/home/imitlearn/crow-base/src/imitrob_hri/imitrob_hri/data_real"
+        if self.experiment_args is None:
+            exp_path = "/"
+        else:
+            exp_path = f"{self.experiment_args.experiment}/{self.experiment_args.alignment}/"
+        # assert subpath == subpath2, f"subpath: {subpath} != {subpath2}"
+        final_path = Path(os.path.join(subpath, exp_path))
+        final_path.mkdir(parents=True, exist_ok=True)
         i = 0
         while True:
-            if Path(subpath).joinpath(f"mms_trial_{i}.npy").exists():
+            if final_path.joinpath(f"{self.experiment_args.experiment}_{self.experiment_args.alignment}_{self.experiment_args.run}_{self.experiment_args.subject}_mms_trial_{i}.npy").exists():
                 i+=1
             else:
                 break
-        np.save(f"{subpath}/mms_trial_{i}", [mms,mms1,mms2,mms3])
-        np.save(f"{subpath}/str_trial_{i}", hricommandstrs)
+        np.save(final_path.joinpath(f"{self.experiment_args.experiment}_{self.experiment_args.alignment}_{self.experiment_args.run}_{self.experiment_args.subject}_mms_trial_{i}"), [mms,mms1,mms2,mms3])
+        np.save(final_path.joinpath(f"{self.experiment_args.experiment}_{self.experiment_args.alignment}_{self.experiment_args.run}_{self.experiment_args.subject}_str_trial_{i}"), hricommandstrs)
 
 
         return hric
@@ -359,8 +383,15 @@ class MMNode(Node):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--experiment", "-e", choices=['arity', 'property'])
+    parser.add_argument("--alignment", "-a", choices=['a', 'nal', 'nag', 'nol', 'nog'], help="a = aligned\nnal = not aligned action from language\nnag = not aligned action from gestures\nnol = not aligned object from language\nnog = not aligned object from gestures")
+    parser.add_argument("--run", "-r", type=int, default=0)
+    parser.add_argument("--subject", "-s", type=str, default="-")
+    args, _ = parser.parse_known_args()
+
     rclpy.init()
-    mmn = MMNode()
+    mmn = MMNode(experiment_args=args)
 
     def spinning_threadfn():
         while rclpy.ok():
@@ -378,8 +409,9 @@ def main():
         if et == 'run':
             mmn.mm_publisher.publish(mmn.merge_modalities())
             mmn.clean_up()
+            delay_run = -1
         elif et == 'run delay':
-            delay_run = 5
+            delay_run = 40
         
         if delay_run > 0:
             delay_run -= 1
@@ -392,7 +424,6 @@ def main():
         if delay_run == 0:
             delay_run = -1
 
-            
             mmn.mm_publisher.publish(mmn.merge_modalities())
             mmn.clean_up()
         

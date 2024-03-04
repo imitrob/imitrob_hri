@@ -243,8 +243,8 @@ class ConfigurationCrow1(Configuration):
         self.mm_pars_names_dict = {'template': ['move-up', 'release', 'stop',
                                     'pick', 'push', 'unglue',
                                     'pour', 'put-into', 'stack'],
-            'selections': ['cube','cup','can','crackers','cleaner','box'],
-            'storages': ['drawer_socket', 'bowl','crackers','foam'],
+            'selections': ['cube','cup','can', 'cleaner','box'],
+            'storages': ['drawer', 'bowl','crackers','foam'],
         }
         self.scene_gen_config = {
             'selections_n': ('uniform', 5, 6),
@@ -384,3 +384,4 @@ class Configuration2_3(Configuration):
         self.sim_table_gesture_storages = self.sim_table_gesture_objects_default[0:4,0:4] # TODO
 
         self.samples = self.samples_default
+

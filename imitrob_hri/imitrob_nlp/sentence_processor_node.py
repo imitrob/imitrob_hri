@@ -48,14 +48,14 @@ class SentenceProcessor(Node):
     NL_INPUT_TOPIC = "/nl_input"
     NL_OUTPUT_TOPIC = "/nlp/hri_command"
 
-    def __init__(self, node_name="sentence_processor"):
+    def __init__(self, node_name="sentence_processor", LANG='en'):
         super().__init__(node_name)
         self.DEBUG_MODE = False
 
         self.crowracle = CrowtologyClient(node=self)
         #CLIENT = self.crowracle
         self.onto = self.crowracle.onto
-        self.LANG = 'cs'
+        self.LANG = LANG
         # self.get_logger().info(self.onto)
         self.ui = UserInputManager(language = self.LANG)
         self.guidance_file = self.ui.load_file('guidance_dialogue.json')
@@ -79,7 +79,7 @@ class SentenceProcessor(Node):
         print("[ParamClient] ready!")
 
         #create listeners (synchronized)
-        qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
+        qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.BEST_EFFORT)
         listener = self.create_subscription(msg_type=SentenceProgram,
                                           topic=self.NL_INPUT_TOPIC,
                                           callback=self.process_sentence_callback,qos_profile=qos) #the listener QoS has to be =1, "keep last only".
@@ -186,7 +186,9 @@ class SentenceProcessor(Node):
             return HRICommand(data=[str(d)]) 
 
         d['target_action'] = str(template.target_action)
+        # print("[[ target_object ]]", template.target_object)
         d['target_object'] = target_object_struri_to_type(template.target_object)
+        # print("[[ target_object2 ]]", d['target_object'])
         d['target_storage'] = target_object_struri_to_type(template.target_storage)
         if 'to' in template._1_detected_data:
             d['to_color'] = str(template._1_detected_data['to'].objs_properties['color'].activated)

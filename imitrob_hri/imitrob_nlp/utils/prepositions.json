@@ -3,14 +3,14 @@
        "on": "on",
        "inside": "inside",
        "outside": "outside",
-       "from": "from"
-
+       "from": "from",
+       "into": "into"
 },
 "cs": { "to": "do",
         "on": "na",
         "inside": "dovnitř",
         "outside": "venku",
-        "from": "z"
-
+        "from": "z",
+        "into": "do"
 }
 }

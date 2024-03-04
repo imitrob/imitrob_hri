@@ -29,7 +29,12 @@ class Object3():
         self.properties = {}
         if properties_config is not None:
             self.observations = None
-            self.properties = properties_config
+
+            for k, v in properties_config.items():
+                if type(v) is bool:
+                    self.properties[k] = lambda value=v: (int(value), value)
+                else:
+                    self.properties[k] = v
         else:
             assert 'types' in observations
             self.observations = observations
@@ -45,7 +50,7 @@ class Object3():
             self.properties['full-liquid'] = self.full_liquid
 
     def is_type(self, typ):
-        return typ in self.properties and self.properties[typ]
+        return typ in self.properties and self.properties[typ] or typ == self.properties["type"]
 
     def pickable(self, r=4):
         threshold_being_unpickable = 0.12 # [m] <- robot's gripper max opened distance 
@@ -111,8 +116,17 @@ class Object3():
     
     def __str__(self):
         if self.observations is None:
-            return f"{cc.F}{self.name}{cc.E}: properties loaded from config"
+            return f"{cc.F}{self.name}{cc.E}: properties loaded from config\n"
         return f"{cc.F}{self.name}{cc.E}: s: {round(self.observations['size'],2)}, p: {np.round(self.observations['position'],2)}, roundness: {round(self.observations['roundness-top'],2)}, weight: {round(self.observations['weight'],2)}, contains: {round(self.observations['contains'],2)}, glued: {self.observations['glued']}, types: {self.observations['types']}\nProperties: {cc.H}Glued:{cc.E} {self.glued(2)}, {cc.H}Pickable:{cc.E} {self.pickable(2)}, {cc.H}Reachable:{cc.E} {self.reachable(2)}, {cc.H}Stackable {cc.E}{self.stackable(2)}, {cc.H}Pushable:{cc.E} {self.pushable(2)}, {cc.H}Full stack:{cc.E} {self.full_stack(2)} full liquid: {self.full_liquid(2)}\n"
+    
+    def get_all_properties(self):
+        s = ""
+        for k, v in self.properties.items():
+            if type(v) is str:
+                s += f"{k}: {v}\n"
+            else:
+                s += f"{k}: {v()[1]}\n"
+        return s
     
     
 class Scene3():

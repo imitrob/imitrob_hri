@@ -11,7 +11,7 @@
   "can": "can",
   "bowl": "bowl",
   "cleaner": "cleaner",
-  "drawer": "drawer_socket"
+  "crackers": "crackers"
 },
 "cs": { "cube": "kostka",
   "hammer": "kladivo",
@@ -25,6 +25,6 @@
   "can": "plechovka",
   "bowl": "miska",
   "cleaner": "čistič",
-  "drawer_socket": "šuplík"
+  "crackers": "křupky"
 }
       }

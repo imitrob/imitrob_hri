@@ -39,87 +39,12 @@ FAILED tests/test_nlp.py::test_nlp_1 - KeyError: 'processor_busy_flag'
 
 Object specified MUST be visible in Ontology
 '''
-class TestSet():
-    test_object_and_color = [
-    ["Seber červenou kostku", {'target_action': 'pick', 'target_object': 'cube_holes', 'to_color': 'red'}],
-    ["Ukaž na červenou kostku", {'target_action': 'point', 'target_object': 'cube_holes', 'to_color': 'red'}],
-    ["Podej mi červenou kostku", {'target_action': 'pass', 'target_object': 'cube_holes', 'to_color': 'red'}],
-    ["Podej mi zelenou kostku.", {'target_action': 'pass', 'target_object': 'cube_holes'}],
-    ["Ukaž na modrý šuplík", {'target_action': 'point', 'target_object': 'drawer', 'to_color': 'blue'}],
-    ]
-    test_object = [
-    ["Seber kostku", {'target_action': 'pick', 'target_object': 'cube_holes'}],
-    ["Ukaž na kostku", {'target_action': 'point', 'target_object': 'cube_holes'}],
-    ["Podej mi kostku", {'target_action': 'pass', 'target_object': 'cube_holes'}],
-    ["Seber kolo", {'target_action': 'pick', 'target_object': 'wheel'}],
-    ["Ukaž na kolo", {'target_action': 'point', 'target_object': 'wheel'}],
-    ["Podej mi kolo", {'target_action': 'pass', 'target_object': 'wheel'}],
-    ]
-    # ["Seber destičku", {'target_action': 'pick', 'target_object': 'wafer'}],
-    # ["Ukaž na destičku", {'target_action': 'point', 'target_object': 'wafer'}],
-    # ["Podej mi destičku", {'target_action': 'pass', 'target_object': 'wafer'}],
-    # ]
-    # test_unknown_object = [
-    # ["Seber kladivo", {'target_action': 'Noop'}],
-    # ["Ukaž na kladivo", {'target_action': 'Noop'}],
-    # ["Podej mi kladivo",{'target_action': 'Noop'}],
-    # ]
-    test_synonyms = [
-    ["Zvedni kostku", {'target_action': 'pick', 'target_object': 'cube_holes'}],
-    ["Získej kostku", {'target_action': 'pick', 'target_object': 'cube_holes'}],
-    ["Dej mi kostku", {'target_action': 'pass', 'target_object': 'cube_holes'}],
-    ["Dej mi krychli",{'target_action': 'pass', 'target_object': 'cube_holes'}],
-    ["Dej mi krychli s dírama.", {'target_action': 'pass', 'target_object': 'cube_holes'}],
-    ]
-    test_shuffled = [
-    ["Kostku mi dej.", {'target_action': 'pass', 'target_object': 'cube_holes'}],
-    ["dej kostku", {'target_action': 'pass', 'target_object': 'cube_holes'}],    
-    ]
-    test_multi_sentence = [
-    ["Kostku mi dej. A pak ukaž na kostku.", {'target_action': 'pass', 'target_object': 'cube_holes'}],
-    ]
-    test_colors = [
-    ["Podej mi červenou kostku", {'target_action': 'pass', 'target_object': 'cube_holes', 'to_color': 'red'}],
-    ["Podej mi zelenou kostku", {'target_action': 'pass', 'target_object': 'cube_holes', 'to_color': 'green'}],
-    ]
-    test_object_storage = [
-    ["Nalij kostku na kolo.", {'target_action': 'pour', 'target_object': 'cube_holes', 'target_storage': 'wheel'}],
-    ["Nandej kostku na kolo.", {'target_action': 'stack', 'target_object': 'cube_holes', 'target_storage': 'wheel'}],
-    ["Polož kostku na kolo.", {'target_action': 'put-into', 'target_object': 'cube_holes', 'target_storage': 'wheel'}],
-    ]
-    test_action = [
-    ["Stop.", {'target_action': 'stop'}],
-    ["Nahoru.", {'target_action': 'move-up'}],
-    ["Pusť.", {'target_action': 'release'}],
-    ]
-    test_all_actions = [
-    ["Postrč kostku.", {'target_action': 'push', 'target_object': 'cube_holes'}],
-    ["Odlep kostku.", {'target_action': 'unglue', 'target_object': 'cube_holes'}],
-    ]
-    test_properties = [
-    ["Nandej zelenou kostku na červený kostku.", {'target_action': 'stack', 'target_object': 'cube_holes', 'to_color': 'green', 'target_storage': 'cube_holes', 'ts_color': 'red'}],
-    ]
-    test_wrong_template = [
-    ["Pusť kostku na šuplík", {'target_action': 'release', 'target_object': 'cube_holes', 'target_storage': 'drawer'}],
-    ["Červenou kostku", {'target_action': 'noop', 'target_object': 'cube_holes', 'to_color': 'red'}],
-    ["Červenou", {'target_action': 'noop', 'to_color': 'red'}],
-    ["Kostku", {'target_action': 'noop', 'target_object': 'cube_holes'}],
-    ["Podej mi", {'target_action': 'pass'}],
-    ["Seber", {'target_action': 'pick'}],
-    ]
-    # example_list = [
-    # ["Ukaž na zelenou kostku", ('point', 'green cube')],
-    # ["Ukaž na kolík", ('', '')],
-    # ["Ukaž na zelenou kostku", ('', '')],
-    
-    # ["Podej mi kladivo", ('Noop', '')],
-    # ]
-    '''example_list = [    
-        # FUTURE?
-        # ["Vezmi jablko a hrušku a dej je do krabice", (..)]
-        ["Dej zelenou kostku na červenou kostku"]
-    ]'''
+CUBE = 'cube'
+# CUBE = 'cube_holes'
+WHEEL = 'crackers'
+# WHEEL = 'wheel'
 
+class BaseSet():
     def _get_set_names_(self):
         ret = []
         for i in dir(self):
@@ -143,6 +68,267 @@ class TestSet():
             for test in set:
                 ret_string += f'**{test[0]}**\n    {test[1]}\n'
         return ret_string
+
+class TestSet(BaseSet):
+    test_object_and_color = [
+    ["Seber červenou kostku", {'target_action': 'pick', 'target_object': CUBE, 'to_color': 'red'}],
+    ["Ukaž na červenou kostku", {'target_action': 'point', 'target_object': CUBE, 'to_color': 'red'}],
+    ["Podej mi červenou kostku", {'target_action': 'pass', 'target_object': CUBE, 'to_color': 'red'}],
+    ["Podej mi zelenou kostku.", {'target_action': 'pass', 'target_object': CUBE}],
+    ["Ukaž na modrý šuplík", {'target_action': 'point', 'target_object': 'drawer', 'to_color': 'blue'}],
+    ]
+    test_object = [
+    ["Seber kostku", {'target_action': 'pick', 'target_object': CUBE}],
+    ["Ukaž na kostku", {'target_action': 'point', 'target_object': CUBE}],
+    ["Podej mi kostku", {'target_action': 'pass', 'target_object': CUBE}],
+    ["Seber kolo", {'target_action': 'pick', 'target_object': WHEEL}],
+    ["Ukaž na kolo", {'target_action': 'point', 'target_object': WHEEL}],
+    ["Podej mi kolo", {'target_action': 'pass', 'target_object': WHEEL}],
+    ]
+    # ["Seber destičku", {'target_action': 'pick', 'target_object': 'wafer'}],
+    # ["Ukaž na destičku", {'target_action': 'point', 'target_object': 'wafer'}],
+    # ["Podej mi destičku", {'target_action': 'pass', 'target_object': 'wafer'}],
+    # ]
+    # test_unknown_object = [
+    # ["Seber kladivo", {'target_action': 'Noop'}],
+    # ["Ukaž na kladivo", {'target_action': 'Noop'}],
+    # ["Podej mi kladivo",{'target_action': 'Noop'}],
+    # ]
+    test_synonyms = [
+    ["Zvedni kostku", {'target_action': 'pick', 'target_object': CUBE}],
+    ["Získej kostku", {'target_action': 'pick', 'target_object': CUBE}],
+    ["Dej mi kostku", {'target_action': 'pass', 'target_object': CUBE}],
+    ["Dej mi krychli",{'target_action': 'pass', 'target_object': CUBE}],
+    ["Dej mi krychli s dírama.", {'target_action': 'pass', 'target_object': CUBE}],
+    ]
+    test_shuffled = [
+    ["Kostku mi dej.", {'target_action': 'pass', 'target_object': CUBE}],
+    ["dej kostku", {'target_action': 'pass', 'target_object': CUBE}],    
+    ]
+    test_multi_sentence = [
+    ["Kostku mi dej. A pak ukaž na kostku.", {'target_action': 'pass', 'target_object': CUBE}],
+    ]
+    test_colors = [
+    ["Podej mi červenou kostku", {'target_action': 'pass', 'target_object': CUBE, 'to_color': 'red'}],
+    ["Podej mi zelenou kostku", {'target_action': 'pass', 'target_object': CUBE, 'to_color': 'green'}],
+    ]
+    test_object_storage = [
+    ["Nalij kostku na kolo.", {'target_action': 'pour', 'target_object': CUBE, 'target_storage': WHEEL}],
+    ["Nandej kostku na kolo.", {'target_action': 'stack', 'target_object': CUBE, 'target_storage': WHEEL}],
+    ["Polož kostku na kolo.", {'target_action': 'put-into', 'target_object': CUBE, 'target_storage': WHEEL}],
+    ]
+    test_action = [
+    ["Stop.", {'target_action': 'stop'}],
+    ["Nahoru.", {'target_action': 'move-up'}],
+    ["Pusť.", {'target_action': 'release'}],
+    ]
+    test_all_actions = [
+    ["Postrč kostku.", {'target_action': 'push', 'target_object': CUBE}],
+    ["Odlep kostku.", {'target_action': 'unglue', 'target_object': CUBE}],
+    ]
+    test_properties = [
+    ["Nandej zelenou kostku na červený kostku.", {'target_action': 'stack', 'target_object': CUBE, 'to_color': 'green', 'target_storage': CUBE, 'ts_color': 'red'}],
+    ]
+    test_wrong_template = [
+    ["Pusť kostku na šuplík", {'target_action': 'release', 'target_object': CUBE, 'target_storage': 'drawer'}],
+    ["Červenou kostku", {'target_action': 'noop', 'target_object': CUBE, 'to_color': 'red'}],
+    ["Červenou", {'target_action': 'noop', 'to_color': 'red'}],
+    ["Kostku", {'target_action': 'noop', 'target_object': CUBE}],
+    ["Podej mi", {'target_action': 'pass'}],
+    ["Seber", {'target_action': 'pick'}],
+    ]
+    # example_list = [
+    # ["Ukaž na zelenou kostku", ('point', 'green cube')],
+    # ["Ukaž na kolík", ('', '')],
+    # ["Ukaž na zelenou kostku", ('', '')],
+    
+    # ["Podej mi kladivo", ('Noop', '')],
+    # ]
+    '''example_list = [    
+        # FUTURE?
+        # ["Vezmi jablko a hrušku a dej je do krabice", (..)]
+        ["Dej zelenou kostku na červenou kostku"]
+    ]'''
+
+class ReExSet(BaseSet):
+    test_object_and_color = [
+    ["Seber červenou kostku", {'target_action': 'pick', 'target_object': CUBE, 'to_color': 'red'}],
+    ["Ukaž na červenou kostku", {'target_action': 'point', 'target_object': CUBE, 'to_color': 'red'}],
+    ["Podej mi červenou kostku", {'target_action': 'pass', 'target_object': CUBE, 'to_color': 'red'}],
+    ["Podej mi zelenou kostku.", {'target_action': 'pass', 'target_object': CUBE}],
+    # ["Ukaž na modrý šuplík", {'target_action': 'point', 'target_object': 'drawer', 'to_color': 'blue'}],
+    ]
+    test_object = [
+    ["Seber kostku", {'target_action': 'pick', 'target_object': CUBE}],
+    ["Ukaž na kostku", {'target_action': 'point', 'target_object': CUBE}],
+    ["Podej mi kostku", {'target_action': 'pass', 'target_object': CUBE}],
+    ["Seber křupky", {'target_action': 'pick', 'target_object': 'crackers'}],
+    ["Ukaž na křupky", {'target_action': 'point', 'target_object': 'crackers'}],
+    ["Podej mi křupky", {'target_action': 'pass', 'target_object': 'crackers'}],
+    ]
+    # ["Seber destičku", {'target_action': 'pick', 'target_object': 'wafer'}],
+    # ["Ukaž na destičku", {'target_action': 'point', 'target_object': 'wafer'}],
+    # ["Podej mi destičku", {'target_action': 'pass', 'target_object': 'wafer'}],
+    # ]
+    # test_unknown_object = [
+    # ["Seber kladivo", {'target_action': 'Noop'}],
+    # ["Ukaž na kladivo", {'target_action': 'Noop'}],
+    # ["Podej mi kladivo",{'target_action': 'Noop'}],
+    # ]
+    test_synonyms = [
+    ["Zvedni kostku", {'target_action': 'pick', 'target_object': CUBE}],
+    ["Získej kostku", {'target_action': 'pick', 'target_object': CUBE}],
+    ["Dej mi kostku", {'target_action': 'pass', 'target_object': CUBE}],
+    ["Dej mi krychli",{'target_action': 'pass', 'target_object': CUBE}],
+    ["Dej mi krychli s dírama.", {'target_action': 'pass', 'target_object': CUBE}],
+    ]
+    test_shuffled = [
+    ["Kostku mi dej.", {'target_action': 'pass', 'target_object': CUBE}],
+    ["dej kostku", {'target_action': 'pass', 'target_object': CUBE}],    
+    ]
+    test_multi_sentence = [
+    ["Kostku mi dej. A pak ukaž na kostku.", {'target_action': 'pass', 'target_object': CUBE}],
+    ]
+    test_colors = [
+    ["Podej mi červenou kostku", {'target_action': 'pass', 'target_object': CUBE, 'to_color': 'red'}],
+    ["Podej mi zelenou kostku", {'target_action': 'pass', 'target_object': CUBE, 'to_color': 'green'}],
+    ]
+    test_object_storage = [
+    ["Nalij kostku na křupky.", {'target_action': 'pour', 'target_object': CUBE, 'target_storage': 'crackers'}],
+    ["Nandej kostku na křupky.", {'target_action': 'stack', 'target_object': CUBE, 'target_storage': 'crackers'}],
+    ["Polož kostku na křupky.", {'target_action': 'put-into', 'target_object': CUBE, 'target_storage': 'crackers'}],
+    ]
+    test_action = [
+    ["Stop.", {'target_action': 'stop'}],
+    ["Nahoru.", {'target_action': 'move-up'}],
+    ["Pusť.", {'target_action': 'release'}],
+    ]
+    test_all_actions = [
+    ["Postrč kostku.", {'target_action': 'push', 'target_object': CUBE}],
+    ["Odlep kostku.", {'target_action': 'unglue', 'target_object': CUBE}],
+    ]
+    test_properties = [
+    ["Nandej zelenou kostku na červený kostku.", {'target_action': 'stack', 'target_object': CUBE, 'to_color': 'green', 'target_storage': CUBE, 'ts_color': 'red'}],
+    ]
+    test_wrong_template = [
+    # ["Pusť kostku na šuplík", {'target_action': 'release', 'target_object': CUBE, 'target_storage': 'drawer'}],
+    ["Červenou kostku", {'target_action': 'noop', 'target_object': CUBE, 'to_color': 'red'}],
+    ["Červenou", {'target_action': 'noop', 'to_color': 'red'}],
+    ["Kostku", {'target_action': 'noop', 'target_object': CUBE}],
+    ["Podej mi", {'target_action': 'pass'}],
+    ["Seber", {'target_action': 'pick'}],
+    ]
+    # example_list = [
+    # ["Ukaž na zelenou kostku", ('point', 'green cube')],
+    # ["Ukaž na kolík", ('', '')],
+    # ["Ukaž na zelenou kostku", ('', '')],
+    
+    # ["Podej mi kladivo", ('Noop', '')],
+    # ]
+    '''example_list = [    
+        # FUTURE?
+        # ["Vezmi jablko a hrušku a dej je do krabice", (..)]
+        ["Dej zelenou kostku na červenou kostku"]
+    ]'''    
+
+class ReExSetEn(BaseSet):
+    # test_object_and_color = [
+    # ["pick red cube", {'target_action': 'pick', 'target_object': CUBE, 'to_color': 'red'}],
+    # ["Point on red cube", {'target_action': 'point', 'target_object': CUBE, 'to_color': 'red'}],
+    # ["Pass me a red cube", {'target_action': 'pass', 'target_object': CUBE, 'to_color': 'red'}],
+    # ["Pass me a green cube.", {'target_action': 'pass', 'target_object': CUBE}],
+    # # ["Ukaž na modrý šuplík", {'target_action': 'point', 'target_object': 'drawer', 'to_color': 'blue'}],
+    # ]
+    # test_object = [
+    # ["Pick up cube", {'target_action': 'pick', 'target_object': CUBE}],
+    # ["Point to a cube", {'target_action': 'point', 'target_object': CUBE}],
+    # ["Pass me a cube", {'target_action': 'pass', 'target_object': CUBE}],
+    # ["Pick up crackers", {'target_action': 'pick', 'target_object': 'crackers'}],
+    # ["Point on a crackers", {'target_action': 'point', 'target_object': 'crackers'}],
+    # ["Pass me a crackers", {'target_action': 'pass', 'target_object': 'crackers'}],
+    # ]
+    # # ["Seber destičku", {'target_action': 'pick', 'target_object': 'wafer'}],
+    # # ["Ukaž na destičku", {'target_action': 'point', 'target_object': 'wafer'}],
+    # # ["Podej mi destičku", {'target_action': 'pass', 'target_object': 'wafer'}],
+    # # ]
+    # # test_unknown_object = [
+    # # ["Seber kladivo", {'target_action': 'Noop'}],
+    # # ["Ukaž na kladivo", {'target_action': 'Noop'}],
+    # # ["Podej mi kladivo",{'target_action': 'Noop'}],
+    # # ]
+    # test_synonyms = [
+    # ["Pick cube", {'target_action': 'pick', 'target_object': CUBE}],
+    # ["Pick up a cube", {'target_action': 'pick', 'target_object': CUBE}],
+    # # ["Dej mi kostku", {'target_action': 'pass', 'target_object': CUBE}],
+    # # ["Dej mi krychli",{'target_action': 'pass', 'target_object': CUBE}],
+    # # ["Dej mi krychli s dírama.", {'target_action': 'pass', 'target_object': CUBE}],
+    # ]
+    # test_shuffled = [
+    # ["Cube pass me it", {'target_action': 'pass', 'target_object': CUBE}],
+    # ["pass cube", {'target_action': 'pass', 'target_object': CUBE}],    
+    # ]
+    # test_multi_sentence = [
+    # ["Cube pass me. And then point on a cube.", {'target_action': 'pass', 'target_object': CUBE}],
+    # ]
+    # test_colors = [
+    # ["Pass me a red cube", {'target_action': 'pass', 'target_object': CUBE, 'to_color': 'red'}],
+    # ["Pass me a green cube", {'target_action': 'pass', 'target_object': CUBE, 'to_color': 'green'}],
+    # ]
+    # test_object_storage = [
+    # ["Pour cube on a crackers.", {'target_action': 'pour', 'target_object': CUBE, 'target_storage': 'crackers'}],
+    # ["Stack cube on a crackers.", {'target_action': 'stack', 'target_object': CUBE, 'target_storage': 'crackers'}],
+    # ["Put cube on crackers.", {'target_action': 'put-into', 'target_object': CUBE, 'target_storage': 'crackers'}],
+    # ]
+    # test_action = [
+    # ["Stop.", {'target_action': 'stop'}],
+    # ["Move up.", {'target_action': 'move-up'}],
+    # ["Release.", {'target_action': 'release'}],
+    # ]
+    # test_all_actions = [
+    # ["Push cube.", {'target_action': 'push', 'target_object': CUBE}],
+    # ["Unglue cube.", {'target_action': 'unglue', 'target_object': CUBE}],
+    # ]
+    # test_properties = [
+    # ["Stack green cube on red cube.", {'target_action': 'stack', 'target_object': CUBE, 'to_color': 'green', 'target_storage': CUBE, 'ts_color': 'red'}],
+    # ]
+    # test_wrong_template = [
+    # # ["Pusť kostku na šuplík", {'target_action': 'release', 'target_object': CUBE, 'target_storage': 'drawer'}],
+    # ["Red cube", {'target_action': 'noop', 'target_object': CUBE, 'to_color': 'red'}],
+    # ["Red", {'target_action': 'noop', 'to_color': 'red'}],
+    # ["Cube", {'target_action': 'noop', 'target_object': CUBE}],
+    # ["Pass me", {'target_action': 'pass'}],
+    # ["Pick", {'target_action': 'pick'}],
+    # ]
+
+    test_dataset = [
+    ["stack cleaner to crackers", {'target_action': 'stack', 'target_object': "cleaner", 'target_storage': "crackers"}],
+    ["stack cleaner to cube", {'target_action': 'stack', 'target_object': "cleaner", 'target_storage': "cube"}],
+    ["stack cleaner to cup", {'target_action': 'stack', 'target_object': "cleaner", 'target_storage': "cup"}],
+    ["stack can to cleaner", {'target_action': 'stack', 'target_object': "can", 'target_storage': "cleaner"}],
+    ["unglue a can can can", {'target_action': 'unglue', 'target_object': "can"}],
+    ["push cube", {'target_action': 'push', 'target_object': "cube"}],
+    ["pick cleaner", {'target_action': 'pick', 'target_object': "cleaner"}],
+    ["unglue box", {'target_action': 'unglue', 'target_object': "box"}],
+    ["push can", {"target_action": "push", "target_object": "can"}],
+    ["put_into cleaner to drawer", {"target_action": "put-into", "target_object": "cleaner", "target_storage": "drawer_socket"}],
+    ["unglue cleaner", {"target_action": "unglue", "target_object": "cleaner"}],
+    ["pour can to bowl", {"target_action": "pour", "target_object": "can", "target_storage": "bowl"}],
+    ["stack cleaner to crackers", {"target_action": "stack", "target_object": "cleaner", "target_storage": "crackers"}],
+    ["put_into cube to drawer", {"target_action": "put-into", "target_object": "cube", "target_storage":"drawer_socket"}],
+    ]
+    # example_list = [
+    # ["Ukaž na zelenou kostku", ('point', 'green cube')],
+    # ["Ukaž na kolík", ('', '')],
+    # ["Ukaž na zelenou kostku", ('', '')],
+    
+    # ["Podej mi kladivo", ('Noop', '')],
+    # ]
+    '''example_list = [    
+        # FUTURE?
+        # ["Vezmi jablko a hrušku a dej je do krabice", (..)]
+        ["Dej zelenou kostku na červenou kostku"]
+    ]'''    
+
     
 def test_nlp_1():
     # particular reason why it is here 
@@ -159,7 +345,9 @@ def test_nlp_1():
     # semantically must match the wanted object
     # Success (cube_holes, wheel, wafer visible)
         
-    ts = TestSet()
+    # ts = TestSet()
+    # ts = ReExSet()
+    ts = ReExSetEn()
     test_examples_sorted = ts()
     print(f"Test set printout:\n{ts}")
 
@@ -181,7 +369,11 @@ def test_nlp_1():
             # common mapping: we get definition of the properties that must match
 
             def target_object_struri_to_type(uri):
-                return URIRef(uri).fragment.split("_od_")[0]
+                ret = URIRef(uri).fragment.split("_od_")[0]
+                if ret == "":
+                    return uri
+                else:
+                    return ret
 
             if 'target_object' in t.keys():
                 t['target_object'] = target_object_struri_to_type(t['target_object'])

@@ -179,7 +179,7 @@ class ProbsVector():
             None: Don't understand, ask again (NoneType)
         '''
         if self.activated is not None: # Is there single most probable items?
-            self.conclusion = 'resolve use'
+            self.conclusion = 'use'
             return self.activated
         elif self.clear != []: # Is there more most probable items?
             self.conclusion = 'ask choose'
@@ -196,7 +196,7 @@ class ProbsVector():
             None (NoneType): Not Matched
         '''
         if self.is_match():
-            self.conclusion = 'match use'
+            self.conclusion = 'use'
             return self.activated
         else:
             self.conclusion = 'not matched - need to resolve'

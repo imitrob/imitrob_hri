@@ -22,6 +22,8 @@ setup(
         'console_scripts': [
             "mm_node = imitrob_hri.merging_modalities.modality_merger_node:main",
             #'listener = my_great_rostwo_package.sub:main',
+            "nlp_node = imitrob_hri.imitrob_nlp.sentence_processor_node:main",
+            "nl_input = imitrob_hri.imitrob_nlp.nl_input_text_node_hricommand:main",
         ],
     },
 )

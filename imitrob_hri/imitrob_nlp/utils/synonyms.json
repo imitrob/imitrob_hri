@@ -46,12 +46,13 @@
       "hammer": ["hammer"],
       "box": ["box"],
       "NO_option": ["no", "do not","don't","not"],
-      "YES_option": ["yes", "can", "sure", "of course"],
+      "YES_option": ["yes", "sure", "of course"],
       "wheel": ["wheel"],
       "drawer": ["drawer", "socket"],
+      "drawer_socket": ["drawer_socket"],
   "CarRoof": ["roof"],
   "ExcavatorBucket": ["bucket"],
-  "Sphere": ["sphere"],
+  "sphere": ["sphere"],
   "wafer": ["wafer"],
   "tape": ["tape"],
   "ChemicalGlue": ["glue"],
@@ -183,5 +184,5 @@
 "miska": ["miska", "misku", "misky"],
 "čistič": ["čistič", "čističe"],
 "krabice": ["krabice", "krabici"],
-"crackers": ["krekry"]
+"křupky": ["krekry", "křupky"]
 }}

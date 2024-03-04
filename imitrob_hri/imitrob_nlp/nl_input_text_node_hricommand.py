@@ -1,4 +1,4 @@
-import rclpy, time, ast
+import rclpy, time, ast, sys
 from rdflib.term import URIRef
 import numpy as np
 from numpy import array
@@ -10,17 +10,21 @@ from imitrob_hri.imitrob_nlp.database.Ontology import RobotProgram, RobotProgram
 from imitrob_hri.imitrob_nlp.structures.tagging.ParsedText import ParseTreeNode
 from crow_ontology.crowracle_client import CrowtologyClient
 from rclpy.node import Node
+from rclpy.qos import QoSReliabilityPolicy, QoSProfile
 
 from teleop_msgs.msg import HRICommand
+from time import sleep
+
 
 class Talker(Node):
 	def __init__(self):
 		super().__init__("talkernodadwde")
-
-		self.pub = self.create_publisher(SentenceProgram, "/nl_input", 5)
+		qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.BEST_EFFORT)
+		self.pub = self.create_publisher(SentenceProgram, "/nl_input", qos)
+		sleep(1)
 
 def main():
-	sentence = 'Polož čistič na krekry'
+	sentence = str(' '.join(sys.argv[1:]))
 
 	rclpy.init()
 	rosnode = Talker()
