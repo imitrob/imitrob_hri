@@ -1,9 +1,11 @@
+import yaml
 import numpy as np
 import sys, os; sys.path.append(os.path.dirname(os.path.abspath(__file__))+"/..")
 from merging_modalities.utils import cc
 from imitrob_hri.imitrob_nlp.TemplateFactory import create_template
 from copy import deepcopy
 from merging_modalities import noise_model
+from pathlib import Path
 
 def add_if_not_there(a, b):
     if b not in a:
@@ -245,3 +247,39 @@ def get_random_scene(c, object_name_list=['potted meat can', 'tomato soup can', 
     scene = Scene3(objects, storages, template_names=c.templates)
 
     return scene
+
+
+
+
+
+def create_scene_from_fake_data():
+
+    with open(Path("~/crow-base/config/crow_hri/scene_properties.yaml").expanduser()) as f:
+        scene_properties = yaml.safe_load(f)
+
+    scene_objects = []
+    object_names = []
+    scene_storages = []
+    storage_names = []
+    for name in scene_properties.keys():
+        
+        o = Object3(observations={'name': name}, properties_config=scene_properties[name])
+
+        if name not in object_names and name not in storage_names:
+            if o.is_type("object"):
+                object_names.append(name)
+                scene_objects.append(o)
+            elif o.is_type("storage"):
+                storage_names.append(name)
+                scene_storages.append(o)
+            else:
+                raise ValueError(f"Unknown object type for object {o}")
+    
+    s = None
+    template_names = ['pick up', 'point']
+    s = Scene3(scene_objects, scene_storages, template_names)
+    return s
+
+if __name__ == '__main__':
+    s = create_scene_from_fake_data()
+    print("s", s)

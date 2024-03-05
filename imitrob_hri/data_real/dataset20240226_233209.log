@@ -1,0 +1,1173 @@
+
+>>> Following are decidable on arity:
+>>>>>>>>>>>>>>>>> Run 1 of arity subset
+Selected action 'stack'.
+'stack' action information:
+arity: 2
+Object constraints:
+{'reachable': True, 'full-stack': False, 'pushable': None, 'full-liquid': None, 'glued': False, 'pickable': True}
+Storage constraints:
+{'reachable': True, 'stackable': True, 'full-stack': False, 'container': None, 'liquid-container': None, 'full-liquid': None, 'full-container': None}
+Num objs on scene: 3
+Scene setup:
+can:
+  full-liquid: false
+  full-stack: false
+  glued: true
+  name: can
+  pickable: true
+  pushable: false
+  reachable: false
+  type: object
+cleaner:
+  full-liquid: false
+  full-stack: false
+  glued: false
+  name: cleaner
+  pickable: true
+  pushable: false
+  reachable: true
+  type: object
+crackers:
+  container: false
+  full-container: false
+  full-liquid: false
+  full-stack: false
+  liquid-container: false
+  name: crackers
+  reachable: true
+  stackable: true
+  type: storage
+cube:
+  full-liquid: false
+  full-stack: true
+  glued: true
+  name: cube
+  pickable: true
+  pushable: true
+  reachable: false
+  type: object
+cup:
+  full-liquid: true
+  full-stack: false
+  glued: true
+  name: cup
+  pickable: true
+  pushable: true
+  reachable: false
+  type: object
+
+Correct sentence: stack cleaner to crackers
+Incorrect action: stop cleaner to crackers
+Incorrect object: stack cup to crackers
+<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>> Run 2 of arity subset
+Selected action 'unglue'.
+'unglue' action information:
+arity: 1
+Object constraints:
+{'reachable': None, 'full-stack': None, 'pushable': None, 'full-liquid': None, 'glued': True, 'pickable': None}
+action has no storage
+Num objs on scene: 2
+Scene setup:
+box:
+  full-liquid: false
+  full-stack: false
+  glued: false
+  name: box
+  pickable: false
+  pushable: true
+  reachable: true
+  type: object
+can:
+  full-liquid: true
+  full-stack: false
+  glued: true
+  name: can
+  pickable: true
+  pushable: true
+  reachable: false
+  type: object
+cleaner:
+  full-liquid: false
+  full-stack: false
+  glued: false
+  name: cleaner
+  pickable: true
+  pushable: false
+  reachable: true
+  type: object
+cup:
+  full-liquid: true
+  full-stack: false
+  glued: false
+  name: cup
+  pickable: true
+  pushable: false
+  reachable: true
+  type: object
+drawer:
+  container: true
+  full-container: true
+  full-liquid: false
+  full-stack: false
+  liquid-container: false
+  name: drawer
+  reachable: false
+  stackable: false
+  type: storage
+
+Correct sentence: unglue can 
+Incorrect action: stack can 
+Incorrect object: unglue cup 
+<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>> Run 3 of arity subset
+Selected action 'push'.
+'push' action information:
+arity: 1
+Object constraints:
+{'reachable': True, 'full-stack': False, 'pushable': True, 'full-liquid': None, 'glued': False, 'pickable': None}
+action has no storage
+Num objs on scene: 2
+Scene setup:
+can:
+  full-liquid: false
+  full-stack: false
+  glued: true
+  name: can
+  pickable: true
+  pushable: false
+  reachable: false
+  type: object
+cube:
+  full-liquid: false
+  full-stack: false
+  glued: false
+  name: cube
+  pickable: true
+  pushable: true
+  reachable: true
+  type: object
+cup:
+  full-liquid: true
+  full-stack: false
+  glued: true
+  name: cup
+  pickable: true
+  pushable: false
+  reachable: false
+  type: object
+drawer:
+  container: true
+  full-container: true
+  full-liquid: false
+  full-stack: false
+  liquid-container: false
+  name: drawer
+  reachable: false
+  stackable: false
+  type: storage
+foam:
+  container: false
+  full-container: false
+  full-liquid: false
+  full-stack: true
+  liquid-container: true
+  name: foam
+  reachable: false
+  stackable: true
+  type: storage
+
+Correct sentence: push cube 
+Incorrect action: put_into cube 
+Incorrect object: push cup 
+<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>> Run 4 of arity subset
+Selected action 'pick'.
+'pick' action information:
+arity: 1
+Object constraints:
+{'reachable': True, 'full-stack': False, 'pushable': None, 'full-liquid': None, 'glued': False, 'pickable': True}
+action has no storage
+Num objs on scene: 2
+Scene setup:
+bowl:
+  container: true
+  full-container: false
+  full-liquid: true
+  full-stack: false
+  liquid-container: true
+  name: bowl
+  reachable: false
+  stackable: false
+  type: storage
+box:
+  full-liquid: false
+  full-stack: true
+  glued: true
+  name: box
+  pickable: false
+  pushable: true
+  reachable: false
+  type: object
+can:
+  full-liquid: false
+  full-stack: false
+  glued: true
+  name: can
+  pickable: true
+  pushable: true
+  reachable: false
+  type: object
+cleaner:
+  full-liquid: false
+  full-stack: false
+  glued: false
+  name: cleaner
+  pickable: true
+  pushable: false
+  reachable: true
+  type: object
+drawer:
+  container: true
+  full-container: true
+  full-liquid: false
+  full-stack: false
+  liquid-container: false
+  name: drawer
+  reachable: false
+  stackable: false
+  type: storage
+
+Correct sentence: pick cleaner 
+Incorrect action: put_into cleaner 
+Incorrect object: pick can 
+<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>> Run 5 of arity subset
+Selected action 'unglue'.
+'unglue' action information:
+arity: 1
+Object constraints:
+{'reachable': None, 'full-stack': None, 'pushable': None, 'full-liquid': None, 'glued': True, 'pickable': None}
+action has no storage
+Num objs on scene: 2
+Scene setup:
+bowl:
+  container: true
+  full-container: false
+  full-liquid: true
+  full-stack: false
+  liquid-container: true
+  name: bowl
+  reachable: false
+  stackable: false
+  type: storage
+box:
+  full-liquid: false
+  full-stack: false
+  glued: true
+  name: box
+  pickable: false
+  pushable: true
+  reachable: true
+  type: object
+can:
+  full-liquid: false
+  full-stack: false
+  glued: false
+  name: can
+  pickable: true
+  pushable: false
+  reachable: false
+  type: object
+cup:
+  full-liquid: true
+  full-stack: false
+  glued: false
+  name: cup
+  pickable: true
+  pushable: true
+  reachable: false
+  type: object
+drawer:
+  container: true
+  full-container: true
+  full-liquid: false
+  full-stack: false
+  liquid-container: false
+  name: drawer
+  reachable: false
+  stackable: false
+  type: storage
+
+Correct sentence: unglue box 
+Incorrect action: move_up box 
+Incorrect object: unglue can 
+<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>> Run 6 of arity subset
+Selected action 'push'.
+'push' action information:
+arity: 1
+Object constraints:
+{'reachable': True, 'full-stack': False, 'pushable': True, 'full-liquid': None, 'glued': False, 'pickable': None}
+action has no storage
+Num objs on scene: 2
+Scene setup:
+bowl:
+  container: true
+  full-container: false
+  full-liquid: true
+  full-stack: false
+  liquid-container: true
+  name: bowl
+  reachable: false
+  stackable: false
+  type: storage
+can:
+  full-liquid: true
+  full-stack: false
+  glued: false
+  name: can
+  pickable: true
+  pushable: true
+  reachable: true
+  type: object
+cube:
+  full-liquid: false
+  full-stack: true
+  glued: true
+  name: cube
+  pickable: true
+  pushable: true
+  reachable: false
+  type: object
+drawer:
+  container: true
+  full-container: true
+  full-liquid: false
+  full-stack: false
+  liquid-container: false
+  name: drawer
+  reachable: false
+  stackable: false
+  type: storage
+
+Correct sentence: push can 
+Incorrect action: stop can 
+Incorrect object: push cube 
+<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>> Run 7 of arity subset
+Selected action 'unglue'.
+'unglue' action information:
+arity: 1
+Object constraints:
+{'reachable': None, 'full-stack': None, 'pushable': None, 'full-liquid': None, 'glued': True, 'pickable': None}
+action has no storage
+Num objs on scene: 2
+Scene setup:
+box:
+  full-liquid: false
+  full-stack: false
+  glued: true
+  name: box
+  pickable: false
+  pushable: true
+  reachable: false
+  type: object
+cleaner:
+  full-liquid: false
+  full-stack: false
+  glued: false
+  name: cleaner
+  pickable: true
+  pushable: false
+  reachable: true
+  type: object
+cup:
+  full-liquid: false
+  full-stack: false
+  glued: false
+  name: cup
+  pickable: true
+  pushable: false
+  reachable: false
+  type: object
+drawer:
+  container: true
+  full-container: true
+  full-liquid: false
+  full-stack: false
+  liquid-container: false
+  name: drawer
+  reachable: false
+  stackable: false
+  type: storage
+foam:
+  container: false
+  full-container: false
+  full-liquid: false
+  full-stack: true
+  liquid-container: true
+  name: foam
+  reachable: false
+  stackable: true
+  type: storage
+
+Correct sentence: unglue box 
+Incorrect action: put_into box 
+Incorrect object: unglue cup 
+<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>> Run 8 of arity subset
+Selected action 'put_into'.
+'put_into' action information:
+arity: 2
+Object constraints:
+{'reachable': True, 'full-stack': False, 'pushable': None, 'full-liquid': None, 'glued': False, 'pickable': True}
+Storage constraints:
+{'reachable': True, 'stackable': None, 'full-stack': False, 'container': True, 'liquid-container': None, 'full-liquid': False, 'full-container': False}
+Num objs on scene: 3
+Scene setup:
+box:
+  full-liquid: false
+  full-stack: true
+  glued: true
+  name: box
+  pickable: false
+  pushable: true
+  reachable: false
+  type: object
+cleaner:
+  full-liquid: false
+  full-stack: false
+  glued: false
+  name: cleaner
+  pickable: true
+  pushable: false
+  reachable: true
+  type: object
+cube:
+  full-liquid: false
+  full-stack: true
+  glued: true
+  name: cube
+  pickable: true
+  pushable: true
+  reachable: false
+  type: object
+cup:
+  full-liquid: false
+  full-stack: false
+  glued: true
+  name: cup
+  pickable: true
+  pushable: false
+  reachable: false
+  type: object
+drawer:
+  container: true
+  full-container: false
+  full-liquid: false
+  full-stack: false
+  liquid-container: false
+  name: drawer
+  reachable: true
+  stackable: false
+  type: storage
+
+Correct sentence: put_into cleaner to drawer
+Incorrect action: unglue cleaner to drawer
+Incorrect object: put_into box to drawer
+<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>> Run 9 of arity subset
+Selected action 'unglue'.
+'unglue' action information:
+arity: 1
+Object constraints:
+{'reachable': None, 'full-stack': None, 'pushable': None, 'full-liquid': None, 'glued': True, 'pickable': None}
+action has no storage
+Num objs on scene: 2
+Scene setup:
+cleaner:
+  full-liquid: false
+  full-stack: false
+  glued: true
+  name: cleaner
+  pickable: true
+  pushable: false
+  reachable: true
+  type: object
+crackers:
+  container: false
+  full-container: false
+  full-liquid: false
+  full-stack: true
+  liquid-container: false
+  name: crackers
+  reachable: false
+  stackable: true
+  type: storage
+cube:
+  full-liquid: false
+  full-stack: false
+  glued: false
+  name: cube
+  pickable: true
+  pushable: true
+  reachable: false
+  type: object
+cup:
+  full-liquid: true
+  full-stack: false
+  glued: false
+  name: cup
+  pickable: true
+  pushable: false
+  reachable: true
+  type: object
+
+Correct sentence: unglue cleaner 
+Incorrect action: stack cleaner 
+Incorrect object: unglue cup 
+<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>> Run 10 of arity subset
+Selected action 'pour'.
+'pour' action information:
+arity: 2
+Object constraints:
+{'reachable': True, 'full-stack': False, 'pushable': None, 'full-liquid': True, 'glued': False, 'pickable': True}
+Storage constraints:
+{'reachable': True, 'stackable': None, 'full-stack': False, 'container': None, 'liquid-container': True, 'full-liquid': False, 'full-container': False}
+Num objs on scene: 3
+Scene setup:
+bowl:
+  container: true
+  full-container: false
+  full-liquid: false
+  full-stack: false
+  liquid-container: true
+  name: bowl
+  reachable: true
+  stackable: false
+  type: storage
+can:
+  full-liquid: true
+  full-stack: false
+  glued: false
+  name: can
+  pickable: true
+  pushable: true
+  reachable: true
+  type: object
+cleaner:
+  full-liquid: false
+  full-stack: false
+  glued: true
+  name: cleaner
+  pickable: true
+  pushable: false
+  reachable: false
+  type: object
+cube:
+  full-liquid: false
+  full-stack: true
+  glued: true
+  name: cube
+  pickable: true
+  pushable: true
+  reachable: false
+  type: object
+
+Correct sentence: pour can to bowl
+Incorrect action: release can to bowl
+Incorrect object: pour cleaner to bowl
+<<<<<<<<<<<<<<<<<<<<
+
+>>> Following are decidable on properties:
+>>>>>>>>>>>>>>>>> Run 1 of properties subset
+Selected action 'unglue'.
+'unglue' action information:
+arity: 1
+Object constraints:
+{'reachable': None, 'full-stack': None, 'pushable': None, 'full-liquid': None, 'glued': True, 'pickable': None}
+action has no storage
+Num objs on scene: 2
+Scene setup:
+box:
+  full-liquid: false
+  full-stack: false
+  glued: false
+  name: box
+  pickable: false
+  pushable: true
+  reachable: true
+  type: object
+cleaner:
+  full-liquid: false
+  full-stack: false
+  glued: true
+  name: cleaner
+  pickable: true
+  pushable: false
+  reachable: true
+  type: object
+crackers:
+  container: false
+  full-container: false
+  full-liquid: false
+  full-stack: true
+  liquid-container: false
+  name: crackers
+  reachable: false
+  stackable: true
+  type: storage
+cube:
+  full-liquid: false
+  full-stack: false
+  glued: false
+  name: cube
+  pickable: true
+  pushable: true
+  reachable: false
+  type: object
+cup:
+  full-liquid: false
+  full-stack: false
+  glued: false
+  name: cup
+  pickable: true
+  pushable: false
+  reachable: false
+  type: object
+
+Correct sentence: unglue cleaner 
+Incorrect action: push cleaner 
+Incorrect object: unglue cube 
+<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>> Run 2 of properties subset
+Selected action 'stack'.
+'stack' action information:
+arity: 2
+Object constraints:
+{'reachable': True, 'full-stack': False, 'pushable': None, 'full-liquid': None, 'glued': False, 'pickable': True}
+Storage constraints:
+{'reachable': True, 'stackable': True, 'full-stack': False, 'container': None, 'liquid-container': None, 'full-liquid': None, 'full-container': None}
+Num objs on scene: 3
+Scene setup:
+box:
+  full-liquid: false
+  full-stack: true
+  glued: true
+  name: box
+  pickable: false
+  pushable: true
+  reachable: false
+  type: object
+cleaner:
+  full-liquid: false
+  full-stack: false
+  glued: false
+  name: cleaner
+  pickable: true
+  pushable: false
+  reachable: true
+  type: object
+crackers:
+  container: false
+  full-container: false
+  full-liquid: false
+  full-stack: false
+  liquid-container: false
+  name: crackers
+  reachable: true
+  stackable: true
+  type: storage
+drawer:
+  container: true
+  full-container: true
+  full-liquid: false
+  full-stack: false
+  liquid-container: false
+  name: drawer
+  reachable: false
+  stackable: false
+  type: storage
+foam:
+  container: false
+  full-container: false
+  full-liquid: true
+  full-stack: true
+  liquid-container: true
+  name: foam
+  reachable: false
+  stackable: true
+  type: storage
+
+Correct sentence: stack cleaner to crackers
+Incorrect action: pour cleaner to crackers
+Incorrect object: stack box to crackers
+<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>> Run 3 of properties subset
+Selected action 'put_into'.
+'put_into' action information:
+arity: 2
+Object constraints:
+{'reachable': True, 'full-stack': False, 'pushable': None, 'full-liquid': None, 'glued': False, 'pickable': True}
+Storage constraints:
+{'reachable': True, 'stackable': None, 'full-stack': False, 'container': True, 'liquid-container': None, 'full-liquid': False, 'full-container': False}
+Num objs on scene: 3
+Scene setup:
+box:
+  full-liquid: false
+  full-stack: true
+  glued: true
+  name: box
+  pickable: false
+  pushable: true
+  reachable: false
+  type: object
+can:
+  full-liquid: false
+  full-stack: false
+  glued: true
+  name: can
+  pickable: true
+  pushable: true
+  reachable: false
+  type: object
+cube:
+  full-liquid: false
+  full-stack: false
+  glued: false
+  name: cube
+  pickable: true
+  pushable: true
+  reachable: true
+  type: object
+cup:
+  full-liquid: true
+  full-stack: false
+  glued: true
+  name: cup
+  pickable: true
+  pushable: true
+  reachable: false
+  type: object
+drawer:
+  container: true
+  full-container: false
+  full-liquid: false
+  full-stack: false
+  liquid-container: false
+  name: drawer
+  reachable: true
+  stackable: false
+  type: storage
+
+Correct sentence: put_into cube to drawer
+Incorrect action: stack cube to drawer
+Incorrect object: put_into cup to drawer
+<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>> Run 4 of properties subset
+Selected action 'stack'.
+'stack' action information:
+arity: 2
+Object constraints:
+{'reachable': True, 'full-stack': False, 'pushable': None, 'full-liquid': None, 'glued': False, 'pickable': True}
+Storage constraints:
+{'reachable': True, 'stackable': True, 'full-stack': False, 'container': None, 'liquid-container': None, 'full-liquid': None, 'full-container': None}
+Num objs on scene: 3
+Scene setup:
+box:
+  full-liquid: false
+  full-stack: true
+  glued: true
+  name: box
+  pickable: false
+  pushable: true
+  reachable: false
+  type: object
+can:
+  full-liquid: false
+  full-stack: false
+  glued: false
+  name: can
+  pickable: true
+  pushable: true
+  reachable: true
+  type: object
+crackers:
+  container: false
+  full-container: false
+  full-liquid: false
+  full-stack: false
+  liquid-container: false
+  name: crackers
+  reachable: true
+  stackable: true
+  type: storage
+cube:
+  full-liquid: false
+  full-stack: true
+  glued: true
+  name: cube
+  pickable: true
+  pushable: true
+  reachable: false
+  type: object
+cup:
+  full-liquid: true
+  full-stack: false
+  glued: true
+  name: cup
+  pickable: true
+  pushable: false
+  reachable: false
+  type: object
+
+Correct sentence: stack can to crackers
+Incorrect action: put_into can to crackers
+Incorrect object: stack cup to crackers
+<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>> Run 5 of properties subset
+Selected action 'pick'.
+'pick' action information:
+arity: 1
+Object constraints:
+{'reachable': True, 'full-stack': False, 'pushable': None, 'full-liquid': None, 'glued': False, 'pickable': True}
+action has no storage
+Num objs on scene: 2
+Scene setup:
+cleaner:
+  full-liquid: false
+  full-stack: false
+  glued: false
+  name: cleaner
+  pickable: true
+  pushable: false
+  reachable: true
+  type: object
+crackers:
+  container: false
+  full-container: false
+  full-liquid: false
+  full-stack: false
+  liquid-container: false
+  name: crackers
+  reachable: true
+  stackable: true
+  type: storage
+cube:
+  full-liquid: false
+  full-stack: true
+  glued: true
+  name: cube
+  pickable: true
+  pushable: true
+  reachable: false
+  type: object
+cup:
+  full-liquid: false
+  full-stack: false
+  glued: true
+  name: cup
+  pickable: true
+  pushable: true
+  reachable: false
+  type: object
+
+Correct sentence: pick cleaner 
+Incorrect action: unglue cleaner 
+Incorrect object: pick cup 
+<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>> Run 6 of properties subset
+Selected action 'pick'.
+'pick' action information:
+arity: 1
+Object constraints:
+{'reachable': True, 'full-stack': False, 'pushable': None, 'full-liquid': None, 'glued': False, 'pickable': True}
+action has no storage
+Num objs on scene: 2
+Scene setup:
+box:
+  full-liquid: false
+  full-stack: true
+  glued: true
+  name: box
+  pickable: false
+  pushable: true
+  reachable: false
+  type: object
+can:
+  full-liquid: false
+  full-stack: false
+  glued: true
+  name: can
+  pickable: true
+  pushable: false
+  reachable: false
+  type: object
+cleaner:
+  full-liquid: false
+  full-stack: false
+  glued: true
+  name: cleaner
+  pickable: true
+  pushable: false
+  reachable: false
+  type: object
+cube:
+  full-liquid: false
+  full-stack: true
+  glued: true
+  name: cube
+  pickable: true
+  pushable: true
+  reachable: false
+  type: object
+cup:
+  full-liquid: true
+  full-stack: false
+  glued: false
+  name: cup
+  pickable: true
+  pushable: false
+  reachable: true
+  type: object
+
+Correct sentence: pick cup 
+Incorrect action: push cup 
+Incorrect object: pick can 
+<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>> Run 7 of properties subset
+Selected action 'stack'.
+'stack' action information:
+arity: 2
+Object constraints:
+{'reachable': True, 'full-stack': False, 'pushable': None, 'full-liquid': None, 'glued': False, 'pickable': True}
+Storage constraints:
+{'reachable': True, 'stackable': True, 'full-stack': False, 'container': None, 'liquid-container': None, 'full-liquid': None, 'full-container': None}
+Num objs on scene: 3
+Scene setup:
+box:
+  full-liquid: false
+  full-stack: true
+  glued: true
+  name: box
+  pickable: false
+  pushable: true
+  reachable: false
+  type: object
+cleaner:
+  full-liquid: false
+  full-stack: false
+  glued: true
+  name: cleaner
+  pickable: true
+  pushable: false
+  reachable: false
+  type: object
+crackers:
+  container: false
+  full-container: false
+  full-liquid: false
+  full-stack: false
+  liquid-container: false
+  name: crackers
+  reachable: true
+  stackable: true
+  type: storage
+cube:
+  full-liquid: false
+  full-stack: false
+  glued: false
+  name: cube
+  pickable: true
+  pushable: true
+  reachable: true
+  type: object
+cup:
+  full-liquid: true
+  full-stack: false
+  glued: true
+  name: cup
+  pickable: true
+  pushable: false
+  reachable: false
+  type: object
+
+Correct sentence: stack cube to crackers
+Incorrect action: pour cube to crackers
+Incorrect object: stack cup to crackers
+<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>> Run 8 of properties subset
+Selected action 'push'.
+'push' action information:
+arity: 1
+Object constraints:
+{'reachable': True, 'full-stack': False, 'pushable': True, 'full-liquid': None, 'glued': False, 'pickable': None}
+action has no storage
+Num objs on scene: 2
+Scene setup:
+bowl:
+  container: true
+  full-container: false
+  full-liquid: true
+  full-stack: false
+  liquid-container: true
+  name: bowl
+  reachable: false
+  stackable: false
+  type: storage
+box:
+  full-liquid: false
+  full-stack: false
+  glued: false
+  name: box
+  pickable: false
+  pushable: true
+  reachable: true
+  type: object
+cleaner:
+  full-liquid: false
+  full-stack: false
+  glued: true
+  name: cleaner
+  pickable: true
+  pushable: false
+  reachable: false
+  type: object
+cube:
+  full-liquid: false
+  full-stack: true
+  glued: true
+  name: cube
+  pickable: true
+  pushable: true
+  reachable: false
+  type: object
+cup:
+  full-liquid: true
+  full-stack: false
+  glued: true
+  name: cup
+  pickable: true
+  pushable: false
+  reachable: false
+  type: object
+
+Correct sentence: push box 
+Incorrect action: unglue box 
+Incorrect object: push cube 
+<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>> Run 9 of properties subset
+Selected action 'pour'.
+'pour' action information:
+arity: 2
+Object constraints:
+{'reachable': True, 'full-stack': False, 'pushable': None, 'full-liquid': True, 'glued': False, 'pickable': True}
+Storage constraints:
+{'reachable': True, 'stackable': None, 'full-stack': False, 'container': None, 'liquid-container': True, 'full-liquid': False, 'full-container': False}
+Num objs on scene: 3
+Scene setup:
+can:
+  full-liquid: true
+  full-stack: false
+  glued: false
+  name: can
+  pickable: true
+  pushable: true
+  reachable: true
+  type: object
+cleaner:
+  full-liquid: false
+  full-stack: false
+  glued: true
+  name: cleaner
+  pickable: true
+  pushable: false
+  reachable: false
+  type: object
+crackers:
+  container: false
+  full-container: false
+  full-liquid: false
+  full-stack: true
+  liquid-container: false
+  name: crackers
+  reachable: false
+  stackable: true
+  type: storage
+foam:
+  container: false
+  full-container: false
+  full-liquid: false
+  full-stack: false
+  liquid-container: true
+  name: foam
+  reachable: true
+  stackable: true
+  type: storage
+
+Correct sentence: pour can to foam
+Incorrect action: put_into can to foam
+Incorrect object: pour cleaner to foam
+<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>> Run 10 of properties subset
+Selected action 'push'.
+'push' action information:
+arity: 1
+Object constraints:
+{'reachable': True, 'full-stack': False, 'pushable': True, 'full-liquid': None, 'glued': False, 'pickable': None}
+action has no storage
+Num objs on scene: 2
+Scene setup:
+box:
+  full-liquid: false
+  full-stack: true
+  glued: true
+  name: box
+  pickable: false
+  pushable: true
+  reachable: false
+  type: object
+can:
+  full-liquid: false
+  full-stack: false
+  glued: false
+  name: can
+  pickable: true
+  pushable: true
+  reachable: true
+  type: object
+cleaner:
+  full-liquid: false
+  full-stack: false
+  glued: true
+  name: cleaner
+  pickable: true
+  pushable: false
+  reachable: false
+  type: object
+cube:
+  full-liquid: false
+  full-stack: true
+  glued: true
+  name: cube
+  pickable: true
+  pushable: true
+  reachable: false
+  type: object
+cup:
+  full-liquid: true
+  full-stack: false
+  glued: true
+  name: cup
+  pickable: true
+  pushable: false
+  reachable: false
+  type: object
+
+Correct sentence: push can 
+Incorrect action: unglue can 
+Incorrect object: push cube 
+<<<<<<<<<<<<<<<<<<<<
