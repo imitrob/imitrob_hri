@@ -35,7 +35,7 @@ import argparse
 
 
 class MMNode(Node):
-    def __init__(self, max_time_delay = 15., model = 1, use_magic = 'entropy', c=ConfigurationCrow1(), experiment_args=None):
+    def __init__(self, max_time_delay = 15., model = 1, use_magic = 'entropy_add_2', c=ConfigurationCrow1(), experiment_args=None):
         """Standard ROS Node
 
         Args:
@@ -288,7 +288,7 @@ class MMNode(Node):
 
         hricommandstrs = []
         for i, (model, name) in enumerate(zip([mms,mms1,mms2,mms3], ["baseline", "M1", "M2", "M3"])):
-            final_s = '{' + f'"target_action": "{model.M["template"].activated}", "target_object": "{model.M["selections"].activated}", "target_storage": "{model.M["storages"].activated}",' 
+            final_s = '{' + f'"target_action": "{model.M["template"].activated}", "target_action_conclusion": {model.M["template"].conclude()}, "target_object": "{model.M["selections"].activated}", "target_storage": "{model.M["storages"].activated}",' 
             final_s+= f'"actions": {model.M["template"].names}, "action_probs": {float_array_to_str(model.M["template"].p)},'
             final_s+= f'"objects": {model.M["selections"].names} , "object_probs": {float_array_to_str(model.M["selections"].p)} , "object_classes": "TODO", '
             final_s+= f'"storages": {model.M["storages"].names} , "storage_probs": {float_array_to_str(model.M["storages"].p)} , '

@@ -36,7 +36,7 @@ class Configuration(ABC):
         return 0.9
     @property
     def gamma_default(self):
-        return 0.5
+        return 0.3
     @property
     def alpha_penal_default(self):
         return 0.9

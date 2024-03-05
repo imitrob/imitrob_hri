@@ -50,7 +50,9 @@ class Object3():
             self.properties['full-liquid'] = self.full_liquid
 
     def is_type(self, typ):
-        return typ in self.properties and self.properties[typ] or typ == self.properties["type"]
+        #print("is type::!: ", typ, self.properties[typ](), typ in self.properties)
+        return typ in self.properties and self.properties[typ]()[1] or typ == self.properties["type"]
+    
 
     def pickable(self, r=4):
         threshold_being_unpickable = 0.12 # [m] <- robot's gripper max opened distance 

@@ -364,6 +364,9 @@ class ModalityMerger():
                 lsp /= penalization_by_entropy_l
                 gsp /= penalization_by_entropy_g
 
+                # print('after entropy penalization')
+                # print('lsp'+f"{lsp}", 'gsp'+f'{gsp}')
+
             if self.is_zeros(gsp):
                 msp = lsp
             elif self.is_zeros(lsp):
@@ -557,6 +560,7 @@ class ModalityMerger():
                                 
                                 if template_obj.is_feasible(o, s):
                                     beta = 1.0
+                                    # print('is feasible: o:'+f'{o}'+'s:'+f'{s}')
                                 # DEBUGdata.append(f"template: {template}, isfeasible {template_obj.is_feasible(o, s)}")
                     elif template_obj.mm_pars_compulsary == ['template', 'selections']:
                         # beta = 0.0
