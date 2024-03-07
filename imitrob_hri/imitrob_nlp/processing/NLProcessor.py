@@ -120,7 +120,7 @@ class NLProcessor():
             if template.grounded_data_filled(): # Found grounded match
                 template_probs.p[template_probs.template_names.index(template_type.name)] = 1.0 
             else:                
-                template_probs.p[template_probs.template_names.index(template_type.name)] = 0.5
+                template_probs.p[template_probs.template_names.index(template_type.name)] = 1.0  # FIXME: should be lower, maybe (TDB)
                 
         # more templates that gounded_data_filled, pick first
         final_template = None

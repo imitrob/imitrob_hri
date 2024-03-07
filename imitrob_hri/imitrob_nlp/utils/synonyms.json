@@ -19,7 +19,7 @@
       "will not":["won't", "wont"],
       "must not":["mustn't", "mustnt"],
       "must":["have to", "ought to"],
-      "put":["place"],
+      "put":["place", "put_into", "put-into"],
       " todelete ":["the", "a", "some", "any", "so", "need to", "needs to", "need", "needs", "all"],
       "starts":["start to", "started to", "started", "starts to"],
       "finishes":["finish to", "finished to", "finished", "finishes to"],

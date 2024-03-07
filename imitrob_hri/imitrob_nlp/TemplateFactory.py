@@ -9,9 +9,9 @@ import os
 enum_strs = []
 enum_values = []
 for cls in imported_classes:
-    # <class 'PickTask.PickTask'> to "PICK_TASK"
-    enum_strs.append(f"{cls.__name__[:-4].upper()}_TASK")
-    enum_values.append(cls)
+    ## <class 'PickTask.PickTask'> to "PICK_TASK"
+    #enum_strs.append(f"{cls.__name__[:-4].upper()}_TASK")
+    #enum_values.append(cls)
     
     ## Make second def. for each template 1. "PICK_TASK", 2. "pick"
     # <class 'PutIntoTask.PutIntoTask'> to "PutInto"

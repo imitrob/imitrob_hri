@@ -257,8 +257,18 @@ class ModalityMerger():
         if larr.count(1) == 1 and larr.count(0) == lenarr - 1:
             return True
         return False
+    
+    @staticmethod
+    def normalize_ab(x,a,b):
+        if len(x) == 0: return []
+        #normalize values in vector x to interval a to b
+        x_01=(x-min(x))/(max(x) - min(x)) 
+        print('after normalization to 0-1')
+        print(x_01)
+        x_ab = (x_01*(b-a))+a
+        return x_ab
 
-    def preprocessing(self, ls, gs, epsilon, gamma):
+    def preprocessing(self, ls, gs, epsilon, gamma, scene=None):
         ''' Data preprocessing '''
         # 1. Add epsilon
         # for ct in self.c.mm_pars_names_dict.keys():
@@ -268,11 +278,40 @@ class ModalityMerger():
         #         gs[ct].p += epsilon
 
         # 2. Add gamma, if language includes one value
+        if scene:
+            o_names = []
+            for o in scene.selections:
+                o_names.append(o.name)
+                
         for ct in self.c.mm_pars_names_dict.keys():
             if self.is_one_only(ls[ct].p):
-                ls[ct].p += gamma
-                ls[ct].p = np.clip(ls[ct].p, 0, 1)
+                if ct == 'template':
+                    ls[ct].p += gamma
+                    ls[ct].p = np.clip(ls[ct].p, 0, 1)
+                    print('----language after normalization for hot one case---')
+                    print(ls[ct].p)
+                    #for gestures normalize the gesture probs for objects and storages to [gamma, 1]
+                if ct=='selections' or ct=='storages':
+                    idxs = []
+                    for idx, name in enumerate(ls[ct].names):
+                        if name in o_names:
+                            idxs.append(idx)
+                    #language normalization
+                    ls[ct].p[idxs] += gamma
+                    ls[ct].p = np.clip(ls[ct].p, 0, 1)
+                    #gesture normalization
+                    G_sel = gs[ct].p[idxs]
+                    G_norm = self.normalize_ab(G_sel,gamma,1)
+                    gs[ct].p[idxs] = G_norm
+                    print('gesture input after normalization for hot one case------------')
+                    print(gs[ct].p)
 
+        # for ct in self.c.mm_pars_names_dict.keys():
+        #     if self.is_one_only(ls[ct].p):
+        #         ls[ct].p += gamma
+        #         ls[ct].p = np.clip(ls[ct].p, 0, 1)
+        #         #for gestures normalize the gesture probs for objects and storages to [gamma, 1]
+        
         return ls, gs
 
     def feedforward(self, language_sentence, gesture_sentence, epsilon=0.05, gamma=0.5):
@@ -399,7 +438,7 @@ class ModalityMerger():
         '''
         DEBUGdata = []
         # A.) Data preprocessing
-        ls, gs = self.preprocessing(ls, gs, epsilon, gamma)
+        ls, gs = self.preprocessing(ls, gs, epsilon, gamma,scene)
 
         # B.) Merging
         # 1. Compare types independently
@@ -492,7 +531,7 @@ class ModalityMerger():
         '''
         DEBUGdata = []
         # A.) Data preprocessing
-        ls, gs = self.preprocessing(ls, gs, epsilon, gamma)
+        ls, gs = self.preprocessing(ls, gs, epsilon, gamma,scene)
 
         # B.) Merging
         # 1. Compare types independently
@@ -561,12 +600,16 @@ class ModalityMerger():
                                 if template_obj.is_feasible(o, s):
                                     beta = 1.0
                                     # print('is feasible: o:'+f'{o}'+'s:'+f'{s}')
+                                # else:
+                                #     print('for template'+f'{template}'+'object'+f'{o}'+'or storage'+f'{s}')
                                 # DEBUGdata.append(f"template: {template}, isfeasible {template_obj.is_feasible(o, s)}")
                     elif template_obj.mm_pars_compulsary == ['template', 'selections']:
                         # beta = 0.0
                         for o in scene.selections:
                             if template_obj.is_feasible(o):
                                 beta = 1.0
+                            # else:
+                            #     print('for template'+f'{template}'+'object'+f'{o}'+'is not feasible')
                             # DEBUGdata.append(f"template: {template}, isfeasible {template_obj.is_feasible(o)}")
                     elif template_obj.mm_pars_compulsary == ['template']:
                         beta = 1.0

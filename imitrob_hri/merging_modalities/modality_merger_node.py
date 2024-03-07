@@ -258,6 +258,7 @@ class MMNode(Node):
             use_magic: {self.use_magic}")
         
 
+        self.use_magic = 'entropy_add_2'
         # baseline
         mm = ModalityMerger(self.c, self.use_magic)
         mms.M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=self.c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=0, use_magic='baseline')
@@ -274,6 +275,20 @@ class MMNode(Node):
         mm = ModalityMerger(self.c, self.use_magic)
         mms3.M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=self.c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=3, use_magic=self.use_magic)
 
+        self.use_magic = 'entropy'
+        # M1, entropy mul
+        mms4 = deepcopy(mms)
+        mm = ModalityMerger(self.c, self.use_magic)
+        mms4.M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=self.c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=1, use_magic=self.use_magic)
+        # M2, entropy mul
+        mms5 = deepcopy(mms)
+        mm = ModalityMerger(self.c, self.use_magic)
+        mms5.M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=self.c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=2, use_magic=self.use_magic)
+        # M6
+        mms6 = deepcopy(mms)
+        mm = ModalityMerger(self.c, self.use_magic)
+        mms6.M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=self.c.epsilon, gamma=self.c.gamma, alpha_penal=self.c.alpha_penal, model=3, use_magic=self.use_magic)
+
         
         # mms.merged_part_to_HRICommand()
 
@@ -287,7 +302,7 @@ class MMNode(Node):
             return substr
 
         hricommandstrs = []
-        for i, (model, name) in enumerate(zip([mms,mms1,mms2,mms3], ["baseline", "M1", "M2", "M3"])):
+        for i, (model, name) in enumerate(zip([mms,mms1,mms2,mms3,mms4,mms5,mms6], ["baseline", "M1", "M2", "M3", "M1_emul", "M2_emul", "M3_emul"])):
             final_s = '{' + f'"target_action": "{model.M["template"].activated}", "target_action_conclusion": {model.M["template"].conclude()}, "target_object": "{model.M["selections"].activated}", "target_storage": "{model.M["storages"].activated}",' 
             final_s+= f'"actions": {model.M["template"].names}, "action_probs": {float_array_to_str(model.M["template"].p)},'
             final_s+= f'"objects": {model.M["selections"].names} , "object_probs": {float_array_to_str(model.M["selections"].p)} , "object_classes": "TODO", '
