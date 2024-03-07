@@ -12,10 +12,10 @@ DATASET_PREFIX = '2' # '' for original dataset
 import matplotlib.pyplot as plt
 
 def tester_all(use_magic):
-    accs = np.zeros((3,6,4,3))
-    results_save = np.zeros((3,6,4,3), dtype=object)
+    accs = np.zeros((3,7,4,3))
+    results_save = np.zeros((3,7,4,3), dtype=object)
     for cn,c in enumerate(['c1', 'c2', 'c3']):  # error? : c1 n3 D1 M1
-        for nn,n in enumerate(['n0', 'n1', 'n2', 'n3', 'n4', 'n5']):
+        for nn,n in enumerate(['n0', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6']):
             for pn,d in enumerate(['D1', 'D2', 'D3', 'D4']):
                 for mn,m in enumerate(['M1','M2','M3']):
                     dataset = np.load(os.path.expanduser(f'{os.path.dirname(os.path.abspath(__file__))}/../data/saves/artificial_dataset{DATASET_PREFIX}_{c}_{n}_{d}.npy'), allow_pickle=True)
