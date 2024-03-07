@@ -377,7 +377,8 @@ def gen_dataset2(c,n,d):
              'n2': (nm.NormalModel(1.0, 0.0), nm.NormalModel(0.0,0.4)),
              'n3': (nm.NormalModel(1.0, 0.0), nm.gesture_noise_model2),
              'n4': (nm.NormalModel(1.0, 0.0), nm.gesture_noise_model3),
-             'n5': (nm.NormalModel(1.0, 0.0), nm.gesture_noise_model4),}
+             'n5': (nm.NormalModel(1.0, 0.0), nm.gesture_noise_model4),
+             'n6': (nm.NormalModel(1.0, 0.0), nm.NormalModel(0.0,0.6)),}
 
     noise = noises[n]
     policies_str = d[1:]
@@ -407,7 +408,7 @@ if __name__ == '__main__':
     dataset_name = sys.argv[1]
     if dataset_name == 'all':
         for c in ['c1', 'c2', 'c3']:
-            for n in ['n0', 'n1', 'n2', 'n3', 'n4', 'n5']:
+            for n in ['n0', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6']:
                 for d in ['D1', 'D2', 'D3', 'D4']:
                     gen_dataset2(c,n,d)
     
