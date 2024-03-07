@@ -50,6 +50,11 @@ class Object3():
             # if 'liquid-container' in observations['types']:
             self.properties['full-stack'] = self.full_stack
             self.properties['full-liquid'] = self.full_liquid
+            self.properties['full-container'] = self.full_container
+            if len(observations['types']) > 0:
+                self.properties['type'] = self.observations['types'][0]
+            else:
+                self.properties['type'] = []
 
     def is_type(self, typ):
         #print("is type::!: ", typ, self.properties[typ](), typ in self.properties)
@@ -89,6 +94,9 @@ class Object3():
         return round(penalization,r), eval
 
     def full_stack(self, r=4):
+        return round(int(self.observations['contain_item']),r), int(self.observations['contain_item'])
+    
+    def full_container(self, r=4):
         return round(int(self.observations['contain_item']),r), int(self.observations['contain_item'])
 
     def full_liquid(self, r=4):
