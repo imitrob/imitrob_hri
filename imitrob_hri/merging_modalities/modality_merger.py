@@ -288,8 +288,8 @@ class ModalityMerger():
                 if ct == 'template':
                     ls[ct].p += gamma
                     ls[ct].p = np.clip(ls[ct].p, 0, 1)
-                    print('----language after normalization for hot one case---')
-                    print(ls[ct].p)
+                    # print('----language after normalization for hot one case---')
+                    # print(ls[ct].p)
                     #for gestures normalize the gesture probs for objects and storages to [gamma, 1]
                 if ct=='selections' or ct=='storages':
                     idxs = []
@@ -303,8 +303,8 @@ class ModalityMerger():
                     G_sel = gs[ct].p[idxs]
                     G_norm = self.normalize_ab(G_sel,gamma,1)
                     gs[ct].p[idxs] = G_norm
-                    print('gesture input after normalization for hot one case------------')
-                    print(gs[ct].p)
+                    # print('gesture input after normalization for hot one case------------')
+                    # print(gs[ct].p)
 
         # for ct in self.c.mm_pars_names_dict.keys():
         #     if self.is_one_only(ls[ct].p):
@@ -569,7 +569,7 @@ class ModalityMerger():
         
         # 2. Penalize likelihood for every template
         templates = self.get_all_templates()
-        print("final templates: ", templates)
+        # print("final templates: ", templates)
         template_ct_penalized = deepcopy(S_naive['template']) # 1D (templates)
         template_ct_penalized_real = deepcopy(S_naive['template']) # 1D (templates)
         

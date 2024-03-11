@@ -1,5 +1,10 @@
 
-import sys, os; sys.path.append(os.path.dirname(os.path.abspath(__file__))+"/..")
+from copy import deepcopy
+import sys, os
+from imitrob_hri.data.scene3_def import create_scene_from_fake_data
+from imitrob_hri.imitrob_nlp.TemplateFactory import TemplateFactory
+from imitrob_hri.merging_modalities.configuration import ConfigurationCrow1
+from imitrob_hri.merging_modalities.modality_merger import MMSentence; sys.path.append(os.path.dirname(os.path.abspath(__file__))+"/..")
 from modality_merger import ModalityMerger
 from utils import *
 from imitrob_nlp.nlp_utils import make_conjunction
@@ -8,10 +13,21 @@ import numpy as np
 from sklearn.metrics import precision_score, recall_score, accuracy_score
 import matplotlib.pyplot as plt
 from pathlib import Path
+from imitrob_hri.merging_modalities.utils import singlehistplot_customized
 
 
+# from devtools import debug as print
 
-def tester_all(exp=['arity'], alignm=['a', 'nag', 'nal', 'nog', 'nol'], thr=True, acto=False):
+MERGE_FUN = 'entropy'
+MERGE_FUN_FIXED = 'mul'
+MODEL = 3
+
+def tester_all(exp=['arity'], 
+               alignm=['a', 'nag', 'nal', 'nog', 'nol'],
+               thr=True,
+               acto=False,
+               one_by_one=False,
+               postprocessing=False):
 
     data_real_folder = Path(__file__).parent.parent.joinpath('data_real')
 
@@ -30,10 +46,14 @@ def tester_all(exp=['arity'], alignm=['a', 'nag', 'nal', 'nog', 'nol'], thr=True
     acc_m1 = 0
     acc_m2 = 0
     acc_m3 = 0
+    acc_m1_fixed = 0
+    acc_m2_fixed = 0
+    acc_m3_fixed = 0
+
     for cn,c in enumerate(exp):
         for pn,d in enumerate(alignm):
             
-            for tn,t in enumerate([1,2,3,4,5,6,7,8,9,10]): # trial 
+            for tn,t in enumerate([1,2,3,4,5,6,7,8,9,10]): # Run 
                 for sn,s in enumerate(['r', 'k', 'p']):
 
                     fld = data_real_folder.joinpath(c,d)
@@ -56,29 +76,100 @@ def tester_all(exp=['arity'], alignm=['a', 'nag', 'nal', 'nog', 'nol'], thr=True
                         # check gt_line found
                         assert len(GT)>0, f"line {c}, {t} not found in dataset20240226_233209_res.log"
 
-                        BL = mms_trial[0].M
-                        M1 = mms_trial[1].M
-                        M2 = mms_trial[2].M
-                        M3 = mms_trial[3].M
-
-                        if compare(BL, GT, thresholds=False, action_only=acto): acc_bl += 1 
-                        if compare(M1, GT, thresholds=thr, action_only=acto): acc_m1 += 1
-                        if compare(M2, GT, thresholds=thr, action_only=acto): acc_m2 += 1
-                        if compare(M3, GT, thresholds=thr, action_only=acto): acc_m3 += 1
+                        # BL = mms_trial[0].M
+                        # M1 = mms_trial[1].M
+                        # M2 = mms_trial[2].M
+                        # M3 = mms_trial[3].M
                         
-                        # print("mms_trial", mms_trial)
-                        # print("str_trial", str_trial)
-                        # print("L", L, "G", G)
+                        scene = create_scene_from_fake_data(c, t)
+                        # Newly generated
+                        BL = mm_run_wrapper(L, G, scene, model=1, merge_fun='baseline')
+                        M1 = mm_run_wrapper(L, G, scene, model=1, merge_fun=MERGE_FUN)
+                        M2 = mm_run_wrapper(L, G, scene, model=2, merge_fun=MERGE_FUN)
+                        M3 = mm_run_wrapper(L, G, scene, model=3, merge_fun=MERGE_FUN)
+                        M1_fixed = mm_run_wrapper(L, G, scene, model=1, merge_fun=MERGE_FUN_FIXED)
+                        M2_fixed = mm_run_wrapper(L, G, scene, model=2, merge_fun=MERGE_FUN_FIXED)
+                        M3_fixed = mm_run_wrapper(L, G, scene, model=3, merge_fun=MERGE_FUN_FIXED)
+
+
+                        BL_suc = compare(BL, GT, thresholds=False, action_only=acto, one_by_one=one_by_one, m='BL', scene=scene, postprocessing=postprocessing)
+                        M1_suc = compare(M1, GT, thresholds=thr, action_only=acto, one_by_one=one_by_one, m='M1', scene=scene, postprocessing=postprocessing)
+                        M2_suc = compare(M2, GT, thresholds=thr, action_only=acto, one_by_one=one_by_one, m='M2', scene=scene, postprocessing=postprocessing)
+                        M3_suc = compare(M3, GT, thresholds=thr, 
+                        action_only=acto, one_by_one=one_by_one, m='M3', scene=scene, postprocessing=postprocessing)
+                        M1_suc_fixed = compare(M1_fixed, GT, thresholds=thr, action_only=acto, one_by_one=one_by_one, m='M1', scene=scene, postprocessing=postprocessing)
+                        M2_suc_fixed = compare(M2_fixed, GT, thresholds=thr, action_only=acto, one_by_one=one_by_one, m='M2', scene=scene, postprocessing=postprocessing)
+                        M3_suc_fixed = compare(M3_fixed, GT, thresholds=thr, 
+                        action_only=acto, one_by_one=one_by_one, m='M3', scene=scene, postprocessing=postprocessing)
+
+                        if BL_suc: acc_bl += 1 
+                        if M1_suc: acc_m1 += 1
+                        if M2_suc: acc_m2 += 1
+                        if M3_suc: acc_m3 += 1
+                        if M1_suc_fixed: acc_m1_fixed += 1
+                        if M2_suc_fixed: acc_m2_fixed += 1
+                        if M3_suc_fixed: acc_m3_fixed += 1
                         all_ex += 1
+
+                        if one_by_one:
+                            if M1_suc and not M2_suc:
+                                print(f"exp: {c}, run: {t}")
+                                print(f"== VSTUP==\nL {L['template']} {L['selections']} {L['storages']}, \nG {G['template']} {G['selections']} {G['storages']}")
+                                
+                                print(f"== VYSTUP ==\nM1 {M1['template']} {M1['selections']}, {M1['storages']} \nM2 {M2['template']} {M2['selections']} {M2['storages']}")
+                                
+                                # print("mms_trial", mms_trial)
+                                # print("str_trial", str_trial)
+                                # print("L", L, "G", G)
+                                # input(f"INSERT SETUP! (for trial number {c} {t})")
+
+                                # scene = create_scene_from_fake_data()
+                                # conf = ConfigurationCrow1()
+                                # mms = MMSentence(L=L, G=G)
+                                # mms.make_conjunction(conf)
+                                # mm = ModalityMerger(conf, MERGE_FUN)
+                                # mms.M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=conf.epsilon, gamma=conf.gamma, alpha_penal=conf.alpha_penal, model=MODEL, use_magic=MERGE_FUN)
+                                # print("== SCENE == ")
+                                # print(scene)
+                                # print(f"== MM NEW MERGE ==\nM3 {mms.M['template']} {mms.M['selections']} {mms.M['storages']}")
+
+                                input("?? NEW TRIAL ??")
        
     print(f"Number of all samples: {all_ex}")
-    print(f"Acc BL: {round(100*acc_bl/all_ex,1)}%")
-    print(f"Acc M1: {round(100*acc_m1/all_ex,1)}%")
-    print(f"Acc M2: {round(100*acc_m2/all_ex,1)}%")
-    print(f"Acc M3: {round(100*acc_m3/all_ex,1)}%")
+    ret = [
+        round(100*acc_bl/all_ex,1),
+        round(100*acc_m1/all_ex,1),
+        round(100*acc_m2/all_ex,1),
+        round(100*acc_m3/all_ex,1),
+        round(100*acc_m1_fixed/all_ex,1),
+        round(100*acc_m2_fixed/all_ex,1),
+        round(100*acc_m3_fixed/all_ex,1)
+    ]
+    print(f"Acc BL: {ret[0]}%")
+    print(f"Acc M1: {ret[1]}%")
+    print(f"Acc M2: {ret[2]}%")
+    print(f"Acc M3: {ret[3]}%")
+    print(f"Acc M1 fixed: {ret[4]}%")
+    print(f"Acc M2 fixed: {ret[5]}%")
+    print(f"Acc M3 fixed: {ret[6]}%")
+
+    # print(f"Acc BL list: {acc_bl_list}")
+    
+
+    return ret
 
 
-def compare(y,ytrue, thresholds=False, action_only=False):
+
+def mm_run_wrapper(L, G, scene, model, merge_fun):
+    
+    conf = ConfigurationCrow1()
+    mms = MMSentence(L=L, G=G)
+    mms.make_conjunction(conf)
+    mm = ModalityMerger(conf, merge_fun)
+    mms.M, DEBUGdata = mm.feedforward3(mms.L, mms.G, scene=scene, epsilon=conf.epsilon, gamma=conf.gamma, alpha_penal=conf.alpha_penal, model=model, use_magic=merge_fun)
+    return mms.M
+
+def compare(y,ytrue, thresholds=False, action_only=False, one_by_one=False, m='BL', scene=None, postprocessing=False):
     """
     Args:
         y (ProbVector[3]): (Template,Selection,Storage) ProbVectors
@@ -94,36 +185,117 @@ def compare(y,ytrue, thresholds=False, action_only=False):
     else:
         t = 'max'
 
-    if getattr(y['template'], t) == ytrue[0]:
-        if action_only:
-            return True
-        if ytrue[1] == "" or getattr(y['selections'],t) == ytrue[1]:
-            if ytrue[2] == "" or getattr(y['storages'],t) == ytrue[2]:
+
+    if one_by_one:
+        print(f"{getattr(y['template'], t)} == {ytrue[0]} and {getattr(y['selections'],t)} == {ytrue[1]} and {getattr(y['storages'],t)} == {ytrue[2]}")
+
+    if not postprocessing:
+        if getattr(y['template'], t) == ytrue[0]:
+            if action_only:
                 return True
+            if ytrue[1] == "" or getattr(y['selections'],t) == ytrue[1]:
+                if ytrue[2] == "" or getattr(y['storages'],t) == ytrue[2]:
+                    return True
+        return False
+    else: # Postprocessing
+        if m != 'M3':
+            if getattr(y['template'], t) == ytrue[0]:
+                if action_only:
+                    return True
+                if ytrue[1] == "" or getattr(y['selections'],t) == ytrue[1]:
+                    if ytrue[2] == "" or getattr(y['storages'],t) == ytrue[2]:
+                        return True
+            return False
+        else: # Final check if template is feasible on the scene
+            # print("getattr(y['template'], t)", getattr(y['template'], t))
+            template_sorted_names = []
+            template_vector = deepcopy(y['template'])
+            template_sorted_names.append(template_vector.max)
+            # print("template sorted naems", template_sorted_names)
+            # if template_sorted_names[0] != getattr(y['template'], t):
+            #     print("template sorted naems", template_sorted_names)
+            #     input(f"!!! ")
+            
+            # template_vector.pop(template_vector.max_id)
+            # template_sorted_names.append(template_vector.max)
+            # template_vector.pop(template_vector.max_id)
+            # template_sorted_names.append(template_vector.max)
+            # print("template_sorted_names", template_sorted_names)
+            
+            for template_name in template_sorted_names:
+                template_o = TemplateFactory().get_template_class_from_str(template_name)()
 
-    # print(f"{getattr(y['template'], t)} == {ytrue[0]} and {getattr(y['selections'],t)} == {ytrue[1]} and {getattr(y['storages'],t)} == {ytrue[2]}")
+                combs = []
+                combs_p = []
+                if template_o.mm_pars_compulsary == ['template', 'selections', 'storages']:
+                    for o in scene.selections:
+                        for s in scene.storages:
+                            if template_o.is_feasible(o,s):
+                                combs.append((o.name, s.name))
+                                combs_p.append((y['selections'].prob_for_entity(o.name) + y['storages'].prob_for_entity(s.name)) / 2)
+                    # print("combs", combs, combs_p)
+                    max_id = np.array(combs_p).argmax()
+                    o_name, s_name = combs[max_id]
+                elif template_o.mm_pars_compulsary == ['template', 'selections']:
+                    for o in scene.selections:
+                        if template_o.is_feasible(o,s=None):
+                            combs.append(o.name)
+                            combs_p.append(y['selections'].prob_for_entity(o.name))
+                    # print("combs", combs, combs_p)
+                    max_id = np.array(combs_p).argmax()
+                    o_name = combs[max_id]
+                elif template_o.mm_pars_compulsary == ['template']:
+                    template_name
 
-    return False
+                
+                # final check
+                if template_name != getattr(y['template'], t):
+                    print("template_name", template_name, "getattr(y['template'], t)", getattr(y['template'], t))
+                    input("???")
+                if template_name == ytrue[0]:
+                    if action_only:
+                        return True
+                    if ytrue[1] == "" or o_name == ytrue[1]:
+                        if ytrue[2] == "" or s_name == ytrue[2]:
+                            return True
+                        else:
+                            input(f"{template_name} == {ytrue[0]}, {o_name} == {ytrue[1]}, {s_name} == {ytrue[2]}")
+                
+        return False
 
 
 if __name__ == '__main__':
-    # print("=== arity ===")
-    # print("All results: ['a', 'nag', 'nal', 'nog', 'nol'], thresholding=True, ta,to,ts must match")
-    # tester_all(exp=['arity'], alignm=['a', 'nag', 'nal', 'nog', 'nol'], thr=True, acto=False)
-    # print("Only aligned actions: ['a'], thresholding=True, ta,to,ts must match")
-    # tester_all(exp=['arity'], alignm=['a'], thr=True, acto=False)
-    # print("No thresholding (max): ['a', 'nag', 'nal', 'nog', 'nol'], thresholding=False, ta,to,ts must match")
-    # tester_all(exp=['arity'], alignm=['a', 'nag', 'nal', 'nog', 'nol'], thr=False, acto=False)
-    # print("Checking action match only: ['a', 'nag', 'nal', 'nog', 'nol'], thresholding=True, Only ta must match")
-    # tester_all(exp=['arity'], alignm=['a', 'nag', 'nal', 'nog', 'nol'], thr=True, acto=True)
+    # tester_all(exp=['arity'], alignm=['a'], thr=True, acto=False, one_by_one=False)
 
-    print("=== property ===")
-    print("All results: ['a', 'nag', 'nal', 'nog', 'nol'], thresholding=True, ta,to,ts must match")
-    tester_all(exp=['property'], alignm=['a', 'nag', 'nal', 'nog', 'nol'], thr=True, acto=False)
-    print("Only aligned actions: ['a'], thresholding=True, ta,to,ts must match")
-    tester_all(exp=['property'], alignm=['a'], thr=True, acto=False)
-    print("No thresholding (max): ['a', 'nag', 'nal', 'nog', 'nol'], thresholding=False, ta,to,ts must match")
-    tester_all(exp=['property'], alignm=['a', 'nag', 'nal', 'nog', 'nol'], thr=False, acto=False)
-    print("Checking action match only: ['a', 'nag', 'nal', 'nog', 'nol'], thresholding=True, Only ta must match")
-    tester_all(exp=['property'], alignm=['a', 'nag', 'nal', 'nog', 'nol'], thr=True, acto=True)
+    postpro = False
+    for exp in ['arity', 'property']:
+        print(f"=== {exp} ===")
+        print("R1 ['a'], thresholding=False, ta must match")
+        ret1 = tester_all(exp=[f"{exp}"], alignm=['a'], thr=False, acto=True, postprocessing=postpro)
+        print("R2 ['a'], thresholding=True, ta must match")
+        ret2 = tester_all(exp=[f"{exp}"], alignm=['a'], thr=True, acto=True, postprocessing=postpro)
+        print("R3 ['a'], thresholding=False, ta,to,ts must match")
+        ret3 = tester_all(exp=[f"{exp}"], alignm=['a'], thr=False, acto=False, postprocessing=postpro)
+        print("R4 Only aligned actions: ['a'], thresholding=True, ta,to,ts must match")
+        ret4 = tester_all(exp=[f"{exp}"], alignm=['a'], thr=True, acto=False, postprocessing=postpro)
+        print("R5 Checking action match only: ['a', 'nag', 'nal', 'nog', 'nol'], thresholding=False, Only ta must match")
+        ret5 = tester_all(exp=[f"{exp}"], alignm=['a', 'nag', 'nal', 'nog', 'nol'], thr=False, acto=True, postprocessing=postpro)
+        
+        print("R5 Checking action match only: ['a', 'nag', 'nal', 'nog', 'nol'], thresholding=True, Only ta must match")
+        ret51 = tester_all(exp=[f"{exp}"], alignm=['a', 'nag', 'nal', 'nog', 'nol'], thr=True, acto=True, postprocessing=postpro)
+        print("R6 No thresholding (max): ['a', 'nag', 'nal', 'nog', 'nol'], thresholding=False, ta,to,ts must match")
+        ret6 = tester_all(exp=[f"{exp}"], alignm=['a', 'nag', 'nal', 'nog', 'nol'], thr=False, acto=False, postprocessing=postpro)
+        print("R7 All results: ['a', 'nag', 'nal', 'nog', 'nol'], thresholding=True, ta,to,ts must match")
+        ret7 = tester_all(exp=[f"{exp}"], alignm=['a', 'nag', 'nal', 'nog', 'nol'], thr=True, acto=False, postprocessing=postpro)
+
+        ret = [ret1,ret2,ret3,ret4,ret5,ret51,ret6,ret7]
+
+        singlehistplot_customized(np.array(ret), f"real_experiment_{exp}", xticks=['$ta_{False}^{aligned}$',
+        '$ta_{True}^{aligned}$',
+        '$all_{False}^{aligned}$',
+        '$all_{True}^{aligned}$',
+        '$ta_{False}^{all}$',
+        '$ta_{True}^{all}$',
+        '$all_{False}^{all}$',
+        '$all_{True}^{all}$'], labels = ['baseline', 'M1', 'M2', 'M3', 'M1 fixed', 'M2 fixed', 'M3 fixed'], plot=True, title=f'Real Exp. {exp}')
 

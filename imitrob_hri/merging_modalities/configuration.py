@@ -252,8 +252,8 @@ class ConfigurationCrow1(Configuration):
         }
         #self.ct_properties = self.ct_properties_default
         
-        self.match_threshold = self.match_threshold_default
-        self.clear_threshold = self.clear_threshold_default
+        self.match_threshold = 0.4
+        self.clear_threshold = 0.4
         self.unsure_threshold = self.unsure_threshold_default
         self.diffs_threshold = self.diffs_threshold_default
 

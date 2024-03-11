@@ -113,17 +113,32 @@ class ProbsVector():
 
         return f"{cc.H}Clear: {cc.E} {s1}\n{cc.H}Unsure:{cc.E} {s2}\n{cc.H}Negative: {cc.E}{s3}\n-> {cc.B}{self.conclude()}{cc.E}"
 
+    def discard_two_maxes(self):
+        r = max(self.p) - self.p
+        if sum(r==0)>1:
+            # print(self.p)
+            # print(r)
+            # print(sum(r==0))
+            # print(self.names)
+            # input("??")
+            return True
+        return False
+
     @property
     def max(self):
+        if self.discard_two_maxes(): return None
+
         if self.empty: return None
         return self.template_names[np.argmax(self.p)]
 
     @property
     def max_prob(self):
+        if self.discard_two_maxes(): return None
         return np.max(self.p)
 
     @property
     def max_id(self):    
+        if self.discard_two_maxes(): return None          
         return np.argmax(self.p)
 
     @property
@@ -300,6 +315,12 @@ class ProbsVector():
         p = self.p[id]
         self.p = np.delete(self.p, id)
         return template, p
+    
+    def prob_for_entity(self, name):
+        for n,name_ in enumerate(self.names):
+            if name == name_:
+                return self.p[n]
+        raise Exception(f"name {name} not found in {self.names}")
 
 class EntropyProbsVector(ProbsVector):
     # UNIFORM_ENTROPY_TH = 0.85
@@ -359,6 +380,7 @@ class NaiveProbsVector(ProbsVector):
 
     @property
     def clear_id(self):
+        if self.discard_two_maxes(): return None
         if len(self.p) == 0: return []
         return [np.argmax(self.p)]
 

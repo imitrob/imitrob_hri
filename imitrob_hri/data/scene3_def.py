@@ -260,10 +260,15 @@ def get_random_scene(c, object_name_list=['potted meat can', 'tomato soup can', 
 
 
 
-def create_scene_from_fake_data():
+def create_scene_from_fake_data(exp=None, run=None):
 
-    with open(Path("~/crow-base/config/crow_hri/scene_properties.yaml").expanduser()) as f:
-        scene_properties = yaml.safe_load(f)
+    if exp is None and run is None:
+        with open(Path("~/crow-base/config/crow_hri/scene_properties.yaml").expanduser()) as f:
+            scene_properties = yaml.safe_load(f)
+    else:
+        with open(Path("~/crow-base/config/crow_hri/all_scene_properties.yaml").expanduser()) as f:
+            all_scene_properties = yaml.safe_load(f)
+            scene_properties = all_scene_properties[exp][int(run)]
 
     scene_objects = []
     object_names = []
