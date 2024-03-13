@@ -236,7 +236,7 @@ def  diagonal_cross_entropy(v):
 
 def singlehistplot_customized(data, filename, labels=['baseline','M1', 'M2', 'M3'], 
                               xticks=['D1','D2','D3','D4','D5'], xlbl='', ylbl='Accuracy [%]',
-                              bottom=0, plot=False, savefig=True, figsize=(12,6), title=""):
+                              bottom=0, plot=False, savefig=True, figsize=(6,2.3), title="", legend_loc='lower right', double_xticks=False):
     ''' Plot histogram plot: Used at MM paper results
     Parameters:
         data (Float[][]): (bars, series?)
@@ -256,27 +256,36 @@ def singlehistplot_customized(data, filename, labels=['baseline','M1', 'M2', 'M3
     yl = shape[1]
 
     # set width of bar
-    barWidth = 0.1
+    barWidth = (0.2 * 4) / len(labels) # Propert bar width for different number of labels
     fig = plt.figure(figsize=figsize)
+    ax = fig.add_axes( [.05, .1, .9, .85 ] )
+
+    if double_xticks: # For Plot 2 only
+        
+        for i in range(0, 2):
+            # plt.axhspan(i, i+.2, facecolor='0.2', alpha=0.5)
+            ax.axvspan(4*i, 4*i+1.8, facecolor='grey', alpha=0.2)
+
 
     # bars
     brs = [np.arange(xl)]
     for i in range(1,yl):
         brs.append( [x + barWidth for x in brs[i-1]])
-    plt.grid(axis='y')
-    
+    ax.grid(axis='y')
+
     colors = iter([plt.cm.tab20(i) for i in range(20)])
 
     arange = list(range(-1, -len(brs)-1,-1))
     for n in arange:
         br, d_, l_ = brs[n], data[:,n], labels[n]
-        plt.bar(br, d_-bottom, color =next(colors), width = barWidth,
+        ax.bar(br, d_-bottom, color =next(colors), width = barWidth,
                 edgecolor ='grey', label =l_, bottom=bottom)
 
     plt.ylim(top = 100)
     # Adding Xticks
     plt.rcParams['pdf.fonttype'] = 42
     plt.rcParams['ps.fonttype'] = 42
+    plt.xticks(fontsize=14, rotation=0)
 
     if title != "":
         plt.title(title)
@@ -285,13 +294,39 @@ def singlehistplot_customized(data, filename, labels=['baseline','M1', 'M2', 'M3
     plt.ylabel(ylbl, fontsize = 15)
     plt.xticks([r + barWidth for r in range(xl)],
             xticks)
-    plt.xticks(rotation=90)
 
-    plt.legend(loc='lower left')
+    ax.legend(loc=legend_loc)
+
+    if double_xticks: # For Plot 2 only
+        # Inserts modelname M1, M2, M3
+        xlbls = []
+        nM = 0
+        model_names = ['$Baseline$', '$M_1$', '$M_2$', '$M_3$']
+        for n,xtick in enumerate(xticks):
+            if n%2 == 1:
+                xlbls.append(model_names[nM])
+                nM += 1
+            xlbls.append(xtick)
     
+        xticks =     np.array([ 0, 0.5, 1, 2, 2.5, 3, 4, 4.5, 5, 6, 6.5, 7]) + 0.32
+
+        ax.set_xticks( xticks )
+        ax.set_xticklabels( xlbls )
+        va = [ 0, -.18, 0,  0, -.18, 0,  0, -.18, 0,  0, -.18, 0 ]
+        for t, y in zip( ax.get_xticklabels( ), va ):
+            t.set_y( y )
+
+
     if savefig:
         plt.savefig(f"{os.path.expanduser(os.path.dirname(os.path.abspath(__file__)))}/../data/pictures/{filename}.eps", dpi=fig.dpi, bbox_inches='tight')
+        plt.savefig(f"{os.path.expanduser(os.path.dirname(os.path.abspath(__file__)))}/../data/pictures/{filename}.pdf", dpi=fig.dpi, bbox_inches='tight')
         plt.savefig(f"{os.path.expanduser(os.path.dirname(os.path.abspath(__file__)))}/../data/pictures/{filename}.png", dpi=fig.dpi, bbox_inches='tight')
+        with open(f"{os.path.expanduser(os.path.dirname(os.path.abspath(__file__)))}/../data/pictures/{filename}.txt", 'w') as f:
+            f.write(f'labels: {labels}, xticks {xticks}')
+            for line in data:
+                f.write(str(line)+'\n')
+            f.write('\n\n\n')
+
     if plot:
         plt.show()
 
@@ -306,3 +341,20 @@ class ForDebugOnly():
                       'storages': [],}
         
 fdo = ForDebugOnly()
+
+
+if __name__ == '__main__':
+    print("Testing double x ticks axes")
+    fig = plt.figure( figsize=(8, 4 ) )
+    ax = fig.add_axes( [.05, .1, .9, .85 ] )
+    
+    xticks =     [ 1, 1.5, 2, 3, 3.5, 4, 5, 5.5, 6, 7, 7.5, 8]
+    xlbls = [ 'D1', 'M1', 'D2', 'D1', 'M2', 'D2', 'D1', 'M3', 'D2', 'D1', 'M4', 'D2']
+
+    ax.set_xticks( xticks )
+    ax.set_xticklabels( xlbls )
+    va = [ 0, -.05, 0,  0, -.05, 0,  0, -.05, 0,  0, -.05, 0 ]
+    for t, y in zip( ax.get_xticklabels( ), va ):
+        t.set_y( y )
+
+    plt.show()

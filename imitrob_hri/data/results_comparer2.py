@@ -15,6 +15,8 @@ from merging_modalities.utils import singlehistplot_customized
 
 DATASET_PREFIX = '2' # '' for original dataset
 
+DATASET_DATE = '' # '_26_2' # '' for up to date
+
 class Results6DComparer():
     def __init__(self):
         # 1. Load results data into 6D table
@@ -23,9 +25,9 @@ class Results6DComparer():
         results_all = []
 
         for name in ['baseline', 'mul', 'add_2', 'entropy', 'entropy_add_2']:
-            accs = np.load(f"{os.path.dirname(os.path.abspath(__file__))}/results{DATASET_PREFIX}/accs_{name}.npy", allow_pickle=True)
+            accs = np.load(f"{os.path.dirname(os.path.abspath(__file__))}/results{DATASET_PREFIX}{DATASET_DATE}/accs_{name}.npy", allow_pickle=True)
 
-            results = np.load(f"{os.path.dirname(os.path.abspath(__file__))}/results{DATASET_PREFIX}/results_{name}.npy", allow_pickle=True)
+            results = np.load(f"{os.path.dirname(os.path.abspath(__file__))}/results{DATASET_PREFIX}{DATASET_DATE}/results_{name}.npy", allow_pickle=True)
             
             results_6D = []
             results_6D.append(np.array(accs))
@@ -46,6 +48,9 @@ class Results6DComparer():
         
         self.merge_fun_to_str = [
             '$baseline$', '$mul_{fixed}$', '$add_{fixed}$', '$mul_{entropy}$', '$add_{entropy}$'
+        ]
+        self.merge_fun_to_str_noeq = [
+            'baseline', 'mul_fixed', 'add_fixed', 'mul_entropy', 'add_entropy'
         ]
         ''' Merge function index'''
         self.baseline = 0
@@ -83,6 +88,13 @@ class Results6DComparer():
         ''' Noise level 4 refers to id=3 index '''
         self.n4 = 4
         self.n5 = 5
+        self.n6 = 6
+
+        self.n0_new = self.n0
+        self.n1_new = self.n3
+        self.n2_new = self.n1
+        self.n3_new = self.n2
+        self.n4_new = self.n6
         
         self.ns = slice(None,None,None) #[self.n1, self.n2, self.n3]
         ''' All Noise levels '''
@@ -108,30 +120,6 @@ class Results6DComparer():
         ''' All models '''
         self.Ms = slice(None,None,None) #[self.M1, self.M2, self.M3]
 
-
-    def _1_ablation_study(self, magic=None):
-        ''' Here we compare Models '''
-        cols = ['baseline','M1', 'M2', 'M3']
-        ''' with Generated Datasets '''
-        indx = ['$D1$','$D2$','$D3$','$D4$']
-        
-        ''' baseline model is special case where:
-            1. Merge function is argmax (self.baseline=0)
-            2. Model is always the M1 (self.M1=0)
-        '''
-        baseline = self.extract_data(indices=[self.baseline,self.acc,self.C3,self.n0,self.Ds_des,self.M1])
-        other = self.extract_data(indices=[magic,self.acc,self.C3,self.n0,self.Ds_des,self.Ms])
-        
-        print(baseline.shape)
-        print(other.shape)
-
-        ''' to percentage '''
-        data = 100 * np.hstack((baseline.reshape(4,1), other))
-
-        print(pd.DataFrame(data, columns=cols, index=indx))
-
-        singlehistplot_customized(data, f'exp_ablation_{magic}', labels=cols, xticks=indx, xlbl='Dataset generation policy', ylbl='Accuracy [%]', plot=True, title=f'Ablation study: $C_3$, $n_0$, {self.merge_fun_to_str[magic]}')
-
     def extract_data(self, indices):
         ''' My supercool function to extract not only slices but different point from n dim array which is impossible to do with self.data[[1,2], [1,2,3], ...], etc.
         '''
@@ -156,6 +144,30 @@ class Results6DComparer():
         
         return subdata
 
+    def _1_ablation_study(self, magic=None):
+        ''' Here we compare Models '''
+        cols = ['baseline','M1', 'M2', 'M3']
+        ''' with Generated Datasets '''
+        indx = ['$D1$','$D2$','$D3$','$D4$']
+        
+        ''' baseline model is special case where:
+            1. Merge function is argmax (self.baseline=0)
+            2. Model is always the M1 (self.M1=0)
+        '''
+        baseline = self.extract_data(indices=[self.baseline,self.acc,self.C3,self.n0,self.Ds_des,self.M1])
+        other = self.extract_data(indices=[magic,self.acc,self.C3,self.n0,self.Ds_des,self.Ms])
+        
+        print(baseline.shape)
+        print(other.shape)
+
+        ''' to percentage '''
+        data = 100 * np.hstack((baseline.reshape(4,1), other))
+
+        print(pd.DataFrame(data, columns=cols, index=indx))
+
+        singlehistplot_customized(data, f'exp_ablation_{magic}', labels=cols, xticks=indx, xlbl='Dataset generation policy', ylbl='Accuracy [%]', plot=True, title=f'Ablation study: $C_3$, $n_0$, {self.merge_fun_to_str[magic]}')
+
+
     def _2_noise_influence(self, magic=None):
         ''' Here we compare Models '''
         cols = ['$n_0$','$n_1$', '$n_2$', '$n_3$','$n_4$','$n_5$']
@@ -178,7 +190,7 @@ class Results6DComparer():
         print( pd.DataFrame(100*noise_levels, columns=cols, index=indx))
 
         singlehistplot_customized(100*noise_levels, f'exp_noise_c3_{magic}', labels=cols, xticks=indx, xlbl='', ylbl='Accuracy [%]',bottom=0, plot=True, title=f'Noise levels: $M_3$, $C_3$, {self.merge_fun_to_str[magic]}')
-        
+
 
     def _3_types_merging(self):
         ''' Here we compare generated datasets '''
@@ -225,6 +237,29 @@ class Results6DComparer():
         print( pd.DataFrame(100*data, columns=cols, index=indx))
 
         singlehistplot_customized(100*data.T, f'exp_thresholding_n{n}_M{M+1}', labels=indx, xticks=cols, xlbl='Generation Policies', ylbl='Accuracy [%]', plot=True, title=f"Thresholding: $M_{M+1}$, $n_{n}$, $C_3$")
+
+    # OLD PLOT 4
+    def plot_4_thresholding_final(self, n, M):
+        ''' Here we compare Datasets '''
+        cols = ['$D_{align}^{sim}$', '$D_{arity}^{sim}$', '$D_{property}^{sim}$', '$D_{unaligned}^{sim}$', '$D_{align}^{real}$', '$D_{unnaligned}^{real}$']
+        ''' with merge functions '''
+        indx = ['$baseline$', '$max$', '$add_{fixed}$', '$mul_{fixed}$', '$add_{entropy}$', '$mul_{entropy}$']
+
+        data_sim = np.vstack((
+        self.extract_data(indices=[self.baseline,self.acc,self.C3,n,self.Ds_des,self.M1]),
+        self.extract_data(indices=[[self.baseline, self.add_2, self.mul, self.entropy_add_2, self.entropy],self.acc,self.C3,n,self.Ds_des,M])
+        )).T
+
+        # data_real = [
+        #     [0.516, 0.9835, 1, 1],
+        #     [0.092, 0.867, 0.934, 0.921],
+        # ]
+
+        # data = np.vstack((data_sim, data_real)).T
+
+        print( pd.DataFrame(100*data_sim, columns=cols, index=indx))
+
+        singlehistplot_customized(100*data_sim.T, f'Plot_4_thresholding_final_C3_n{n}old_M{M+1}', labels=indx, xticks=cols, xlbl='Generation Policies', ylbl='Accuracy [%]', plot=True, title=f"Thresholding")
 
     def _5_noise_levels_compared_to_models(self):
         ''' Here we compare Models '''
@@ -289,33 +324,225 @@ class Results6DComparer():
 
         singlehistplot_customized(100*data, 'exp_merge_methods', labels=cols, xticks=indx, xlbl='Metrics', ylbl='Accuracy [%]', plot=True)
 
+    def Plot_1_Ablation(self, magic=None, noise=None, noise_name=None):
+        ''' Here we compare Models '''
+        cols = ['baseline','M1', 'M2', 'M3']
+        ''' with Generated Datasets '''
+        indx = ['$D^{sim}_{\mathcal{A}}$','$D^{sim}_{\mathcal{U}}$', '$D^{real}_{\mathcal{A}}$', '$D^{real}_{\mathcal{U}}$']
+
+        data_real = [
+            [0.458, 0.9005, 0.9005, 1],
+            [0.05, 0.3586, 0.455, 0.921]
+        ]
+
+        DS = [self.D1, self.D2, self.D3]
+
+        baseline = self.extract_data(indices=[self.baseline,self.acc,self.C3,noise,DS,self.M1])
+        other = self.extract_data(indices=[magic,self.acc,self.C3,noise,DS,self.Ms])
+
+        print(baseline.shape)
+        print(other.shape)
+
+        ''' JOIN D2 and D3 '''
+        sim_data = np.hstack((baseline.reshape(len(DS),1), other))
+        # 3 Datasets x 4 Models
+        assert sim_data.shape == (3, 4)
+        # Join D2 and D3 
+        D2D3_average = (sim_data[1] + sim_data[2]) / 2
+        sim_data = sim_data[0:2]
+        sim_data[1] = D2D3_average
+
+        data = 100 * np.vstack((sim_data, data_real))
+
+        print(pd.DataFrame(data, columns=cols, index=indx))
+
+        singlehistplot_customized(data, f'Plot_1_Ablation_{self.merge_fun_to_str_noeq[magic]}_C3_{noise_name}', labels=cols, xticks=indx, xlbl='Datasets', ylbl='Accuracy [%]', plot=False, title=f'', legend_loc='lower left')
+
+    def Plot_2_Noises_Models(self, merge_fun):
+        ''' Here we compare Datasets '''
+        cols = ['$D_{\mathcal{A}}^{sim}$', '$D_{\mathcal{U}}^{sim}$',
+                '$D_{\mathcal{A}}^{sim}$', '$D_{\mathcal{U}}^{sim}$',
+                '$D_{\mathcal{A}}^{sim}$', '$D_{\mathcal{U}}^{sim}$',
+                '$D_{\mathcal{A}}^{sim}$', '$D_{\mathcal{U}}^{sim}$'] #, '$D_{\mathcal{U}}^{sim}$'] #, '$D_{align}^{real}$', '$D_{unnaligned}^{real}$']
+        ''' with merge functions '''
+        indx = ['$n_0$','$n_1^{real}$', '$n_2$', '$n_3$','$n_4$']
+
+        DS = [self.D1, self.D2, self.D3]
+
+        # 4 modely - aligned x notaligned (only for sim) for all noises
+        # Noises are in legend
+        # Models and datasets(unaligned, aligned) are columns;;; D^A, D^U -> M_1
+
+        noises_new = [self.n0_new,self.n1_new,self.n2_new,self.n3_new,self.n4_new]
+        
+        data_pieces = []
+        for n,m in enumerate([self.baseline, self.M1, self.M2, self.M3]):
+            if n == 0:
+                data_piece = self.extract_data(indices=[self.baseline,self.acc,self.C3,noises_new,DS,m])
+            else:
+                data_piece = self.extract_data(indices=[merge_fun,self.acc,self.C3,noises_new,DS,m])
+
+            # 3 Datasets x 4 Models
+            assert data_piece.shape == (5, 3)
+            # Join D2 and D3 
+            D2D3_average = (data_piece[:,1] + data_piece[:,2]) / 2
+            data_piece = data_piece[:,0:2]
+            data_piece[:,1] = D2D3_average
+
+            data_pieces.append(
+                data_piece
+            )
+        data_sim = np.hstack(data_pieces)
+
+        # data_real = [
+        #     [0.516, 0.9835, 1, 1],
+        #     [0.092, 0.867, 0.934, 0.921],
+        # ]
+
+        # data = np.vstack((data_sim, data_real)).T
+
+
+        
+
+        print( pd.DataFrame(100*data_sim, columns=cols, index=indx))
+
+        singlehistplot_customized(100*data_sim.T, f'Plot_2_Noises_Models_C3_M3_{self.merge_fun_to_str_noeq[merge_fun]}', labels=indx, xticks=cols, xlbl='Datasets', ylbl='Accuracy [%]', plot=False, title=f"", double_xticks = True)
+
+    def Plot_3_Noise_Mergefun(self):
+        ''' Here we compare Models '''
+        ''' with Generated Datasets '''
+        cols = ['$baseline$','$max$', '$mul$', '$add$']
+        indx = ['$n_0$','$n_1^{real}$', '$n_2$', '$n_3$','$n_4$']
+        
+        noises = [self.n0_new,self.n1_new,self.n2_new,self.n3_new,self.n4_new]
+
+        data_sim = np.vstack((
+        self.extract_data(indices=[self.baseline,self.acc,self.C3,noises,self.D1,self.M1]),
+        self.extract_data(indices=[[self.baseline, self.entropy, self.entropy_add_2],self.acc,self.C3,noises,self.D1,self.M3])
+        )).T
+        
+        print( pd.DataFrame(100*data_sim, columns=cols, index=indx))
+
+        singlehistplot_customized(100*data_sim, f'Plot_3_Noise_Mergefun_c3_D1_M3', labels=cols, xticks=indx, xlbl='Noise levels', ylbl='Accuracy [%]',bottom=0, plot=False, title=f'')
+
+    def Plot_4_Noise_Mergefun_Alt(self):
+        ''' Here we compare Models '''
+        ''' with Generated Datasets '''
+        indx = ['$baseline$','$max$', '$mul$', '$add$']
+        cols = ['$n_0$','$n_1^{real}$', '$n_2$', '$n_3$','$n_4$']
+        
+        noises = [self.n0_new,self.n1_new,self.n2_new,self.n3_new,self.n4_new]
+
+        data_sim = np.vstack((
+        self.extract_data(indices=[self.baseline,self.acc,self.C3,noises,self.D1,self.M1]),
+        self.extract_data(indices=[[self.baseline, self.entropy, self.entropy_add_2],self.acc,self.C3,noises,self.D1,self.M3])
+        ))
+        
+        print( pd.DataFrame(100*data_sim, columns=cols, index=indx))
+
+        singlehistplot_customized(100*data_sim, f'Plot_4_Noise_Mergefun_Alt_c3_D1_M3', labels=cols, xticks=indx, xlbl='Merge function', ylbl='Accuracy [%]',bottom=0, plot=False, title=f'', legend_loc='lower right')
+
+    def Plot_5_Thresholding(self, n, M, noise_name):
+        ''' Here we compare Datasets '''
+        cols = ['$D_{\mathcal{A}}^{sim}$', '$D_{\mathcal{U}}^{sim}$', '$D_{\mathcal{A}}^{real}$', '$D_{\mathcal{U}}^{real}$']
+        ''' with merge functions '''
+        indx = ['$baseline$', '$max$', '$mul_{fixed}$','$add_{fixed}$', '$mul_{entropy}$','$add_{entropy}$']
+
+        DS = [self.D1, self.D2, self.D3]
+
+        data_sim = np.vstack((
+        self.extract_data(indices=[self.baseline,self.acc,self.C3,n,DS,self.M1]),
+        self.extract_data(indices=[[self.baseline, self.mul, self.add_2, self.entropy, self.entropy_add_2],self.acc,self.C3,n,DS,M])
+        )).T
+
+        
+        ''' Join D2 and D3 ''' 
+        # 3 Datasets x 4 Models
+        assert data_sim.shape == (3, 6)
+        # Join D2 and D3 
+        D2D3_average = (data_sim[1] + data_sim[2]) / 2
+        data_sim = data_sim[0:2]
+        data_sim[1] = D2D3_average
+
+        # datareal: thresholding, all_match, M3
+        # baseline, max, mul, add
+        data_real = [
+            [0.516, 0.9835, (0.968+0.967)/2, (1+1)/2, 1, 1],
+            [0.092, 0.867, (0.925+0.867)/2, (0.958+0.883)/2, 0.921, 0.934],
+        ]
+
+
+        data = np.vstack((data_sim, data_real)).T
+
+        print( pd.DataFrame(100*data, columns=cols, index=indx))
+
+        singlehistplot_customized(100*data.T, f'Plot_5_Thresholding_C3_{noise_name}_M{M+1}', labels=indx, xticks=cols, xlbl='Datasets', ylbl='Accuracy [%]', plot=False, title=f"")
 
 if __name__ == '__main__':
     rc = Results6DComparer()
 
-    # rc._1_ablation_study(magic=rc.entropy)
-    # rc._1_ablation_study(magic=rc.add_2)
-    # rc._1_ablation_study(magic=rc.entropy_add_2)
-    # rc._1_ablation_study(magic=rc.mul)
+    rc.Plot_1_Ablation(magic=rc.entropy, noise=rc.n0_new, noise_name='n0')
+    rc.Plot_1_Ablation(magic=rc.entropy, noise=rc.n1_new, noise_name='n1')
+    rc.Plot_1_Ablation(magic=rc.entropy, noise=rc.n2_new, noise_name='n2')
+    rc.Plot_1_Ablation(magic=rc.entropy, noise=rc.n3_new, noise_name='n3')
+    rc.Plot_1_Ablation(magic=rc.entropy, noise=rc.n4_new, noise_name='n4')
 
-    # rc._2_noise_influence(magic=rc.entropy)
-    # rc._2_noise_influence(magic=rc.add_2)
-    # rc._2_noise_influence(magic=rc.entropy_add_2)
-    # rc._2_noise_influence(magic=rc.mul)
+    rc.Plot_1_Ablation(magic=rc.entropy_add_2, noise=rc.n0_new, noise_name='n0')
+    rc.Plot_1_Ablation(magic=rc.entropy_add_2, noise=rc.n1_new, noise_name='n1')
+    rc.Plot_1_Ablation(magic=rc.entropy_add_2, noise=rc.n2_new, noise_name='n2')
+    rc.Plot_1_Ablation(magic=rc.entropy_add_2, noise=rc.n3_new, noise_name='n3')
+    rc.Plot_1_Ablation(magic=rc.entropy_add_2, noise=rc.n4_new, noise_name='n4')
+
+
+    rc.Plot_2_Noises_Models(merge_fun = rc.entropy)
+    rc.Plot_2_Noises_Models(merge_fun = rc.entropy_add_2)
+
+    # rc.Plot_3_Noise_Mergefun()
+
+    # rc.Plot_4_Noise_Mergefun_Alt()
+
+    # rc.Plot_5_Thresholding(n=rc.n0_new, M=rc.M3, noise_name='n0')
+    # rc.Plot_5_Thresholding(n=rc.n1_new, M=rc.M3, noise_name='n1')
+    # rc.Plot_5_Thresholding(n=rc.n2_new, M=rc.M3, noise_name='n2')
+    # rc.Plot_5_Thresholding(n=rc.n3_new, M=rc.M3, noise_name='n3')
+    # rc.Plot_5_Thresholding(n=rc.n4_new, M=rc.M3, noise_name='n4')
+
+
+
+def old_plots():
+    
+    rc.plot_4_thresholding_final(n=rc.n2_new, M=rc.M3)
+
+
+    rc._1_ablation_study(magic=rc.entropy)
+    rc._1_ablation_study(magic=rc.add_2)
+    rc._1_ablation_study(magic=rc.entropy_add_2)
+    rc._1_ablation_study(magic=rc.mul)
+
+    rc._2_noise_influence(magic=rc.entropy)
+    rc._2_noise_influence(magic=rc.add_2)
+    rc._2_noise_influence(magic=rc.entropy_add_2)
+    rc._2_noise_influence(magic=rc.mul)
     
     rc._3_types_merging()
     
-    # rc._4_thresholding(n=rc.n4, M=rc.M2)
-    # rc._4_thresholding(n=rc.n5, M=rc.M2)
-    # rc._4_thresholding(n=rc.n4, M=rc.M3)
-    # rc._4_thresholding(n=rc.n5, M=rc.M3)
+    rc._4_thresholding(n=rc.n4, M=rc.M2)
+    rc._4_thresholding(n=rc.n5, M=rc.M2)
+    rc._4_thresholding(n=rc.n4, M=rc.M3)
+    rc._4_thresholding(n=rc.n5, M=rc.M3)
+
+    rc._4_thresholding_final(n=rc.n0_new, M=rc.M3)
+    rc._4_thresholding_final(n=rc.n1_new, M=rc.M3)
+    rc._4_thresholding_final(n=rc.n2_new, M=rc.M3)
+    rc._4_thresholding_final(n=rc.n3_new, M=rc.M3)
+    rc._4_thresholding_final(n=rc.n4_new, M=rc.M3)
+
+    rc._5_noise_levels_compared_to_models()
     
-    # rc._5_noise_levels_compared_to_models()
-    
-    # rc._6_baseline_examination()
+    rc._6_baseline_examination()
     
     
-def old():
+def super_old_plots():
     def make_table(c, n, m, d):
         print(f"Configuration id: {c}, Noise level id: {n}, Method id: {m}, Dataset policy: {d}")
         print( pd.DataFrame(100*results_all[:,1:,c,n,d,m], columns=['accuracy', 'precision', 'recall', 'specificity', 'f1'], index=['baseline', 'mul', 'add_2', 'entropy', 'entropy_add_2']))

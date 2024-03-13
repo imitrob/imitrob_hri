@@ -81,29 +81,30 @@ gesture_noise_model4 = MixtureModel([
 
 
 def entropy_tester():
+    # newest noises
     noises = {'n0':NormalModel(0.0,0.0), 
-             'n1': NormalModel(0.0,0.2),
-             'n2': NormalModel(0.0,0.4),
-             'n3': gesture_noise_model2,
-             'n4': gesture_noise_model3,
-             'n5': gesture_noise_model4,}
+             'n1': gesture_noise_model2,
+             'n2': NormalModel(0.0,0.2),
+             'n3': NormalModel(0.0,0.4),
+             'n4': NormalModel(0.0,0.6)}
 
     nm = NormalModel(0.0, 0.05)
-    fig = plt.figure(figsize =(4,2))
+    fig = plt.figure(figsize =(6,3))
     # plt.hist(gesture_det_model(100000), bins=np.linspace(0.001,1,200))
-    plt.hist(noises['n0'](100000), bins=np.linspace(0.001, 1, 100))
-    plt.hist(noises['n1'](100000), bins=np.linspace(0.001, 1, 100))
+    # plt.hist(noises['n0'](100000), bins=np.linspace(0.001, 1, 100))
+    plt.hist(noises['n1'](100000), bins=np.linspace(0.001, 1, 100),zorder=100)
     plt.hist(noises['n2'](100000), bins=np.linspace(0.001, 1, 100))
     plt.hist(noises['n3'](100000), bins=np.linspace(0.001, 1, 100))
     plt.hist(noises['n4'](100000), bins=np.linspace(0.001, 1, 100))
-    plt.hist(noises['n5'](100000), bins=np.linspace(0.001, 1, 100))
-    plt.legend(['$n_0$', '$n_1$', '$n_2$', '$n_3$', '$n_4$', '$n_5$'])
+    # plt.hist(noises['n5'](100000), bins=np.linspace(0.001, 1, 100))
+    plt.legend(['$n_1^{real}$', '$n_2$', '$n_3$', '$n_4$'])
     #plt.hist(gesture_det_model.rvs(10000), bins=np.linspace(0, 1, 200))
     plt.xlabel("Noise level [-]", fontsize = 15)
-    plt.ylabel("Occurance [-]", fontsize = 15)
+    plt.ylabel("Occurrence [-]", fontsize = 15)
     plt.grid()
-    plt.axis([0.0, 1.0, 0, 10000])
+    plt.axis([0.0, 1.0, 0, 3000])
     
+    # plt.yscale('log')
     plt.rcParams['pdf.fonttype'] = 42
     plt.rcParams['ps.fonttype'] = 42
 
