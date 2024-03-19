@@ -236,7 +236,7 @@ def  diagonal_cross_entropy(v):
 
 def singlehistplot_customized(data, filename, labels=['baseline','M1', 'M2', 'M3'], 
                               xticks=['D1','D2','D3','D4','D5'], xlbl='', ylbl='Accuracy [%]',
-                              bottom=0, plot=False, savefig=True, figsize=(6,2.3), title="", legend_loc='lower right', double_xticks=False):
+                              bottom=0, plot=False, savefig=True, figsize=(3,2.3), title="", legend_loc='lower right', double_xticks=False, disable_y_ticks=False):
     ''' Plot histogram plot: Used at MM paper results
     Parameters:
         data (Float[][]): (bars, series?)
@@ -291,7 +291,16 @@ def singlehistplot_customized(data, filename, labels=['baseline','M1', 'M2', 'M3
         plt.title(title)
     if xlbl != '':
         plt.xlabel(xlbl, fontsize = 15)
-    plt.ylabel(ylbl, fontsize = 15)
+
+    if disable_y_ticks:
+        plt.tick_params(
+            axis='y',          # changes apply to the x-axis
+            which='both',      # both major and minor ticks are affected
+            left=False,      # ticks along the bottom edge are off
+            right=False,         # ticks along the top edge are off
+            labelleft=False) # labels along the bottom edge are off
+    else:
+        plt.ylabel(ylbl, fontsize = 15)
     plt.xticks([r + barWidth for r in range(xl)],
             xticks)
 

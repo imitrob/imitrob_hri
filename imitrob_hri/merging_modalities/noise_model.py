@@ -89,7 +89,7 @@ def entropy_tester():
              'n4': NormalModel(0.0,0.6)}
 
     nm = NormalModel(0.0, 0.05)
-    fig = plt.figure(figsize =(6,3))
+    fig = plt.figure(figsize =(6,2.3))
     # plt.hist(gesture_det_model(100000), bins=np.linspace(0.001,1,200))
     # plt.hist(noises['n0'](100000), bins=np.linspace(0.001, 1, 100))
     plt.hist(noises['n1'](100000), bins=np.linspace(0.001, 1, 100),zorder=100)
@@ -102,13 +102,14 @@ def entropy_tester():
     plt.xlabel("Noise level [-]", fontsize = 15)
     plt.ylabel("Occurrence [-]", fontsize = 15)
     plt.grid()
-    plt.axis([0.0, 1.0, 0, 3000])
+    plt.axis([0.0, 1.0, 0, 2500])
     
     # plt.yscale('log')
     plt.rcParams['pdf.fonttype'] = 42
     plt.rcParams['ps.fonttype'] = 42
 
     plt.savefig(f"{os.path.dirname(os.path.abspath(__file__))}/noise_model.eps", dpi=fig.dpi, bbox_inches='tight')
+    plt.savefig(f"{os.path.dirname(os.path.abspath(__file__))}/noise_model.pdf", dpi=fig.dpi, bbox_inches='tight')
 
     plt.show()
     for i in range(10):

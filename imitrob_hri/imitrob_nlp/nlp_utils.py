@@ -195,7 +195,7 @@ class cc:
     U = '\033[4m'
 
 
-def make_conjunction(gesture_templates, language_templates, gesture_likelihoods, language_likelihoods, ct='template', keep_only_items_in_c_templates=False, c_templates=None):
+def make_conjunction(gesture_templates, language_templates, gesture_likelihoods, language_likelihoods, ct='template', keep_only_items_in_c_templates=False, c_templates=None, disable_unification=False, print_debug=False):
     ''' template or objects or storages is names template here!
         If language and gesture templates has different sizes or one/few templates are missing
         This function makes UNION from both template lists.
@@ -229,7 +229,8 @@ def make_conjunction(gesture_templates, language_templates, gesture_likelihoods,
         discards_g = []
         for n,gt in enumerate(gesture_templates):
             if gt not in c_templates:
-                print(f"WARNING! {gt} was discarded!")
+                if print_debug:
+                    print(f"WARNING! {gt} was discarded!")
                 discards_g.append(n)
         discards_g.reverse()
         # print("discards_g", discards_g)
@@ -244,7 +245,8 @@ def make_conjunction(gesture_templates, language_templates, gesture_likelihoods,
 
         for n,lt in enumerate(language_templates):
             if lt not in c_templates:
-                print(f"WARNING! {lt} was discarded!")
+                if print_debug:
+                    print(f"WARNING! {lt} was discarded!")
                 discards_l.append(n)
         discards_l.reverse()
         for i in discards_l:
@@ -253,37 +255,41 @@ def make_conjunction(gesture_templates, language_templates, gesture_likelihoods,
 
 
 
-    unique_list = gesture_templates.copy()
-    # extended_list = gesture_templates.copy()
-    # extended_list.extend(language_templates)
-    # unique_list = list(set(extended_list))
     
-    # gesture_likelihoods_unified =  [0.] * len(unique_list)
-    # language_likelihoods_unified = [0.] * len(unique_list)
-    # for unique_item in unique_list:
-    #     if unique_item in gesture_templates:
-    #         n = gesture_templates.index(unique_item)
-            
-    #         m = unique_list.index(unique_item)
-    #         gesture_likelihoods_unified[m] = gesture_likelihoods[n]
+    if disable_unification:
+        unique_list = gesture_templates.copy()
+        return unique_list, language_likelihoods, gesture_likelihoods
+    else:
+        extended_list = gesture_templates.copy()
+        extended_list.extend(language_templates)
+        unique_list = list(set(extended_list))
+        
+        gesture_likelihoods_unified =  [0.] * len(unique_list)
+        language_likelihoods_unified = [0.] * len(unique_list)
+        for unique_item in unique_list:
+            if unique_item in gesture_templates:
+                n = gesture_templates.index(unique_item)
+                
+                m = unique_list.index(unique_item)
+                gesture_likelihoods_unified[m] = gesture_likelihoods[n]
 
-    #     if unique_item in language_templates:
-    #         n = language_templates.index(unique_item)
-    #         m = unique_list.index(unique_item)
-    #         language_likelihoods_unified[m] = language_likelihoods[n]
+            if unique_item in language_templates:
+                n = language_templates.index(unique_item)
+                m = unique_list.index(unique_item)
+                language_likelihoods_unified[m] = language_likelihoods[n]
+        
+        if keep_only_items_in_c_templates:
+            for tmpl in c_templates:
+                if tmpl not in unique_list:
+                    if print_debug:
+                        print(f"WARNING! {tmpl} was added with 0.0 prob!")
+                    unique_list.append(tmpl)
+                    language_likelihoods_unified.append(0.0)
+                    gesture_likelihoods_unified.append(0.0)
+        if print_debug:
+            print(f"[conj fun][{len(unique_list)}] final templates: {unique_list}")
+        return unique_list, language_likelihoods_unified, gesture_likelihoods_unified
     
-    # if keep_only_items_in_c_templates:
-    #     for tmpl in c_templates:
-    #         if tmpl not in unique_list:
-    #             print(f"WARNING! {tmpl} was added with 0.0 prob!")
-    #             unique_list.append(tmpl)
-    #             language_likelihoods_unified.append(0.0)
-    #             gesture_likelihoods_unified.append(0.0)
-    
-    # #print(f"[conj fun][{len(unique_list)}] final templates: {unique_list}")
-    # return unique_list, language_likelihoods_unified, gesture_likelihoods_unified
-    return unique_list, language_likelihoods, gesture_likelihoods
-
 
 
 

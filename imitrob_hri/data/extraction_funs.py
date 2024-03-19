@@ -2,7 +2,7 @@
 import numpy as np
 from sklearn.metrics import f1_score
 from sklearn.metrics import multilabel_confusion_matrix
-
+from sklearn.metrics import confusion_matrix
 
 def get_from_results(ct, metric, results):
     ret = np.zeros((3,7,4,3))
@@ -41,4 +41,20 @@ def get_f1(ct, results):
                     Y_pred = results[cn,nn,pn,mn].item()[ct]['y_pred_cts']
                     Y_true = results[cn,nn,pn,mn].item()[ct]['y_true_cts']
                     ret[cn,nn,pn,mn] = f1_score(Y_true, Y_pred, average='micro')
+    return ret
+
+def get_false_positives(ct, results):
+    ret = np.zeros((3,7,4,3))
+    for cn,c in enumerate(['c1', 'c2', 'c3']):
+        for nn,n in enumerate(['n0', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6']):
+            for pn,p in enumerate(['D1','D2','D3','D4']):
+                for mn,m in enumerate(['m1', 'm2', 'm3']):
+                    Y_pred = results[cn,nn,pn,mn].item()[ct]['y_pred_cts']
+                    Y_true = results[cn,nn,pn,mn].item()[ct]['y_true_cts']
+
+                    cm = confusion_matrix(Y_pred, Y_true)
+                    fp = cm.sum(axis=0) - np.diag(cm)
+
+                    # total false positives 
+                    ret[cn,nn,pn,mn] = sum(fp) / len(Y_pred)
     return ret

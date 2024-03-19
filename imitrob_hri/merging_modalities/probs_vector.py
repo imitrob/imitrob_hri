@@ -126,19 +126,25 @@ class ProbsVector():
 
     @property
     def max(self):
-        if self.discard_two_maxes(): return None
-
         if self.empty: return None
+        if self.c.discard_two_maxes_enabled:
+            if self.discard_two_maxes(): return None
+
         return self.template_names[np.argmax(self.p)]
 
     @property
     def max_prob(self):
-        if self.discard_two_maxes(): return None
+        if len(self.p) == 0: return None
+        if self.c.discard_two_maxes_enabled:
+            if self.discard_two_maxes(): return None  
+        
         return np.max(self.p)
 
     @property
     def max_id(self):    
-        if self.discard_two_maxes(): return None          
+        if len(self.p) == 0: return None
+        if self.c.discard_two_maxes_enabled:
+            if self.discard_two_maxes(): return None          
         return np.argmax(self.p)
 
     @property
@@ -161,6 +167,7 @@ class ProbsVector():
         Returns:
             activated template (String) or None
         '''
+        if len(self.p) == 0: return None
         if len(self.clear) > 0 and self.diffs_above_threshold():
             return self.max_id
         #elif (len(self.unsure) > 0 and self.diffs_above_threshold()):
@@ -380,8 +387,10 @@ class NaiveProbsVector(ProbsVector):
 
     @property
     def clear_id(self):
-        if self.discard_two_maxes(): return None
         if len(self.p) == 0: return []
+        
+        if self.c.discard_two_maxed_enabled:
+            if self.discard_two_maxes(): return []
         return [np.argmax(self.p)]
 
     @property

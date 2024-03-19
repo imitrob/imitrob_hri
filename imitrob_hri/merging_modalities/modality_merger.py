@@ -268,7 +268,7 @@ class ModalityMerger():
         x_ab = (x_01*(b-a))+a
         return x_ab
 
-    def preprocessing(self, ls, gs, epsilon, gamma, scene=None):
+    def preprocessing(self, ls, gs, epsilon, gamma, scene=None, normalizing_tots=False):
         ''' Data preprocessing '''
         # 1. Add epsilon
         # for ct in self.c.mm_pars_names_dict.keys():
@@ -277,42 +277,51 @@ class ModalityMerger():
         #     if self.is_zeros(gs[ct].p):
         #         gs[ct].p += epsilon
 
-        # 2. Add gamma, if language includes one value
-        if scene:
-            o_names = []
-            for o in scene.selections:
-                o_names.append(o.name)
-                
-        for ct in self.c.mm_pars_names_dict.keys():
-            if self.is_one_only(ls[ct].p):
-                if ct == 'template':
+        if not normalizing_tots:
+            for ct in self.c.mm_pars_names_dict.keys():
+                if self.is_one_only(ls[ct].p):
                     ls[ct].p += gamma
                     ls[ct].p = np.clip(ls[ct].p, 0, 1)
-                    # print('----language after normalization for hot one case---')
-                    # print(ls[ct].p)
                     #for gestures normalize the gesture probs for objects and storages to [gamma, 1]
-                if ct=='selections' or ct=='storages':
-                    idxs = []
-                    for idx, name in enumerate(ls[ct].names):
-                        if name in o_names:
-                            idxs.append(idx)
-                    #language normalization
-                    ls[ct].p[idxs] += gamma
-                    ls[ct].p = np.clip(ls[ct].p, 0, 1)
-                    #gesture normalization
-                    G_sel = gs[ct].p[idxs]
-                    G_norm = self.normalize_ab(G_sel,gamma,1)
-                    gs[ct].p[idxs] = G_norm
-                    # print('gesture input after normalization for hot one case------------')
-                    # print(gs[ct].p)
+            return ls, gs
 
-        # for ct in self.c.mm_pars_names_dict.keys():
-        #     if self.is_one_only(ls[ct].p):
-        #         ls[ct].p += gamma
-        #         ls[ct].p = np.clip(ls[ct].p, 0, 1)
-        #         #for gestures normalize the gesture probs for objects and storages to [gamma, 1]
+        else:
+            # 2. Add gamma, if language includes one value
+            if scene:
+                o_names = []
+                for o in scene.selections:
+                    o_names.append(o.name)
+                    
+            for ct in self.c.mm_pars_names_dict.keys():
+                if self.is_one_only(ls[ct].p):
+                    if ct == 'template':
+                        ls[ct].p += gamma
+                        ls[ct].p = np.clip(ls[ct].p, 0, 1)
+                        # print('----language after normalization for hot one case---')
+                        # print(ls[ct].p)
+                        #for gestures normalize the gesture probs for objects and storages to [gamma, 1]
+                    if ct=='selections' or ct=='storages':
+                        idxs = []
+                        for idx, name in enumerate(ls[ct].names):
+                            if name in o_names:
+                                idxs.append(idx)
+                        #language normalization
+                        ls[ct].p[idxs] += gamma
+                        ls[ct].p = np.clip(ls[ct].p, 0, 1)
+                        #gesture normalization
+                        G_sel = gs[ct].p[idxs]
+                        G_norm = self.normalize_ab(G_sel,gamma,1)
+                        gs[ct].p[idxs] = G_norm
+                        # print('gesture input after normalization for hot one case------------')
+                        # print(gs[ct].p)
+
+            # for ct in self.c.mm_pars_names_dict.keys():
+            #     if self.is_one_only(ls[ct].p):
+            #         ls[ct].p += gamma
+            #         ls[ct].p = np.clip(ls[ct].p, 0, 1)
+            #         #for gestures normalize the gesture probs for objects and storages to [gamma, 1]
         
-        return ls, gs
+            return ls, gs
 
     def feedforward(self, language_sentence, gesture_sentence, epsilon=0.05, gamma=0.5):
         '''
@@ -704,7 +713,9 @@ class MMSentence():
                     print(f"{cc.F}{y[ct]} != {self.M[ct].activated}{cc.E}", end="; ")
             
             if ct in y.keys():
-                if y[ct] != self.M[ct].activated:
+                if y[ct] is not None and y[ct] != self.M[ct].activated:
+                    if printer:
+                        print(f"{y[ct]} != {self.M[ct].max};; {self.M[ct].activated}")
                     success = False
         if printer: print()
         return success

@@ -15,7 +15,8 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from imitrob_hri.merging_modalities.utils import singlehistplot_customized
 
-
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import f1_score
 # from devtools import debug as print
 
 
@@ -52,6 +53,15 @@ def tester_all(exp=['arity'],
     acc_m3_fixed = 0
     acc_bl_m3 = 0 # Max function with thresholding, added last
     
+    # This is added for special evaluating purpose
+    special_pred_bl = []
+    special_real_bl = []
+    special_pred_thr = []
+    special_real_thr = []
+    special_pred_fixed = []
+    special_real_fixed = []
+    special_pred_M3 = []
+    special_real_M3 = []
 
     for cn,c in enumerate(exp):
         for pn,d in enumerate(alignm):
@@ -68,7 +78,16 @@ def tester_all(exp=['arity'],
 
 
                         L = mms_trial[0].L
+                        L['template'].template_names = []
+                        L['template'].p = []
+                        L['selections'].template_names = []
+                        L['selections'].p = []
+                        L['storages'].template_names = []
+                        L['storages'].p = []
+
                         G = mms_trial[0].G
+
+                        print(len(L['template'].names), len(G['template'].names))
                         # search for a line, which corresponds to given experiment and trial
                         GT = []
                         for gt_line in ground_truth:
@@ -105,6 +124,17 @@ def tester_all(exp=['arity'],
                         M2_suc_fixed = compare(M2_fixed, GT, thresholds=thr, action_only=acto, one_by_one=one_by_one, m='M2', scene=scene, postprocessing=postprocessing)
                         M3_suc_fixed = compare(M3_fixed, GT, thresholds=thr, 
                         action_only=acto, one_by_one=one_by_one, m='M3', scene=scene, postprocessing=postprocessing)
+
+                        special_pred_bl.append(f"{BL['template'].activated}")#{M3['selections'].activated}{M3['storages'].activated}")
+                        special_real_bl.append(f"{GT[0]}")#{GT[1]}{GT[2]}")
+                        special_pred_thr.append(f"{M3['template'].activated}")#{M3['selections'].activated}{M3['storages'].activated}")
+                        special_real_thr.append(f"{GT[0]}")#{GT[1]}{GT[2]}")
+                        special_pred_fixed.append(f"{M3_fixed['template'].activated}")#{M3['selections'].activated}{M3['storages'].activated}")
+                        special_real_fixed.append(f"{GT[0]}")#{GT[1]}{GT[2]}")
+
+                        special_pred_M3.append(f"{BL_M3['template'].activated}")#{M3['selections'].activated}{M3['storages'].activated}")
+                        special_real_M3.append(f"{GT[0]}")#{GT[1]}{GT[2]}")
+
 
                         # Baseline with M3 - added on top
                         BL_M3_suc_fixed = compare(BL_M3, GT, thresholds=False, 
@@ -144,7 +174,7 @@ def tester_all(exp=['arity'],
 
                                 input("?? NEW TRIAL ??")
        
-    print(f"Number of all samples: {all_ex}")
+    # print(f"Number of all samples: {all_ex}")
     ret = [
         round(100*acc_bl/all_ex,1),
         round(100*acc_m1/all_ex,1),
@@ -154,14 +184,50 @@ def tester_all(exp=['arity'],
         round(100*acc_m2_fixed/all_ex,1),
         round(100*acc_m3_fixed/all_ex,1)
     ]
-    print(f"Acc BL: {ret[0]}%")
-    print(f"Acc M1: {ret[1]}%")
-    print(f"Acc M2: {ret[2]}%")
+    # print(f"Acc BL: {ret[0]}%")
+    # print(f"Acc M1: {ret[1]}%")
+    # print(f"Acc M2: {ret[2]}%")
     print(f"Acc M3: {ret[3]}%")
-    print(f"Acc M1 fixed: {ret[4]}%")
-    print(f"Acc M2 fixed: {ret[5]}%")
+    # print(f"Acc M1 fixed: {ret[4]}%")
+    # print(f"Acc M2 fixed: {ret[5]}%")
     print(f"Acc M3 fixed: {ret[6]}%")
-    print(f"Acc BL M3: {round(100*acc_bl_m3/all_ex,1)}%")
+    # print(f"Acc BL M3: {round(100*acc_bl_m3/all_ex,1)}%")
+
+
+    # evaluating special metric
+    if False:
+        f1_final_1 = f1_score(special_pred_bl, special_real_bl, average='micro')
+        print(f"f1_final bl: {round(100*f1_final_1,1)}")
+        f1_final_2 = f1_score(special_pred_thr, special_real_thr, average='micro')
+        print(f"f1_final thr: {round(100*f1_final_2,1)}")
+        f1_final_3 = f1_score(special_pred_fixed, special_real_fixed, average='micro')
+        print(f"f1_final fixed: {round(100*f1_final_3,1)}")
+
+        return f1_final_1, f1_final_2, f1_final_3
+        # cm = confusion_matrix(special_pred_M3, special_real_M3)                        
+        # fp = cm.sum(axis=0) - np.diag(cm)
+        # fp_final = sum(fp) / all_ex
+        # print(f"f1_final M3: {round(100*fp_final,1)}")
+
+    # evaluating special metric
+    if False:
+        cm = confusion_matrix(special_pred_bl, special_real_bl)                        
+        fp = cm.sum(axis=0) - np.diag(cm)
+        fp_final = sum(fp) / all_ex
+        print(f"fp_final bl: {round(100*fp_final,1)}")
+        cm = confusion_matrix(special_pred_thr, special_real_thr)                        
+        fp = cm.sum(axis=0) - np.diag(cm)
+        fp_final = sum(fp) / all_ex
+        print(f"fp_final thr: {round(100*fp_final,1)}")
+        cm = confusion_matrix(special_pred_fixed, special_real_fixed)                        
+        fp = cm.sum(axis=0) - np.diag(cm)
+        fp_final = sum(fp) / all_ex
+        print(f"fp_final fixed: {round(100*fp_final,1)}")
+        cm = confusion_matrix(special_pred_M3, special_real_M3)                        
+        fp = cm.sum(axis=0) - np.diag(cm)
+        fp_final = sum(fp) / all_ex
+        print(f"fp_final M3: {round(100*fp_final,1)}")
+
 
     # print(f"Acc BL list: {acc_bl_list}")
     
@@ -292,7 +358,6 @@ if __name__ == '__main__':
 
     for mf in [('entropy_add_2', 'add_2'), ('entropy', 'mul')]:
         for exp in ['arity', 'property']:
-            print(f"=== {exp} ===")
             print("R1 ['a'], thresholding=False, ta must match")
             ret1 = tester_all(exp=[f"{exp}"], alignm=['a'], thr=False, acto=True, postprocessing=postpro, mf=mf)
             print("R2 ['a'], thresholding=True, ta must match")
@@ -301,29 +366,72 @@ if __name__ == '__main__':
             ret3 = tester_all(exp=[f"{exp}"], alignm=['a'], thr=False, acto=False, postprocessing=postpro, mf=mf)
             print("R4 Only aligned actions: ['a'], thresholding=True, ta,to,ts must match")
             ret4 = tester_all(exp=[f"{exp}"], alignm=['a'], thr=True, acto=False, postprocessing=postpro, mf=mf)
+            print(ret1, ret2, ret3, ret4)
+
+    if True: # Getting only false positives for plot 5
+        for mf in [('entropy_add_2', 'add_2')]: #, ('entropy', 'mul')]:
+            print(f" === {mf} ===")
+            for exp in ['arity', 'property']:
+                print(f"--- {exp} ---")
+                print("Aligned, thresholding=False")
+
+                fiss = []
+                
+                f1s = tester_all(exp=[f"{exp}"], alignm=['a'], thr=False, acto=True, postprocessing=postpro, mf=mf)
+                fiss.append(f1s)
+                print("Aligned, thresholding=True")
+                f2s = tester_all(exp=[f"{exp}"], alignm=['a'], thr=True, acto=True, postprocessing=postpro, mf=mf)
+                fiss.append(f2s)
+                
+                fiss2 = []
+                print("Unaligned, thresholding = False")
+                f3s = tester_all(exp=[f"{exp}"], alignm=['nag', 'nal', 'nog', 'nol'], thr=False, acto=True, postprocessing=postpro, mf=mf)
+                fiss2.append(f3s)
+                print("Unaligned, thresholding = True")
+                f4s = tester_all(exp=[f"{exp}"], alignm=['nag', 'nal', 'nog', 'nol'], thr=True, acto=True, postprocessing=postpro, mf=mf)
+                fiss2.append(f4s)
+
+                fisss = [fiss, fiss2]
+
+                print("Align x Thres x (BL, ENTROPY, FIXED)")
+                print(fisss)
+                input("??")
+        exit()
+
+    for mf in [('entropy_add_2', 'add_2'), ('entropy', 'mul')]:
+        for exp in ['arity', 'property']:
+            print(f"=== {exp} ===")
+            print("R1 ['a'], thresholding=False, ta must match")
+            ret1 = tester_all(exp=[f"{exp}"], alignm=['a'], thr=False, acto=True, postprocessing=postpro, mf=mf)
+            # print("R2 ['a'], thresholding=True, ta must match")
+            # ret2 = tester_all(exp=[f"{exp}"], alignm=['a'], thr=True, acto=True, postprocessing=postpro, mf=mf)
+            print("R3 ['a'], thresholding=False, ta,to,ts must match")
+            ret3 = tester_all(exp=[f"{exp}"], alignm=['a'], thr=False, acto=False, postprocessing=postpro, mf=mf)
+            # print("R4 Only aligned actions: ['a'], thresholding=True, ta,to,ts must match")
+            # ret4 = tester_all(exp=[f"{exp}"], alignm=['a'], thr=True, acto=False, postprocessing=postpro, mf=mf)
             print("R5 Checking action match only: ['nag', 'nal', 'nog', 'nol'], thresholding=False, Only ta must match")
             ret5 = tester_all(exp=[f"{exp}"], alignm=['nag', 'nal', 'nog', 'nol'], thr=False, acto=True, postprocessing=postpro, mf=mf)
             
             
             
-            print("R5 Checking action match only: ['nag', 'nal', 'nog', 'nol'], thresholding=True, Only ta must match")
-            ret51 = tester_all(exp=[f"{exp}"], alignm=['nag', 'nal', 'nog', 'nol'], thr=True, acto=True, postprocessing=postpro, mf=mf)
+            # print("R5 Checking action match only: ['nag', 'nal', 'nog', 'nol'], thresholding=True, Only ta must match")
+            # ret51 = tester_all(exp=[f"{exp}"], alignm=['nag', 'nal', 'nog', 'nol'], thr=True, acto=True, postprocessing=postpro, mf=mf)
             print("R6 No thresholding (max): ['nag', 'nal', 'nog', 'nol'], thresholding=False, ta,to,ts must match")
             ret6 = tester_all(exp=[f"{exp}"], alignm=['nag', 'nal', 'nog', 'nol'], thr=False, acto=False, postprocessing=postpro, mf=mf)
-            print("R7 All results: ['nag', 'nal', 'nog', 'nol'], thresholding=True, ta,to,ts must match")
-            ret7 = tester_all(exp=[f"{exp}"], alignm=['nag', 'nal', 'nog', 'nol'], thr=True, acto=False, postprocessing=postpro, mf=mf)
+            # print("R7 All results: ['nag', 'nal', 'nog', 'nol'], thresholding=True, ta,to,ts must match")
+            # ret7 = tester_all(exp=[f"{exp}"], alignm=['nag', 'nal', 'nog', 'nol'], thr=True, acto=False, postprocessing=postpro, mf=mf)
 
-            ret = [ret1,ret2,ret3,ret4,ret5,ret51,ret6,ret7]
+            # ret = [ret1,ret2,ret3,ret4,ret5,ret51,ret6,ret7]
 
-            singlehistplot_customized(np.array(ret), f"real_experiment_{exp}_{mf[0]}__{mf[1]}", xticks=['$ta_{False}^{aligned}$',
-            '$ta_{True}^{aligned}$',
-            '$all_{False}^{aligned}$',
-            '$all_{True}^{aligned}$',
-            '$ta_{False}^{nonaligned}$',
-            '$ta_{True}^{nonaligned}$',
-            '$all_{False}^{nonaligned}$',
-            '$all_{True}^{nonaligned}$'], labels = ['baseline', 'M1', 'M2', 'M3', 'M1 fixed', 'M2 fixed', 'M3 fixed'], plot=True, 
-            title=f'Real Exp. {exp}, Aligned & Non-aligned')
+            # singlehistplot_customized(np.array(ret), f"real_experiment_{exp}_{mf[0]}__{mf[1]}", xticks=['$ta_{False}^{aligned}$',
+            # '$ta_{True}^{aligned}$',
+            # '$all_{False}^{aligned}$',
+            # '$all_{True}^{aligned}$',
+            # '$ta_{False}^{nonaligned}$',
+            # '$ta_{True}^{nonaligned}$',
+            # '$all_{False}^{nonaligned}$',
+            # '$all_{True}^{nonaligned}$'], labels = ['baseline', 'M1', 'M2', 'M3', 'M1 fixed', 'M2 fixed', 'M3 fixed'], plot=True, 
+            # title=f'Real Exp. {exp}, Aligned & Non-aligned')
 
     exit() # Don't evaluate old
 

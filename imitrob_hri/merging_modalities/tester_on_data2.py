@@ -5,7 +5,7 @@ from utils import *
 from imitrob_nlp.nlp_utils import make_conjunction
 import data.datagen_utils2 as datagen_utils2 
 import numpy as np
-from sklearn.metrics import precision_score, recall_score, accuracy_score
+from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score
 
 DATASET_PREFIX = '2' # '' for original dataset
 
@@ -22,10 +22,11 @@ def tester_all(use_magic):
                     model = int(m[1]) # (from M1 chooses the 1)
                     acc, results = tester_on_data(dataset, model, use_magic, printer=False)
                     accs[cn,nn,pn,mn] = acc
-                    print(f"{c} {n} {d} {m}: {acc}")
+                    print(f"{c} {n} {d} {m}: {round(acc,1)}%")
                     #print(cn,nn,pn,mn, results)
                     results_save[cn,nn,pn,mn] = np.asanyarray(results, dtype=object)
                     #print(results)
+                    
                     np.save(f"{os.path.dirname(os.path.abspath(__file__))}/../data/results{DATASET_PREFIX}/accs_{use_magic}.npy", accs)
                     np.save(f"{os.path.dirname(os.path.abspath(__file__))}/../data/results{DATASET_PREFIX}/results_{use_magic}.npy", results_save)
     
@@ -125,7 +126,6 @@ def tester_on_data(dataset, model, use_magic, printer=False):
         'y_pred_cts': y_pred_cts[:,ct],
         }
     n+=1
-    print(f"Final acc: {acc/n*100}%")
 
     # plt.hist(test_actionsdoability_hist, bins=np.linspace(0, 10, 20))
     # plt.grid()
@@ -145,6 +145,9 @@ if __name__ == '__main__':
         else:
             print(f"Running on all merge functions!")
             for mgn,use_magic in enumerate(['baseline', 'mul', 'add_2', 'entropy', 'entropy_add_2']):
+                print(f" =============================")
+                print(f" ======== {use_magic} ========")
+                print(f" =============================")
                 tester_all(use_magic)
     else:
         # Model M3: model = 3
