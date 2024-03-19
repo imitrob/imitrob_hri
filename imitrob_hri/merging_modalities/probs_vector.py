@@ -389,7 +389,7 @@ class NaiveProbsVector(ProbsVector):
     def clear_id(self):
         if len(self.p) == 0: return []
         
-        if self.c.discard_two_maxed_enabled:
+        if self.c.discard_two_maxes_enabled:
             if self.discard_two_maxes(): return []
         return [np.argmax(self.p)]
 

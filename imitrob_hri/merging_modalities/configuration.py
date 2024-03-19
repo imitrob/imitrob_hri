@@ -125,6 +125,11 @@ class Configuration(ABC):
     def properties(self):
         return ['glued', 'pickable', 'reachable', 'stackable', 'pushable', 'full-stack', 'full-liquid']
     
+    discard_two_maxes_enabled = False
+    normalizing_tots = True
+    disable_unification = False
+
+    
 class Configuration1(Configuration):
     def __init__(self):
         self.mm_pars_names_dict = {'template': ['move-up', 'release', 'stop', ],

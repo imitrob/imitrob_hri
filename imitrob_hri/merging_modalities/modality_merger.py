@@ -540,7 +540,7 @@ class ModalityMerger():
         '''
         DEBUGdata = []
         # A.) Data preprocessing
-        ls, gs = self.preprocessing(ls, gs, epsilon, gamma,scene)
+        ls, gs = self.preprocessing(ls, gs, epsilon, gamma,scene, normalizing_tots=self.c.normalizing_tots)
 
         # B.) Merging
         # 1. Compare types independently
@@ -690,7 +690,7 @@ class MMSentence():
                                         self.G[ct].names, self.L[ct].names, \
                                         self.G[ct].p, self.L[ct].p, ct=ct,
                                         keep_only_items_in_c_templates=True,
-                                        c_templates=c.mm_pars_names_dict[ct])
+                                        c_templates=c.mm_pars_names_dict[ct], disable_unification=c.disable_unification)
             self.G[ct].names = c.mm_pars_names_dict[ct]
             self.L[ct].names = c.mm_pars_names_dict[ct]
         # special case: extend to all loaded templates (from files)
