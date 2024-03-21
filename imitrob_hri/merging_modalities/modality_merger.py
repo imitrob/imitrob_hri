@@ -262,9 +262,13 @@ class ModalityMerger():
     def normalize_ab(x,a,b):
         if len(x) == 0: return []
         #normalize values in vector x to interval a to b
-        x_01=(x-min(x))/(max(x) - min(x)) 
+        rozmezi = (max(x) - min(x))
+        if rozmezi == 0.0:
+            rozmezi = 1.0
+        x_01=(x-min(x))/rozmezi
         print('after normalization to 0-1')
         print(x_01)
+        assert not np.isnan(x_01).any(), f"Unsuccessfull x_01: {x_01}, input: x {x}, a {a}, b {b}" 
         x_ab = (x_01*(b-a))+a
         return x_ab
 
