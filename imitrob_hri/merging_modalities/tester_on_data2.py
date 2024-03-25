@@ -19,8 +19,7 @@ def tester_all(use_magic):
             for pn,d in enumerate(['D1', 'D2', 'D3', 'D4']):
                 for mn,m in enumerate(['M1','M2','M3']):
                     dataset = np.load(os.path.expanduser(f'{os.path.dirname(os.path.abspath(__file__))}/../data/saves/artificial_dataset{DATASET_PREFIX}_{c}_{n}_{d}.npy'), allow_pickle=True)
-                    model = int(m[1]) # (from M1 chooses the 1)
-                    acc, results = tester_on_data(dataset, model, use_magic, printer=False)
+                    acc, results = tester_on_data(dataset, m, use_magic, printer=False)
                     accs[cn,nn,pn,mn] = acc
                     print(f"{c} {n} {d} {m}: {round(acc,1)}%")
                     #print(cn,nn,pn,mn, results)
@@ -32,6 +31,9 @@ def tester_all(use_magic):
     
 
 def tester_on_data(dataset, model, use_magic, printer=False):
+    assert model[0] == 'M'
+    model = int(m[1])-1 # (from M1 chooses the 1)
+                    
     ''' Set configuration '''
     y_pred_cts = []
     y_true_cts = []
@@ -150,8 +152,7 @@ if __name__ == '__main__':
                 print(f" =============================")
                 tester_all(use_magic)
     else:
-        # Model M3: model = 3
-        model = int(sys.argv[3]) if len(sys.argv) > 3 else 3
+        model = str(sys.argv[3]) if len(sys.argv) > 3 else 'M3'
         printer = eval(sys.argv[4]) if len(sys.argv) > 4 else False
         
 

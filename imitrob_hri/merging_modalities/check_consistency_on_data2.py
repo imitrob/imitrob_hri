@@ -12,7 +12,11 @@ from tqdm.contrib import tenumerate
 
 
 if __name__ == '__main__':
-    dataset = np.load(os.path.join(MODULE_DIR, 'data/saves/artificial_dataset_c2_n2_D5.npy'), allow_pickle=True)
+    dataset_name = sys.argv[1]
+    use_magic = sys.argv[2] if len(sys.argv) > 2 else 'entropy_add_2'
+    model = sys.argv[3] if len(sys.argv) > 3 else 'M3'
+
+    dataset = np.load(os.path.join(MODULE_DIR, 'data/saves/artificial_dataset2_{dataset_name}.npy'), allow_pickle=True)
 
     ''' Set configuration '''
     c = dataset[0]['config']
@@ -36,7 +40,7 @@ if __name__ == '__main__':
             scene = sample['x_scene']
             mm = ModalityMerger(c, "add_2")
             #s.M = mm.feedforward2(s.L, s.G, scene)
-            s.M, DEBUGdata = mm.feedforward3(s.L, s.G, scene, epsilon=c.epsilon, gamma=c.gamma, alpha_penal=c.alpha_penal, model=2, use_magic="add_2")
+            s.M, DEBUGdata = mm.feedforward3(s.L, s.G, scene, epsilon=c.epsilon, gamma=c.gamma, alpha_penal=c.alpha_penal, model=model, use_magic=use_magic)
 
             if s.check_merged(sample['y'], c, printer=False):
                 acc +=1
