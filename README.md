@@ -1,4 +1,4 @@
-# imitrob_hri
+# imitrob_hri, on Modality Merger 2024 (MM24 branch)
 
 This package consists of modality merger algorithm, NL processor for common imitrob setup, it is jointly working with crow-base modules.
 
