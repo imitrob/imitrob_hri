@@ -126,7 +126,7 @@ class Configuration(ABC):
         return ['glued', 'pickable', 'reachable', 'stackable', 'pushable', 'full-stack', 'full-liquid']
     
     discard_two_maxes_enabled = False
-    normalizing_tots = True
+    normalizing_tots = True # False for simulated data
     disable_unification = False
 
     
