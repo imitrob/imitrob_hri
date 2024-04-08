@@ -65,11 +65,11 @@ Dependendencies:
 - [imitrob_robot_server](https://github.com/imitrob/imitrob_robot_server) - Panda robot Control
 
 
-## Build 
+#### Build 
 
 - `colcon build --symlink-install`
 
-## Usage
+#### Usage
 
 1. Term:
 ```Shell
