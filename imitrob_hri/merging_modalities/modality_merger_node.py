@@ -301,15 +301,25 @@ class MMNode(Node):
             substr += ']'
             return substr
 
+        scene2 = self.soc.get_scene2()
+        
         hricommandstrs = []
         for i, (model, name) in enumerate(zip([mms,mms1,mms2,mms3,mms4,mms5,mms6], ["baseline", "M1", "M2", "M3", "M1_emul", "M2_emul", "M3_emul"])):
-            final_s = '{' + f'"target_action": "{model.M["template"].activated}", "target_action_conclusion": {model.M["template"].conclude()}, "target_object": "{model.M["selections"].activated}", "target_storage": "{model.M["storages"].activated}",' 
+            final_s = '{' + f'"target_action": "{model.M["template"].activated}", "target_action_conclusion": "{model.M["template"].conclude()}", "target_object": "{model.M["selections"].activated}", "target_storage": "{model.M["storages"].activated}",' 
             final_s+= f'"actions": {model.M["template"].names}, "action_probs": {float_array_to_str(model.M["template"].p)},'
+
+            # object class name to object grounded name            
+            new_names = []
+            for n, object_class_name in enumerate(model.M["selections"].names):
+
+                new_names.append( self.to_grounded_obj(scene2, object_class_name) )
+            model.M["selections"].template_names = new_names
+
             final_s+= f'"objects": {model.M["selections"].names} , "object_probs": {float_array_to_str(model.M["selections"].p)} , "object_classes": "TODO", '
             final_s+= f'"storages": {model.M["storages"].names} , "storage_probs": {float_array_to_str(model.M["storages"].p)} , '
             # final_s+= f'"parameters": "TODO", "action_timestamp": "TODO", "scene": {scene}'
             final_s+= f'"epsilon": "{self.c.epsilon}", "gamma": "{self.c.gamma}", "alpha_penal": "{self.c.alpha_penal}", "model index": "{i}", "use_magic": "{self.use_magic}",'
-            final_s+= f'"merge_function": {self.use_magic}'
+            final_s+= f'"merge_function": "{self.use_magic}"'
             final_s+= '}'
             final_s = final_s.replace("'", '"')
 
@@ -355,6 +365,14 @@ class MMNode(Node):
 
         return hric
 
+    def to_grounded_obj(self, scene, object_name, properties='TODO'):
+        # scene object names with _od_ - grounded real objects
+        # object_name - class object
+        
+        for scene_object_name in scene.O:
+            if object_name in scene_object_name:
+                return scene_object_name
+        return object_name
     
     def receive_scene(self, scene):
         ''' Node sends crow ontology scene info to ROS topic. Here, the topic msg is received and 
