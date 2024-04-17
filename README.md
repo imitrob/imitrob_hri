@@ -53,10 +53,25 @@ Further tests:
     - Needs to have results generated in folder `data/results2`, generate results using `python tester_on_data2.py all` OR use results from [link](https://drive.google.com/file/d/1117fI_fFEZq8VNi0Fm3q_jKOTQEQSJOU/view?usp=sharing)
     - Toggle experiment number
 
-### Real dataset usage
+### Real dataset setup
 
-- Dependency on packages `crow-base` - ontology, cameras, filters, `teleop_gesture_toolbox` - hand gesture recognition, `imitrob_templates`, `imitrob_robot_server`, `imitrob_robot_client` - Panda Robot Control
-- Usage Run, 1. Term:
+Several packages are needed to setup. 
+
+- Build on crow setup (ROS2 env): [crow-base](https://github.com/imitrob/crow-base) - ontology, cameras, filters, 
+Dependendencies:
+- [teleop_gesture_toolbox](https://github.com/imitrob/teleop_gesture_toolbox/tree/MM24) - hand gesture recognition, Use MM24 branch, `git clone https://github.com/imitrob/teleop_gesture_toolbox.git --branch MM24`
+    - Leap Motion Controller, Coppelia Sim, dataset example might be needed
+- [imitrob_templates](https://github.com/imitrob/imitrob_templates) - Robot task execution
+- [imitrob_robot_server](https://github.com/imitrob/imitrob_robot_server) - Panda robot Control
+
+
+#### Build 
+
+- `colcon build --symlink-install`
+
+#### Usage
+
+1. Term:
 ```Shell
 cd ~/crow-base && source start_404.sh
 python user_scripts/tmux_all.py --config user_scripts/run_tmux_404.yaml && tmux attach-session -t crow_run_all

@@ -184,8 +184,8 @@ def interactive_probs_plotter(cl, cg, action_names, clear_threshold, unsure_thre
     
     # Display graph
     if save:
-        plt.savefig(f"/home/petr/Downloads/{save_file}.eps")
-        plt.savefig(f"/home/petr/Downloads/{save_file}.png")
+        plt.savefig(f"{save_file}.eps")
+        plt.savefig(f"{save_file}.png")
     plt.show()
 
     
