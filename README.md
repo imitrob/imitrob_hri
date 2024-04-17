@@ -17,7 +17,9 @@ INPUT -- "HRICommand<br>Gesture<br>language" --> MM("Modality<br>Merger") -- "HR
 
 ```
 
-### Install additional: (might be added to requirements or conda yml file)
+### Install dependencies 
+
+- Simulated setup, see deps for real setup below
 
 ```
 pip install owlready nltk gTTS playsound SpeechRecognition rdflib knowl python-dotenv
@@ -55,7 +57,7 @@ Further tests:
 
 ### Real dataset setup
 
-Several packages are needed to setup. 
+Several packages are needed to setup, see setup script: `real_setup.sh`.
 
 - Build on crow setup (ROS2 env): [crow-base](https://github.com/imitrob/crow-base) - ontology, cameras, filters, 
 Dependendencies:

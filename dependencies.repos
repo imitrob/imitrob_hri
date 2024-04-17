@@ -1,0 +1,36 @@
+# List of repositories to use within your workspace
+# See https://github.com/dirk-thomas/vcstool
+############ 
+# Example:
+############
+repositories:
+  teleop_gesture_toolbox:
+    type: git
+    url: https://github.com/imitrob/teleop_gesture_toolbox.git
+    version: MM24 # branch
+  coppelia_sim_ros_interface:
+    type: git
+    url: https://github.com/imitrob/coppelia_sim_ros_interface.git
+    version: MM24 # branch
+  coppelia_sim_ros_interface_msgs:
+    type: git
+    url: https://github.com/petrvancjr/coppelia_sim_ros_interface_msgs.git
+  context_based_gesture_operation:
+    type: git
+    url: https://github.com/imitrob/context_based_gesture_operation.git
+    version: MM24 # branch
+  py_trees_ros:
+    type: git
+    url: https://github.com/splintered-reality/py_trees_ros.git
+  py_trees_ros_interfaces:
+    type: git
+    url: https://github.com/splintered-reality/py_trees_ros_interfaces.git
+  imitrob_templates:
+    type: git
+    url: https://github.com/imitrob/imitrob_templates.git
+  imitrob_hri:
+    type: git
+    url: https://github.com/imitrob/imitrob_hri.git
+  realsense_ros:
+    type: git
+    url: https://github.com/IntelRealSense/realsense-ros.git
