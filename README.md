@@ -57,39 +57,40 @@ Further tests:
 
 ### Real dataset setup
 
-Several packages are needed to setup, see setup script: `real_setup.sh`.
-
-- Build on crow setup (ROS2 env): [crow-base](https://github.com/imitrob/crow-base) - ontology, cameras, filters, 
-Dependendencies:
-- [teleop_gesture_toolbox](https://github.com/imitrob/teleop_gesture_toolbox/tree/MM24) - hand gesture recognition, Use MM24 branch, `git clone https://github.com/imitrob/teleop_gesture_toolbox.git --branch MM24`
-    - Leap Motion Controller, Coppelia Sim, dataset example might be needed
+Several packages are needed to setup, go through setup script: `real_setup.sh`.
+- [crow-base](https://github.com/imitrob/crow-base) - ontology, cameras, filters
+- [teleop_gesture_toolbox](https://github.com/imitrob/teleop_gesture_toolbox/tree/MM24) - hand gesture recognition, Use MM24 branch
+- Leap Motion Controller
+- CoppeliaSim (optional)
 - [imitrob_templates](https://github.com/imitrob/imitrob_templates) - Robot task execution
-- [imitrob_robot_server](https://github.com/imitrob/imitrob_robot_server) - Panda robot Control
+- [imitrob_robot_server](https://github.com/imitrob/imitrob_robot_server) - Panda Controller is not available online yet, please, contact us if you are interested
 
+- Objects detected via AruCo markers are using AruCo dictionary `DICT_ARUCO_ORIGINAL` with size `38mm`, see `crow_detector/aruco_detector_node.py`. In this file are calibrated transformation values from RealSense camera to Panda robot base.
+- Mapping from markers to objects, offsets, sizes and names are defined in `config/crow_detector/config_objects.yaml`.
+- Our Leap Motion is opposite from the Panda robot, see transformation in file (teleop_gesture_toolbox/os_and_utils/transformations.py:transformLeapToBase__CornerConfig).
 
-#### Build 
-
-- `colcon build --symlink-install`
 
 #### Usage
 
-1. Term:
-```Shell
-cd ~/crow-base && source start_404.sh
-python user_scripts/tmux_all.py --config user_scripts/run_tmux_404.yaml && tmux attach-session -t crow_run_all
-```
-- 2. Term, run NLP node: `cd ~/crow-base && source start_404.sh && ros2 run imitrob_hri nlp_node`
-- 3. Term, run MM node: `cd ~/crow-base && source start_404.sh && ros2 run imitrob_hri mm_node`
+- Plug RealSense (D455 or D435) camera and Leap Motion Controller. 
+
+- 1. Term: `crowrun`
+- 2. Term, run NLP node: `crow && ros2 run imitrob_hri nlp_node`
+- 3. Term, run MM node: `crow && ros2 run imitrob_hri mm_node`
     - Use agrument `-e` for `'arity'` or `'property'` experiment
     - Use argmument `-a` for performing aligned (`'a'`), not aligned action from language (`'nal'`), not aligned action from gestures (`'nag'`), not aligned object from language (`'nol'`), not aligned object from gestures (`'nog'`)
     - Use argument `-r` for run number
     - Use argument `-s` for user
-- 4. Term, run gesture detectors: `cd ~/crow-base && source start_404.sh && ros2 launch teleop_gesture_toolbox crow_gestures.launch`
-- 5. Term, run `CoppeliaSim` to see the selected pointed object: `cd ~/crow-base && source start_404.sh && ros2 launch teleop_gesture_toolbox crow_gestures.launch`
+- 4. Term, run gesture detectors: `crow && ros2 launch teleop_gesture_toolbox crow_gestures.launch`
+- 5. Term, run `CoppeliaSim` to see the selected pointed object: `crow && cop && ros2 launch coppelia_sim_ros_interface server_run.launch`
 - 6. Term, run LeapMotion Controller backend: `sudo leapd`
 - 7. Term, run speech-to-text module, we don't provide Google API key for STT, here is script that publishes text input: `ros2 run imitrob_hri nl_input <your NLP sentence>`
-- 8. Term, node that executes merged actions by robot: `ros2 run imitrob_template template_execution_node`
-  - This needs custom `ros2 run imitrob_robot_server robot_server` running, that prepares the robot for executing mode
+
+Now system is waiting for your NL input and is automatically detecting gestures from Leap Motion. See merged output in MM node console terminal. 
+
+Robot execution:
+- 1. Term, node that executes merged actions by robot: `ros2 run imitrob_template template_execution_node`
+- 2. Run robot server `ros2 run imitrob_robot_server robot_server`
 
 This saves results to: `imitrob_hri/data_real`
 
